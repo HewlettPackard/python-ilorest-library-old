@@ -1,5 +1,5 @@
 
- # Copyright 2014 Hewlett-Packard Development Company, L.P.
+ # Copyright 2015 Hewlett-Packard Development Company, L.P.
  #
  # Licensed under the Apache License, Version 2.0 (the "License"); you may
  # not use this file except in compliance with the License. You may obtain
@@ -173,7 +173,7 @@ def rest_op(operation, host, suburi, request_headers, request_body, iLO_loginnam
         headers = dict((x.lower(), y) for x, y in resp.getheaders())
 
         # Follow HTTP redirect
-        if resp.status == 301 and 'location' in  headers:
+        if resp.status >= 300 and resp.status < 400 and 'location' in  headers:
             url = urlparse(headers['location'])
             redir_count -= 1
         else:
@@ -362,8 +362,8 @@ def ex1_change_bios_setting(host, bios_property, value, iLO_loginname, iLO_passw
         assert(get_type(system) == 'ComputerSystem.0' or get_type(system) == 'ComputerSystem.1')
 
         # find the BIOS URI
-        if 'links' not in system['Oem']['Hp']:
-            print('\t"links/BIOS" section in ComputerSystem/Oem/Hp does not exist')
+        if 'links' not in system['Oem']['Hp'] or 'BIOS' not in system['Oem']['Hp']['links']:
+            print('\tBIOS Settings resource or feature is not supported on this system')
             return
         bios_uri = system['Oem']['Hp']['links']['BIOS']['href']
 
