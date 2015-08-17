@@ -1,2 +1,2 @@
 # iLO 4 REST API Data Model
-The data model documentation can be found [here](http://h20564.www2.hp.com/hpsc/doc/public/display?docId=c04423960 "HP RESTful API Data Model Reference for iLO 4").
+The data model documentation can be found [here](http://h22208.www2.hp.com/eginfolib/servers/docs/HPRestfultool/iLo4/data_model_reference.html "HP RESTful API Data Model Reference for iLO 4").
