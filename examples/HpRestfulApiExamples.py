@@ -1,5 +1,5 @@
-
- # Copyright 2015 Hewlett-Packard Development Company, L.P.
+from __future__ import print_function
+ # Copyright 2014,2015 Hewlett Packard Enterprise Development, LP.
  #
  # Licensed under the Apache License, Version 2.0 (the "License"); you may
  # not use this file except in compliance with the License. You may obtain
@@ -115,16 +115,23 @@ Clients should always be prepared for:
 
 __author__ = 'HP'
 
+import sys
 import ssl
-import urllib2
-from urlparse import urlparse
-import httplib
+if (sys.version_info >= (3, 0)):
+   # Python 3 imports
+   from urllib.parse import urlparse
+   from http.client import HTTPSConnection, HTTPConnection
+   from io import StringIO
+else:
+   # Python 2 imports
+   from urlparse import urlparse
+   from httplib import HTTPSConnection, HTTPConnection
+   from StringIO import StringIO
+
 import base64
 import json
 import hashlib
 import gzip
-import StringIO
-import sys
 
 # REST operation generic handler
 def rest_op(operation, host, suburi, request_headers, request_body, iLO_loginname, iLO_password, x_auth_token=None, enforce_SSL=True):
@@ -154,11 +161,11 @@ def rest_op(operation, host, suburi, request_headers, request_body, iLO_loginnam
                 enforce_SSL            == False):
                 cont=ssl.SSLContext(ssl.PROTOCOL_TLSv1)
                 cont.verify_mode = ssl.CERT_NONE
-                conn = httplib.HTTPSConnection(host=url.netloc, strict=True, context=cont)
+                conn = HTTPSConnection(host=url.netloc, strict=True, context=cont)
             else:
-                conn = httplib.HTTPSConnection(host=url.netloc, strict=True)
+                conn = HTTPSConnection(host=url.netloc, strict=True)
         elif url.scheme == 'http':
-            conn = httplib.HTTPConnection(host=url.netloc, strict=True)
+            conn = HTTPConnection(host=url.netloc, strict=True)
         else:
             assert(False)
         conn.request(operation, url.path, headers=request_headers, body=json.dumps(request_body))
@@ -186,7 +193,7 @@ def rest_op(operation, host, suburi, request_headers, request_body, iLO_loginnam
         # NOTE:  resources may return gzipped content
         # try to decode as gzip (we should check the headers for Content-Encoding=gzip)
         try:
-            gzipper = gzip.GzipFile(fileobj=StringIO.StringIO(body))
+            gzipper = gzip.GzipFile(fileobj=StringIO(body))
             uncompressed_string = gzipper.read().decode('UTF-8')
             response = json.loads(uncompressed_string)
         except:
@@ -347,7 +354,7 @@ def print_extended_error(extended_error):
         print('\t' + msg)
         msgcnt += 1
     if msgcnt == 0: # add a spacer
-        print
+        print()
 
 # noinspection PyPep8Naming
 def ex1_change_bios_setting(host, bios_property, value, iLO_loginname, iLO_password, bios_password):
@@ -1293,7 +1300,7 @@ def ex25_get_schema(host, iLO_loginname, iLO_password, schema_prefix):
                     print('\t' + schema_prefix + ' not found at ' + extref_uri)
                     return None, None
 
-    print('Registry ' + schema_prefix + ' not found.')
+    print('Schema ' + schema_prefix + ' not found.')
 
 def ex26_get_registry(host, iLO_loginname, iLO_password, registry_prefix):
 
@@ -1403,6 +1410,50 @@ def ex29_get_PowerMetrics_Average(host, iLO_loginname, iLO_password):
         else:
             print('\t' + chassis['Model'] + ' AverageConsumedWatts = ' + str(pwrmetric['PowerMetrics']['AverageConsumedWatts']) + ' watts over a ' + str(pwrmetric['PowerMetrics']['IntervalInMin']) + ' minute moving average' )
 
+def ex30_set_LicenseKey(host, iLO_loginname, iLO_password, iLO_Key):
+
+    print("EXAMPLE 30:  Set iLO License Key")
+
+    # for each manager in the manager collection at /rest/v1/Managers
+    for status, headers, manager, memberuri in collection(host, '/rest/v1/Managers', None, iLO_loginname, iLO_password):
+      # verify expected type
+        # hint:  don't limit to version 0 here as we will rev to 1.0 at some point hopefully with minimal changes
+        assert(get_type(manager) == 'Manager.0' or get_type(manager) == 'Manager.1')
+
+        # for each manager in the manager collection at /rest/v1/Manager
+        if 'href' not in manager['Oem']['Hp']['links']['LicenseService']:
+            print('\t"LicenseService" section in Manager/Oem/Hp does not exist')
+            return
+        license_uri = manager['Oem']['Hp']['links']['LicenseService']['href']
+        for status, headers, licenseItem, memberuri in collection(host, license_uri, None, iLO_loginname, iLO_password):
+            # verify expected type
+            # hint:  don't limit to version 0 here as we will rev to 1.0 at some point hopefully with minimal changes
+            assert(get_type(licenseItem) == 'HpiLOLicense.0' or get_type(licenseItem) == 'HpiLOLicense.1')
+
+            if ('LicenseKey' not in licenseItem):
+                print('\tHpiLOLicense resource does not contain "LicenseKey" property')
+            else:
+                print('\tOld Key: "' + licenseItem['LicenseKey'] + '"' )
+
+        key = dict()
+        key['LicenseKey'] = iLO_Key
+
+        # perform the POST action
+        print('POST ' + json.dumps(key) + ' to ' + license_uri)
+        status, headers, response = rest_post(host, license_uri, None, key, iLO_loginname, iLO_password)
+        print('POST response = ' + str(status))
+        print_extended_error(response)
+
+        for status, headers, licenseItem, memberuri in collection(host, license_uri, None, iLO_loginname, iLO_password):
+            # verify expected type
+            # hint:  don't limit to version 0 here as we will rev to 1.0 at some point hopefully with minimal changes
+            assert(get_type(licenseItem) == 'HpiLOLicense.0' or get_type(licenseItem) == 'HpiLOLicense.1')
+
+            if ('LicenseKey' not in licenseItem):
+                print('\tHpiLOLicense resource does not contain "LicenseKey" property')
+            else:
+                print('\tNew Key: "' + licenseItem['LicenseKey'] + '"' )
+
 # Run the tests
 
 # commonly needed function values (typically would be passed in by argument)
@@ -1410,6 +1461,7 @@ host = 'hostname'
 iLO_loginname = 'username'
 iLO_password = 'password'
 bios_password = None
+iLO_Key = None
 
 print('Tutorial Examples 0.9.12 BETA for HP RESTful API')
 print('Copyright 2002-2014 Hewlett-Packard Development Company, L.P.')
@@ -1514,3 +1566,8 @@ if False:
 # Get average watts consumed.
 if False:
     ex29_get_PowerMetrics_Average(host, iLO_loginname, iLO_password)    
+    
+# Install iLO LicenseKey
+if False:
+    ex30_set_LicenseKey(host, iLO_loginname, iLO_password, iLO_Key)
+    
