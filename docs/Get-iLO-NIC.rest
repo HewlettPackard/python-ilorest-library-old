@@ -1,0 +1,81 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+|
+
+
+
+
+If not created already,  create an instance of Rest or Redfish Object using the  **RestObject** or **RedfishObject** class respectively. The class constructor takes iLO hostname/ ip address, iLO login username and password as arguments. The class also initializes a login session, gets systems resources and message registries.
+
+Rest Object creation:
+
+.. code-block:: python
+
+ REST_OBJ = RestObject(iLO_host, login_account, login_password)
+
+::
+
+Redfish Object creation:
+
+.. code-block:: python
+
+ REDFISH_OBJ = RedfishObject(iLO_host, login_account, login_password)
+
+::
+
+
+Example 20: Get iLO NIC
+=======================
+
+The method **ex20_get_ilo_nic** takes an instance of rest object ( or redfish object if using Redfish API )  and active flag as arguments.
+
+.. code-block:: python
+
+  def ex20_get_ilo_nic(restobj, get_active):
+
+::
+
+Find and get the system resource for manager. 
+
+.. code-block:: python
+
+
+     instances = restobj.search_for_type("Manager.")
+
+::
+
+Send a HTTP GET request to the  manager URI(s).
+
+.. code-block:: python
+
+      for instance in instances:
+          tmp = restobj.rest_get(instance["href"]) 
+
+::
+
+Send another GET request to the ethernet interfaces URI.
+
+.. code-block:: python
+
+  
+   response = restobj.rest_get(tmp.dict["links"]["EthernetNICs"]["href"])
+
+
+::
+
+Print the active NIC from the response body.
+
+.. code-block:: python
+
+   for nic in response.dict["Items"]:
+            if get_active and nic["Status"]["State"] == "Enabled":
+                sys.stdout.write("Active\t" + nic["links"]["self"]["href"] + \
+                                                ": " + json.dumps(nic) + "\n")
+            elif get_active == False and nic["Status"]["State"] == "Disabled":
+                sys.stdout.write("InActive\t" + nic["links"]["self"]["href"] + \
+                                                ": " + json.dumps(nic) + "\n")
+
+::
+
+

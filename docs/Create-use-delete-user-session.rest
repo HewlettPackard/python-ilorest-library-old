@@ -1,0 +1,79 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+|
+
+
+
+
+If not created already,  create an instance of Rest or Redfish Object using the  **RestObject** or **RedfishObject** class respectively. The class constructor takes iLO hostname/ ip address, iLO login username and password as arguments. The class also initializes a login session, gets systems resources and message registries.
+
+Rest Object creation:
+
+.. code-block:: python
+
+ REST_OBJ = RestObject(iLO_host, login_account, login_password)
+
+::
+
+Redfish Object creation:
+
+.. code-block:: python
+
+ REDFISH_OBJ = RedfishObject(iLO_host, login_account, login_password)
+
+::
+
+
+Example 14: Create and delete a user session
+==============================================
+
+The method **ex14_sessions** takes an instance of rest object( or redfish object if using Redfish API ) , iLO login user name and iLO login password as arguments.
+
+.. code-block:: python
+
+  def ex12_sessions(restobj, login_account, login_password):
+
+::
+
+Create a new session dictionary with iLO login username and login password.
+
+.. code-block:: python
+ 
+  new_session = {"UserName": login_account, "Password": login_password}
+
+::
+
+Sent a POST request to the URI '/rest/v1/Sessions' with the created session dictionary as request body to create a session.
+
+.. code-block:: python
+
+  response = restobj.rest_post("/rest/v1/Sessions", new_session)
+  restobj.error_handler(response)
+  
+::
+
+For a successful response status get the session URI, session key from the response header. ILO returns lower case header names though HTTP headers are case insensitive.
+
+.. code-block:: python
+
+    if response.status == 201:
+        session_uri = response.getheader("location")
+        session_uri = urlparse.urlparse(session_uri)
+        sys.stdout.write("\tSession " + session_uri.path + " created\n")
+
+        x_auth_token = response.getheader("x-auth-token")
+        sys.stdout.write("\tSession key " + x_auth_token + " created\n")
+
+::
+
+
+
+Send  DELETE request to the session URI in order to log out of the session and check the response status.
+
+.. code-block:: python
+
+    sessresp = restobj.rest_delete(session_uri.path)
+    restobj.error_handler(sessresp)
+
+::

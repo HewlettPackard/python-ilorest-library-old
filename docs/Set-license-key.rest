@@ -1,0 +1,81 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+|
+
+
+
+
+
+If not created already,  create an instance of Rest or Redfish Object using the  **RestObject** or **RedfishObject** class respectively. The class constructor takes iLO hostname/ ip address, iLO login username and password as arguments. The class also initializes a login session, gets systems resources and message registries.
+
+Rest Object creation:
+
+.. code-block:: python
+
+ REST_OBJ = RestObject(iLO_host, login_account, login_password)
+
+::
+
+Redfish Object creation:
+
+.. code-block:: python
+
+ REDFISH_OBJ = RedfishObject(iLO_host, login_account, login_password)
+
+::
+
+
+
+Example 31: Set license key
+===========================
+
+The method **ex29_set_ilicense_key** takes an instance of rest object ( or redfish object if using Redfish API ) and  iLO key as arguments.
+
+
+.. code-block:: python
+
+  def ex31_set_license_key(restobj, iLO_Key):
+
+::
+
+Find and get the system resource for manager. 
+
+.. code-block:: python
+
+
+     instances = restobj.search_for_type("Manager.")
+::
+
+
+Send HTTP GET request to manager URI(s).
+
+.. code-block:: python
+
+          for instance in instances:
+             rsp = restobj.rest_get(instance["href"])
+::
+
+
+Prepare the  request body with iLO license key provided.
+
+.. code-block:: python
+
+        body = dict()
+        body["LicenseKey"] = iLO_Key
+       
+::
+
+Perform  POST request and check response.
+
+.. code-block:: python
+
+        response = restobj.rest_post(rsp.dict["Oem"]["Hp"]["links"]
+                                     ["LicenseService"]["href"], body)
+        restobj.error_handler(response)
+
+::
+
+   
+
+  

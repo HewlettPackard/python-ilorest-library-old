@@ -1,0 +1,66 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+|
+
+.. toctree::
+   :maxdepth: 1
+   
+
+First create an instance of Rest or Redfish Object using the  **RestObject** or **RedfishObject** class respectively. The class constructor takes iLO hostname/ ip address, iLO login username and password as arguments. The class also initializes a login session, gets systems resources and message registries.
+
+Rest Object creation:
+
+.. code-block:: python
+
+ REST_OBJ = RestObject(iLO_host, login_account, login_password)
+
+::
+
+Redfish Object creation:
+
+.. code-block:: python
+
+ REDFISH_OBJ = RedfishObject(iLO_host, login_account, login_password)
+
+::
+
+Example 3: Change BIOS setting
+==============================
+
+This is an example from RestfulApiExamples.py that can be used to change system BIOS settings. The example in RedfishApiExamples.py  is similar except that a rest object is replaced by a redfish object.
+
+The method **ex3_change_bios_setting** takes an instance of rest object, BIOS property of interest, the new value for the BIOS property and BIOS password as arguments.
+
+.. code-block:: python
+
+
+  def ex3_change_bios_setting(restobj, bios_property, property_value, login_password,
+                              bios_password):
+
+::
+
+Find and get the BIOS settings URI from the systems resources collection. 
+
+.. code-block:: python
+
+
+     instances = restobj.search_for_type("Bios.")
+
+::
+
+For the BIOS settings URI/s prepare the request body with only the BIOS property we want to change and perform the PATCH request.
+
+.. code-block:: python
+
+        for instance in instances:
+           body = {bios_property: property_value}
+           response = restobj.rest_patch(instance["href"], body, \
+                                            optionalpassword=bios_password)
+           restobj.error_handler(response)
+
+::
+
+
+
+A successful PATCH response will set the BIOS property value to the new value provided in BIOS settings, however the BIOS setting changes will get affected only after a system reset or reboot.

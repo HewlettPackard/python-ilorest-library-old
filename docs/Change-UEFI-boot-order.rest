@@ -1,0 +1,92 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+|
+
+
+
+
+
+
+If not created already,  create an instance of Rest or Redfish Object using the  **RestObject** or **RedfishObject** class respectively. The class constructor takes iLO hostname/ ip address, iLO login username and password as arguments. The class also initializes a login session, gets systems resources and message registries.
+
+Rest Object creation:
+
+.. code-block:: python
+
+ REST_OBJ = RestObject(iLO_host, login_account, login_password)
+
+::
+
+Redfish Object creation:
+
+.. code-block:: python
+
+ REDFISH_OBJ = RedfishObject(iLO_host, login_account, login_password)
+
+::
+
+
+
+Example 7: Change UEFI boot order
+=================================
+
+The method **ex7_change_boot_order** takes an instance of rest object (or redfish object if using Redfish API) and BIOS  password (default None) as arguments.
+
+
+.. code-block:: python
+
+
+    def ex7_change_boot_order(restobj, bios_password=None):
+
+
+::
+
+
+Find and get the server boot settings URI(s) from the system resource collection. 
+
+.. code-block:: python
+
+
+     instances = restobj.search_for_type("ServerBootSettings.1")
+
+::
+
+Send a HTTP GET request to the server boot settings URI(s) retrieved.
+
+.. code-block:: python
+
+ for instance in instances:
+        response = restobj.rest_get(instance["href"])
+
+::
+
+Get the boot order from the response body.
+
+.. code-block:: python
+ 
+  bootorder = response.dict["PersistentBootConfigOrder"]
+
+
+Set up PATCH request body.
+
+.. code-block:: python
+
+ body = dict()
+ body["PersistentBootConfigOrder"] = bootorder
+
+::
+
+
+ 
+PATCH request is sent next and response error is handled if any.
+
+.. code-block:: python
+
+        response = restobj.rest_patch(instance["href"], body, optionalpassword=bios_password)            
+        restobj.error_handler(response)
+
+::
+
+
+A successful PATCH response will set the Boot order  in BIOS, however the settings remain pending until next reboot.

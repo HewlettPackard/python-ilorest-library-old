@@ -1,0 +1,76 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+|
+
+
+
+
+
+If not created already,  create an instance of Rest or Redfish Object using the  **RestObject** or **RedfishObject** class respectively. The class constructor takes iLO hostname/ ip address, iLO login username and password as arguments. The class also initializes a login session, gets systems resources and message registries.
+
+Rest Object creation:
+
+.. code-block:: python
+
+ REST_OBJ = RestObject(iLO_host, login_account, login_password)
+
+::
+
+Redfish Object creation:
+
+.. code-block:: python
+
+ REDFISH_OBJ = RedfishObject(iLO_host, login_account, login_password)
+
+::
+
+
+Example 12: Remove iLO user account
+===================================
+
+The method **ex12_remove_ilo_account** takes an instance of rest object ( or redfish object if using Redfish API ) and  iLO login name for the account to be removed.
+
+.. code-block:: python
+
+  def ex12_remove_ilo_account(restobj, ilo_loginname_to_remove):
+
+::
+
+Find and get the system resource for account service.
+
+.. code-block:: python
+
+
+     instances = restobj.search_for_type("AccountService.")
+
+::
+
+Send  HTTP GET request to the  account service URI(s).
+
+.. code-block:: python
+
+ for instance in instances:
+        rsp = restobj.rest_get(instance["href"])
+
+::
+
+Send another GET request to get  accounts resources.
+
+.. code-block:: python
+
+ accounts = restobj.rest_get(response.dict["links"]["Accounts"]["href"])
+
+::
+
+For the requested account to be removed, send a DELETE request to the account uri.
+iLO has two user account properties, Login name is the string used as the user identity to log in, we use this for 'UserName'. User name is the friendly (or full) name of the user, potentially easy to reverse. Use the iLO account login name as 'UserName' in the API.
+
+.. code-block:: python
+
+     for account in accounts.dict["Items"]:
+            if account["UserName"] == ilo_loginname_to_remove:
+                newrsp = restobj.rest_delete(account["links"]["self"]["href"])
+                restobj.error_handler(newrsp)
+
+::

@@ -1,0 +1,149 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+|
+
+
+If not created already,  create an instance of Rest or Redfish Object using the  **RestObject** or **RedfishObject** class respectively. The class constructor takes iLO hostname/ ip address, iLO login username and password as arguments. The class also initializes a login session, gets systems resources and message registries.
+
+Rest Object creation:
+
+.. code-block:: python
+
+ REST_OBJ = RestObject(iLO_host, login_account, login_password)
+
+::
+
+Redfish Object creation:
+
+.. code-block:: python
+
+ REDFISH_OBJ = RedfishObject(iLO_host, login_account, login_password)
+
+::
+
+
+Example 16: Get computer details
+================================
+
+The method **ex16_computer_details** takes an instance of rest object ( or redfish object if using Redfish API ) as argument.
+
+
+.. code-block:: python
+
+
+    def ex14_computer_details(restobj):
+
+::
+
+
+Find and get the system resource for computer system. 
+
+.. code-block:: python
+
+
+     instances = restobj.search_for_type("ComputerSystem.")
+
+::
+
+Send HTTP GET request to the  system URI(s).
+
+.. code-block:: python
+
+  for instance in instances:
+      response = restobj.rest_get(instance["href"])
+
+::
+
+For each system print manufacturer, model and serial number from the response body..
+
+.. code-block:: python
+
+        sys.stdout.write("\tManufacturer:  " + \
+                                str(response.dict["Manufacturer"]) + "\n")
+        sys.stdout.write("\tModel:  " + str(response.dict["Model"]) + "\n")
+        sys.stdout.write("\tSerial Number:  " + \
+                                str(response.dict["SerialNumber"]) + "\n")
+::
+
+Next print virtual serial number, virtual UUID, asset tag if any.
+
+.. code-block:: python
+
+        if "VirtualSerialNumber" in response.dict:
+            sys.stdout.write("\tVirtual Serial Number:  " +
+                   str(response.dict["VirtualSerialNumber"]) + "\n")
+        else:
+            sys.stderr.write("\tVirtual Serial Number information not " \
+                                        "available on system resource\n")
+            sys.stdout.write("\tUUID:  " + str(response.dict["UUID"]) + "\n")
+
+        if "VirtualUUID" in response.dict["Oem"]["Hp"]:
+            sys.stdout.write("\tVirtualUUID:  " + \
+                     str(response.dict["Oem"]["Hp"]["VirtualUUID"]) + "\n")
+        else:
+            sys.stderr.write("\tVirtualUUID not available system " \
+                                                            "resource\n")
+        if "AssetTag" in response.dict:
+            sys.stdout.write("\tAsset Tag:  " + response.dict["AssetTag"] \
+                                                                    + "\n")
+        else:
+            sys.stderr.write("\tNo Asset Tag information on system"  \
+                                                             "resource\n")
+
+::
+
+Print BIOS version, memory and CPU information.
+
+.. code-block:: python
+
+        sys.stdout.write("\tBIOS Version: " + \
+                 response.dict["Bios"]["Current"]["VersionString"] + "\n")
+
+        sys.stdout.write("\tMemory:  " + 
+               str(response.dict["Memory"]["TotalSystemMemoryGB"]) +" GB\n")
+
+        sys.stdout.write("\tProcessors:  " + \
+                 str(response.dict["Processors"]["Count"]) + " x " + \
+                 str(response.dict["Processors"]["ProcessorFamily"])+ "\n")
+
+::
+
+Print health information.
+
+.. code-block:: python
+
+  if "Status" not in response.dict or "Health" not in \
+                                                    response.dict["Status"]:
+            sys.stdout.write("\tStatus/Health information not available in "
+                                                        "system resource\n")
+  else:
+            sys.stdout.write("\tHealth:  " + \
+                             str(response.dict["Status"]["Health"]) + "\n")
+
+::
+
+If host correlation available, print details.
+
+.. code-block:: python
+
+       if "HostCorrelation" in response.dict:
+            if "HostFQDN" in response.dict["HostCorrelation"]:
+                sys.stdout.write("\tHost FQDN:  " + \
+                     response.dict["HostCorrelation"]["HostFQDN"] + "\n")
+                
+            if "HostMACAddress" in response.dict["HostCorrelation"]:
+                for mac in response.dict["HostCorrelation"]["HostMACAddress"]:
+                    sys.stdout.write("\tHost MAC Address:  " + str(mac) + "\n")
+
+            if "HostName" in response.dict["HostCorrelation"]:
+                sys.stdout.write("\tHost Name:  " + \
+                     response.dict["HostCorrelation"]["HostName"] + "\n")
+
+            if "IPAddress" in response.dict["HostCorrelation"]:
+                for ip_address in response.dict["HostCorrelation"]\
+                                                            ["IPAddress"]:
+                    if ip_address:
+                        sys.stdout.write("\tHost IP Address:  " + \
+                                                    str(ip_address) + "\n")
+::

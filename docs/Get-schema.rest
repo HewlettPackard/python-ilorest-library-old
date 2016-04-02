@@ -1,0 +1,75 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+|
+
+If not created already,  create an instance of Rest or Redfish Object using the  **RestObject** or **RedfishObject** class respectively. The class constructor takes iLO hostname/ ip address, iLO login username and password as arguments. The class also initializes a login session, gets systems resources and message registries.
+
+Rest Object creation:
+
+.. code-block:: python
+
+ REST_OBJ = RestObject(iLO_host, login_account, login_password)
+
+::
+
+Redfish Object creation:
+
+.. code-block:: python
+
+ REDFISH_OBJ = RedfishObject(iLO_host, login_account, login_password)
+
+::
+
+Example 27: Get schema
+======================
+
+The method **ex27_get_schema** takes an instance of rest object ( or redfish object if using Redfish API ) and schema prefix as arguments.
+
+.. code-block:: python
+
+  def ex27_get_schema(restobj, schema_prefix):
+
+::
+
+Send HTTP GET request to schema URI '/rest/v1/Schemas'.  
+
+.. code-block:: python
+
+
+     response = restobj.rest_get("/rest/v1/Schemas")
+::
+
+
+
+From the response body find the requested schema URI.
+
+.. code-block:: python
+
+      for schema in response.dict["Items"]:
+        if schema["Schema"].startswith(schema_prefix):
+            for location in schema["Location"]:
+                extref_uri = location["Uri"]["extref"]
+::
+
+Get the schema with the requested schema prefix through GET  request.
+
+.. code-block:: python
+
+        response = restobj.rest_get(extref_uri)
+::
+
+Check the status.
+
+.. code-block:: python
+
+                if response.status == 200:
+                    sys.stdout.write("\tFound " + schema_prefix + " at "\
+                                                        + extref_uri + "\n")
+                    return
+                else:
+                    sys.stderr.write("\t" + schema_prefix + " not found at " \
+                                                        + extref_uri + "\n")
+                    return
+
+::

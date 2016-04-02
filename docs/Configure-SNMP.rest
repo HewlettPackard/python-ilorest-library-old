@@ -1,0 +1,62 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+|
+
+
+
+
+If not created already,  create an instance of Rest or Redfish Object using the  **RestObject** or **RedfishObject** class respectively. The class constructor takes iLO hostname/ ip address, iLO login username and password as arguments. The class also initializes a login session, gets systems resources and message registries.
+
+Rest Object creation:
+
+.. code-block:: python
+
+ REST_OBJ = RestObject(iLO_host, login_account, login_password)
+
+::
+
+Redfish Object creation:
+
+.. code-block:: python
+
+ REDFISH_OBJ = RedfishObject(iLO_host, login_account, login_password)
+
+::
+
+Example 26: configure SNMP
+==========================
+
+The method **ex26_configure_snmp** takes an instance of rest object ( or redfish object if using Redfish API ), snmp mode and alerts as arguments.
+
+.. code-block:: python
+
+  def ex26_configure_snmp(restobj, snmp_mode, snmp_alerts):
+::
+
+Find and get the system resource for snmp service. 
+
+.. code-block:: python
+
+     instances = restobj.search_for_type("SnmpService.")
+
+::
+
+Prepare request body with the snmp mode and alerts parameters provided.
+
+.. code-block:: python
+
+      for instance in instances:
+        body = {"Mode": snmp_mode, "AlertsEnabled": snmp_alerts}
+
+
+::
+
+Perform PATCH request and check response.
+
+.. code-block:: python
+
+            response = restobj.rest_patch(instance["href"], body)
+            restobj.error_handler(response)
+::
+

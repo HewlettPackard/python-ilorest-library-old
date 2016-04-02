@@ -1,0 +1,83 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+|
+
+
+
+
+
+If not created already,  create an instance of Rest or Redfish Object using the  **RestObject** or **RedfishObject** class respectively. The class constructor takes iLO hostname/ ip address, iLO login username and password as arguments. The class also initializes a login session, gets systems resources and message registries.
+
+Rest Object creation:
+
+.. code-block:: python
+
+ REST_OBJ = RestObject(iLO_host, login_account, login_password)
+
+::
+
+Redfish Object creation:
+
+.. code-block:: python
+
+ REDFISH_OBJ = RedfishObject(iLO_host, login_account, login_password)
+
+::
+
+
+Example 9: Find iLO mac address
+===============================
+
+The method **ex9_find_ilo_mac_address** takes an instance of rest object (or redfish object if using Redfish API) as argument.
+
+
+.. code-block:: python
+
+
+    def ex9_find_ilo_mac_address(restobj):
+
+
+::
+
+Find and get the system resource for manager. 
+
+.. code-block:: python
+
+
+     instances = restobj.search_for_type("Manager.")
+
+::
+
+Send a HTTP GET request to the  manager URI(s). 
+
+.. code-block:: python
+
+ for instance in instances:
+        tmp = restobj.rest_get(instance["href"])
+
+::
+
+Ethernet interfaces URI link found from the response body is used for another GET request.
+
+.. code-block:: python
+
+  
+   response = restobj.rest_get(tmp.dict["links"]["EthernetNICs"]["href"])
+
+::
+
+Check the response for Mac addresses, if found print it.
+
+.. code-block:: python
+
+   for item in response.dict["Items"]:
+            if "MacAddress" not in item:
+                sys.stderr.write("\tNIC resource does not contain " \
+                                                    "'MacAddress' property\n")
+            else:
+                sys.stdout.write("\t" + item["Name"] + " = " + \
+                                             item["MacAddress"] + "\t(" + \
+                                             item["Status"]["State"] + ")\n")
+::
+

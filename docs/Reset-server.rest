@@ -1,0 +1,75 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+|
+
+
+
+If not created already,  create an instance of Rest or Redfish Object using the  **RestObject** or **RedfishObject** class respectively. The class constructor takes iLO hostname/ ip address, iLO login username and password as arguments. The class also initializes a login session, gets systems resources and message registries.
+
+Rest Object creation:
+
+.. code-block:: python
+
+ REST_OBJ = RestObject(iLO_host, login_account, login_password)
+
+::
+
+Redfish Object creation:
+
+.. code-block:: python
+
+ REDFISH_OBJ = RedfishObject(iLO_host, login_account, login_password)
+
+::
+
+
+
+Example 4: Reset a server
+=========================
+
+The method **ex4_reset_server** takes an instance of rest object (or redfish object if using redfish API) and BIOS  password (default None) as arguments.
+
+
+.. code-block:: python
+
+
+    def ex4_reset_server(restobj, bios_password=None):
+
+
+::
+
+
+Find and get the Computer System settings URI from the systems resources collection. 
+
+.. code-block:: python
+
+
+     instances = restobj.search_for_type("ComputerSystem.")
+
+::
+
+
+Next the HTTP request body is set for the reset of each Computer System URI.
+
+.. code-block:: python
+
+    for instance in instances:
+        body = dict()
+        body["Action"] = "Reset"
+        body["ResetType"] = "ForceRestart"
+::
+
+POST request is sent next and response error is handled if any.
+
+.. code-block:: python
+
+        response = restobj.rest_post(instance["href"], body)
+        restobj.error_handler(response)
+
+::
+
+
+
+
+A successful PATCH response will restart the system.

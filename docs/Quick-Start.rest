@@ -1,0 +1,145 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+   
+|
+
+.. toctree::
+   :maxdepth: 1
+
+===========
+Quick Start
+===========
+
+
+
+
+This is a basic detailed breakdown of `quickstart.py <https://github.hpe.com/jack-g-garcia/python-ilorestful-library/tree/master/examples/quickstart.py>`_ examples. This will cover object creation and a simple call to the API. For more elaborate example that use the API and Python library look at the examples in `RestfulApiExamples.py <https://github.hpe.com/jack-g-garcia/python-ilorestful-library/tree/master/examples/RestfulApiExamples.py>`_ and `RedfishApiExamples.py <https://github.hpe.com/jack-g-garcia/python-ilorestful-library/tree/master/examples/RedfishApiExamples.py>`_.
+
+Make sure that ilorest library is imported.
+
+.. code-block:: python
+
+ import ilorest
+
+..
+
+The very first thing that needs to be done for a restful request is to create a rest object.
+
+Create a Redfish Object
+=======================
+
+A Redfish Rest object instance  is created by calling the  **redfish_client** method of the imported **ilorest** library. The **redfish_client** method returns an instance of the Redfish RESTful client and takes as parameters iLO hostname/ ip address, user name, password, default rest prefix ('**/redfish/v1**') and other optional arguments.
+
+
+.. code-block:: python
+
+   REST_OBJ = ilorest.redfish_client(base_url=host,username=login_account, 
+                                   password=login_password, default_prefix='/redfish/v1')
+::
+
+ 
+
+
+
+Create a Rest Object
+====================
+
+A Rest object instance is created by calling the **rest_client** method of the imported **ilorest** library. The **rest_client** method returns an instance of the RESTful client and takes as parameters iLO hostname/ ip address, user name, password, default rest prefix ('**/rest/v1**') and other optional arguments.
+
+.. code-block:: python
+
+   REST_OBJ = ilorest.rest_client(base_url=host,username=login_account,
+                                password=login_password, default_prefix='/rest/v1')
+
+
+::
+
+Create a login session
+======================
+
+Next the rest object's **login** method is called to initiate a rest session. The parameters for the login method are iLO user name, password and login type (default is Basic authentication). For "session" login, a session key is generated through a rest request.
+
+.. code-block:: python
+
+  REST_OBJ.login(auth="session")
+
+::
+
+Please remember to call  **logout** method once the session is completed.
+
+
+
+Perform first Restful API operation
+===================================
+
+This is a very simple request example that shows the basic libraries involved and how to properly form the request. The following example performs a GET operation on the systems resource (/rest/v1/systems/1) using the HP Restful API for iLO. It does an HTTP GET request on the iLO SSL(HTTPS) port (typically 443 but the iLO can be configured to use another port as well). The interface is not available over open HTTP (port 80), so SSL handshake must be used.
+
+
+After creating a Redfish/Rest object as mentioned above in `Create a Rest Object`_ section followed by a login session. 
+
+Next the Rest object's **get** method is called with the system uri (/rest/v1/systems/1) as the parameter. For this simple GET example no additional parameter is required but the Rest object's **put** and **post** method may take request header and body as parameters while **patch** method can take request body as parameter.
+
+.. code-block:: python
+
+ response = REST_OBJ.get('/rest/v1/systems/1')
+
+::
+
+Print the HTTP GET response, the response includes response status, response header and response body.
+
+.. code-block:: python
+
+ sys.stdout.write("%s\n" % response)
+
+::
+
+Response status:
+
+ 200
+
+
+Response header:
+
+
+
+ | content-length 4135
+ | server HPE-iLO-Server/1.30
+ | connection keep-alive
+ | etag W/"F7BDA039"
+ | link </rest/v1/SchemaStore/en/ComputerSystem.json>; rel=describedby
+ | allow GET, HEAD, POST, PATCH
+ | cache-control no-cache
+ | date Mon, 14 Mar 2016 10:05:32 GMT
+ | x-frame-options sameorigin
+ | x_hp-chrp-service-version 1.0.3
+ | content-type application/json; charset=utf-8
+
+
+Response body (formatted using Postman):
+
+ 
+.. image:: /images/iLO_sys1.jpg
+   :height: 200
+   
+ 
+
+
+Close the login session
+-----------------------
+
+Logout of the current session.
+
+.. code-block:: python
+
+  REST_OBJ.logout()
+
+::
+ 
+
+
+
+Additional Examples
+===================
+
+Please look into the `examples <Examples.html>`_ section for more details on how to perform certain iLO tasks through RESTful requests using scripts.

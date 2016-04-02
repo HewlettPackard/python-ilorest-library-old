@@ -1,0 +1,98 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+|
+
+
+
+If not created already,  create an instance of Rest or Redfish Object using the  **RestObject** or **RedfishObject** class respectively. The class constructor takes iLO hostname/ ip address, iLO login username and password as arguments. The class also initializes a login session, gets systems resources and message registries.
+
+Rest Object creation:
+
+.. code-block:: python
+
+ REST_OBJ = RestObject(iLO_host, login_account, login_password)
+
+::
+
+Redfish Object creation:
+
+.. code-block:: python
+
+ REDFISH_OBJ = RedfishObject(iLO_host, login_account, login_password)
+
+::
+
+Example 13: Dump iLO NIC states
+===============================
+
+The method **ex13_dump_ilo_nic** takes an instance of rest object ( or redfish object if using Redfish API ) as argument.
+
+.. code-block:: python
+
+  def ex13_dump_ilo_nic(restobj)
+
+::
+
+Find and get the system resource for manager. 
+
+.. code-block:: python
+
+
+     instances = restobj.search_for_type("Manager.")
+
+::
+
+Send a HTTP GET request to the  manager URI(s).
+
+.. code-block:: python
+
+           rsp = restobj.rest_get(instance["href"])
+::
+
+Send another GET request using the ethernet interface URI(s) from the respose body.
+
+.. code-block:: python
+
+  
+    response = restobj.rest_get(rsp.dict["links"]["EthernetNICs"]["href"])
+
+
+::
+
+
+Check the response body for NIC status states and print the states.
+
+.. code-block:: python
+
+            for nic in response.dict["Items"]:
+            if nic["Status"]["State"] == "Enabled":
+                sys.stdout.write("\t" + nic["Name"] + "\n")
+
+                if "MacAddress" not in nic:
+                    sys.stderr.write("\tNo MacAddress information available (no"
+                           " 'MacAddress' property in NIC resource)\n")
+                else:
+                    sys.stdout.write("\tMAC: " + str(nic["MacAddress"]) + "\n")
+
+                sys.stdout.write("\tSpeed: " + str(nic["SpeedMbps"]) + "\n")
+                sys.stdout.write("\tAutosense:  " + \
+                                                str(nic["Autosense"]) + "\n")
+                sys.stdout.write("\tFull Duplex:  " + str(nic["FullDuplex"]) \
+                                                                        + "\n")
+                if "FQDN" not in nic:
+                    sys.stderr.write("\tNo FQDN information available\n")
+                else:
+                    sys.stdout.write("\tFQDN:  " + str(nic["FQDN"]) + "\n")
+                for addr in nic["IPv4Addresses"]:
+                    sys.stdout.write("\tIPv4 Address:  " + addr["Address"] 
+                           + " from " + addr["AddressOrigin"] + "\n")
+                if "IPv6Addresses" not in nic:
+                    sys.stderr.write("\tIPv6Addresses information not "\
+                                                                "available\n")
+                else:
+                    for addr in nic["IPv6Addresses"]:
+                        sys.stdout.write("\tIPv6 Address:  " + addr["Address"] 
+                               + " from " + addr["AddressOrigin"] + "\n")
+
+::

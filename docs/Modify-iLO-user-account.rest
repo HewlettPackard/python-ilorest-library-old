@@ -1,0 +1,123 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+|
+
+
+
+
+If not created already,  create an instance of Rest or Redfish Object using the  **RestObject** or **RedfishObject** class respectively. The class constructor takes iLO hostname/ ip address, iLO login username and password as arguments. The class also initializes a login session, gets systems resources and message registries.
+
+Rest Object creation:
+
+.. code-block:: python
+
+ REST_OBJ = RestObject(iLO_host, login_account, login_password)
+
+::
+
+Redfish Object creation:
+
+.. code-block:: python
+
+ REDFISH_OBJ = RedfishObject(iLO_host, login_account, login_password)
+
+::
+
+
+Example 11: Modify iLO user account
+==================================
+
+The method **ex11_modify_ilo_user_account** takes an instance of rest object , iLO login account name to modify, new iLO login name, new user name, new password, remote console privilege, iLO configuration privilege, virtual media privilege, user configuration privilege and virtual power and reset privilege.
+
+.. code-block:: python
+
+  def ex11_modify_ilo_user_account(restobj, ilo_login_name_to_modify, \
+                new_ilo_loginname, new_ilo_username, new_ilo_password, \
+                irc=None, cfg=None, virtual_media=None, usercfg=None, vpr=None):
+
+::
+
+Find and get the system resource for account service.
+
+.. code-block:: python
+
+
+     instances = restobj.search_for_type("AccountService.")
+
+::
+
+
+Send  HTTP GET request to the  account service URI(s).
+
+.. code-block:: python
+
+ for instance in instances:
+        rsp = restobj.rest_get(instance["href"])
+
+::
+
+Send another GET request to get  accounts resources.
+
+.. code-block:: python
+
+ accounts = restobj.rest_get(response.dict["links"]["Accounts"]["href"])
+
+::
+
+
+For the requested account to modify, add the requested fields and value from the arguments passed.
+
+.. code-block:: python
+
+      for account in accounts.dict["Items"]:
+            if account["UserName"] == ilo_login_name_to_modify:
+                body = {}
+                body_oemhp = {}
+                body_oemhp_privs = {}
+    
+                # if new loginname or password specified
+                if new_ilo_password:
+                    body["Password"] = new_ilo_password
+                if new_ilo_loginname:
+                    body["UserName"] = new_ilo_loginname
+    
+                # if different username specified
+                if new_ilo_username:
+                    body_oemhp["LoginName"] = new_ilo_username
+    
+                # if different privileges were requested (None = no change)
+                if irc != None:
+                    body_oemhp_privs["RemoteConsolePriv"] = irc
+                if virtual_media != None:
+                    body_oemhp_privs["VirtualMediaPriv"] = virtual_media
+                if cfg != None:
+                    body_oemhp_privs["iLOConfigPriv"] = cfg
+                if usercfg != None:
+                    body_oemhp_privs["UserConfigPriv"] = usercfg
+                if vpr != None:
+                    body_oemhp_privs["VirtualPowerAndResetPriv"] = vpr
+    
+::
+
+Organize the PATCH request body.
+
+.. code-block:: python
+
+                if len(body_oemhp_privs):
+                    body_oemhp["Privileges"] = body_oemhp_privs
+                if len(body_oemhp):
+                    body["Oem"] = {"Hp": body_oemhp}
+
+::
+
+Update the account through a PATCH request. Warning, if you don't change anything, you will
+get an HTTP 400 response back.
+
+.. code-block:: python
+
+           newrsp = restobj.rest_patch(account["links"]["self"]["href"], body)
+           restobj.error_handler(newrsp)
+
+::
+

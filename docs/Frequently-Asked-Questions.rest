@@ -1,0 +1,20 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+|
+
+
+
+
+Frequently Asked Questions
+==========================
+
+Q1: What is the difference between REST and Redfish API?
+--------------------------------------------------------
+
+Representational State Transfer(REST) is a web based software architectural style consisting a set of constraints that focus on a system's resource. HPE REST library performs the basic HTTP operations GET, POST, PUT, PATCH and DELETE on resources using the HATEOS (Hypermedia as the Engine of Application) REST architecture. RESTful  typically  refers to web services implementing REST architecture.
+
+Redfish API uses a hypermedia data model OData(Open Data Protocol) v4 represented within a RESTful interface. OData is a specific implementation of REST architecture which allows resources indentified using URIs and defined in abstract data model. Since it is based on OData v4, Redfish implementation requires the starting metadata OData header to be version 4. Redfish changes the linking between resources. Where the HPE Restful URIs places all link as "href" inside a "links" sub-object, Redfish changes "**href**" to "**@odata.id**", "**links**" sub-objects to "**Links**". For more information click on `Redfish <http://www8.hp.com/h20195/v2/GetPDF.aspx/4AA6-1727ENW.pdf>`_ API.
+ 
+
+

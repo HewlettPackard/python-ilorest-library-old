@@ -1,0 +1,75 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+|
+
+.. toctree::
+   :maxdepth: 1
+   
+
+If not created already,  create an instance of Rest or Redfish Object using the  **RestObject** or **RedfishObject** class respectively. The class constructor takes iLO hostname/ ip address, iLO login username and password as arguments. 
+
+Rest Object creation:
+
+.. code-block:: python
+
+ REST_OBJ = RestObject(iLO_host, login_account, login_password)
+
+::
+
+Redfish Object creation:
+
+.. code-block:: python
+
+ REDFISH_OBJ = RedfishObject(iLO_host, login_account, login_password)
+
+::
+
+
+Example 2: Get base registry
+============================
+
+
+The method **ex2_get_base_registry** takes an instance of rest object ( or redfish object if using Redfish API) as argument.
+
+.. code-block:: python
+
+
+  def ex2_get_base_registry(restobj):
+
+::
+
+A Restful GET request is performed next  by calling the Rest object's get method  with the registries uri ('**/rest/v1/registries**') as parameter.  For Redfish RESTful request the URI is ('**/redfish/v1/registries**')
+
+.. code-block:: python
+
+ response = restobj.rest_get("/rest/v1/Registries")
+
+::
+
+From the response body for each "Location" in "Items" with "Base" or "iLO" Id , a GET request in performed with the URI retrieved from ["Location"]["Uri"]["extref"]. 
+
+.. code-block:: python
+
+ for entry in response.dict["Items"]:
+        if entry["Id"] not in ["Base", "iLO"]:
+            continue
+        for location in entry["Location"]:  
+            reg_resp = restobj.rest_get(location["Uri"]["extref"])
+
+::
+
+For successful response status, messages are added to MESSAGE_REGISTRIES.
+
+.. code-block:: python
+
+            if reg_resp.status == 200:
+                sys.stdout.write("\tFound " + entry["Id"] + " at " + \
+                                            location["Uri"]["extref"] + "\n")
+                MESSAGE_REGISTRIES[entry["Id"]] = reg_resp.dict["Messages"]                
+            else:
+                sys.stdout.write("\t" + entry["Id"] + " not found at "\
+                                            + location["Uri"]["extref"] + "\n")
+ 
+::
+

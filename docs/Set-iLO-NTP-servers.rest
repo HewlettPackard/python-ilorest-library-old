@@ -1,0 +1,69 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+|
+
+If not created already,  create an instance of Rest or Redfish Object using the  **RestObject** or **RedfishObject** class respectively. The class constructor takes iLO hostname/ ip address, iLO login username and password as arguments. The class also initializes a login session, gets systems resources and message registries.
+
+Rest Object creation:
+
+.. code-block:: python
+
+ REST_OBJ = RestObject(iLO_host, login_account, login_password)
+
+::
+
+Redfish Object creation:
+
+.. code-block:: python
+
+ REDFISH_OBJ = RedfishObject(iLO_host, login_account, login_password)
+
+::
+
+Example 29: Set iLO NTP servers
+===============================
+
+The method **ex29_set_ilo_ntp_servers** takes an instance of rest object ( or redfish object if using Redfish API ) and  NTP server list as arguments. The method doesn't work if SNTP configuration is currently managed by DHCP and is therefore read-only.
+
+
+.. code-block:: python
+
+  def ex29_set_ilo_ntp_servers(restobj, ntp_servers):
+::
+
+Find and get the system resource for iLO date time. 
+
+.. code-block:: python
+
+
+     instances = restobj.search_for_type("HpiLODateTime.")
+
+::
+
+Send HTTP GET request to iLO date time URI.
+
+.. code-block:: python
+
+          for instance in instances:
+             response = restobj.rest_get(instance["href"])
+
+::
+
+
+Prepare the PATCH request body with NTP server list provided.
+
+.. code-block:: python
+
+  body = {"StaticNTPServers": ntp_servers}
+
+       
+::
+
+Perform  PATCH request and check response.
+
+.. code-block:: python
+
+        response = restobj.rest_patch(instance["href"], body)
+        restobj.error_handler(response)
+::

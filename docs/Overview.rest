@@ -1,0 +1,74 @@
+
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+|
+
+.. toctree::
+   :maxdepth: 1
+
+========
+Overview
+========
+
+
+
+
+Why HPE iLO RESTful SDK?
+-----------------------
+
+This HPE RESTful API for iLO will become the main management API for iLO and iLO Chassis Manager
+based HPE servers. Its feature set will become larger than the existing iLO XML API (RIBCL) and IPMI
+interfaces. Using this API, you can take full inventory of the server, control power and reset, configure
+BIOS and iLO settings, fetch event logs, as well as many other functions.
+
+This API follows the trend of the Internet in moving to a common pattern for new software interfaces.
+Many web services in a variety of industries use REST APIs because they are easy to implement,
+easy to consume, and offer scalability advantages over previous technologies. HPE OneView,
+OpenStack, and many other server management APIs are now REST APIs. Most HPE Management
+software offerings, as well as the entire Software Defined Data Center architecture, are built upon
+REST APIs.
+
+The HPE RESTful API for iLO has the additional advantage of consistency across all present and
+projected server architectures. The same data model works for traditional rack-mount servers,
+blades, as well as newer types of systems like Moonshot. This advantage comes because the data
+model is designed to self-describe the service’s capabilities to the client and has room for flexibility
+designed in from the start.
+
+
+Resource operations
+-------------------
+
+RESTful APIs are stateless. The resource manager maintains the resource state that is reported as
+the resource representation. The client maintains the application state and the client might manipulate
+the resource locally, but until a PATCH or POST is made, the resource, as known by the resource
+manager, is not changed.
+
++------------------------+---------------------------------+-----------------------------------------------------------+
+| Operation              | HTTP Verb                       | Description                                               |
++========================+=================================+===========================================================+
+|       Create           | POST resource URI (payload =    | Create new resources. A synchronous POST returns the newly|         
+|                        | resource data)                  | created resource.                                         |
++------------------------+---------------------------------+-----------------------------------------------------------+
+|        Read            | GET resource URI                | Returns the requested resource representations.           |        
++------------------------+---------------------------------+-----------------------------------------------------------+
+|        Update          | PATCH resource URI (payload =   | Updates an existing resource. You can only PATCH          |
+|                        | update data)                    | properties that are marked readonly = false in the schema.|
++------------------------+---------------------------------+-----------------------------------------------------------+
+|        Delete          | DELETE resource URI             | Deletes the specified resource.                           |
++------------------------+---------------------------------+-----------------------------------------------------------+
+
+Return codes
+------------
+
++------------------------+---------------------------------------------------------------------------------------------+
+| Return code            | Description                                                                                 |
++========================+=================================+===========================================================+
+| 2xx                    | Successful operation.                                                                       |         
++------------------------+---------------------------------+-----------------------------------------------------------+
+| 4xx                    | Client-side error with error message returned.                                              |        
++------------------------+---------------------------------+-----------------------------------------------------------+
+| 5xx                    | iLO error with error message returned.                                                      |
++------------------------+---------------------------------+-----------------------------------------------------------+
+
+

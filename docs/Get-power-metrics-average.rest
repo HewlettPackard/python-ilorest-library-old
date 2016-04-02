@@ -1,0 +1,72 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+|
+
+
+
+If not created already,  create an instance of Rest or Redfish Object using the  **RestObject** or **RedfishObject** class respectively. The class constructor takes iLO hostname/ ip address, iLO login username and password as arguments. The class also initializes a login session, gets systems resources and message registries.
+
+Rest Object creation:
+
+.. code-block:: python
+
+ REST_OBJ = RestObject(iLO_host, login_account, login_password)
+
+::
+
+Redfish Object creation:
+
+.. code-block:: python
+
+ REDFISH_OBJ = RedfishObject(iLO_host, login_account, login_password)
+
+::
+
+Example 30: Get power metrics average
+=====================================
+
+The method **ex30_get_powermetrics_average** takes an instance of rest object ( or redfish object if using Redfish API ) as argument. 
+
+.. code-block:: python
+
+  def ex30_get_powermetrics_average(restobj):
+
+::
+
+Find and get the system resource for power metrics. 
+
+.. code-block:: python
+
+
+     instances = restobj.search_for_type("PowerMetrics.")
+
+
+::
+
+Send HTTP GET request to power metrics URI.
+
+.. code-block:: python
+
+          for instance in instances:
+             response = restobj.rest_get(instance["href"])
+
+::
+
+From the response body get the average and print.
+
+.. code-block:: python
+
+        if "PowerMetrics" not in response.dict or \
+            "AverageConsumedWatts" not in response.dict["PowerMetrics"] or \
+                        "IntervalInMin" not in response.dict["PowerMetrics"]:
+            sys.stdout.write("\tPowerMetrics resource does not contain "\
+                       "'AverageConsumedWatts' or 'IntervalInMin' property\n")
+        else:
+            sys.stdout.write("\t" + " AverageConsumedWatts = " + \
+                 str(response.dict["PowerMetrics"]["AverageConsumedWatts"]) + \
+                 " watts over a " + str(response.dict["PowerMetrics"]\
+                                ["IntervalInMin"]) + " minute moving average\n")
+       
+::
+

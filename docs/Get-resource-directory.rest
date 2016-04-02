@@ -1,0 +1,111 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+|
+
+.. toctree::
+   :maxdepth: 1
+   
+
+First create an instance of Rest or Redfish Object using the  **RestObject** or **RedfishObject** class respectively. The class constructor takes iLO hostname/ ip address, iLO login username and password as arguments. The class also initializes a login session, gets systems resources and message registries.
+
+Rest Object creation:
+
+.. code-block:: python
+
+ REST_OBJ = RestObject(iLO_host, login_account, login_password)
+
+::
+
+Redfish Object creation:
+
+.. code-block:: python
+
+ REDFISH_OBJ = RedfishObject(iLO_host, login_account, login_password)
+
+::
+
+
+Example 1: Get resource directory
+=================================
+
+
+The method **ex1_get_resource_directory** takes an instance of rest object (or redfish object if using Redfish API) as argument.
+
+.. code-block:: python
+
+
+  def ex1_get_resource_directory(restobj):
+
+::
+
+A Restful GET request is performed next  by calling the Rest object's get method  with the resource directory URI ('**/rest/v1/resourcedirectory**') as parameter.  For Redfish RESTful request the URI is ('**/redfish/v1/resourcedirectory**')
+
+.. code-block:: python
+
+ response = restobj.rest_get("/rest/v1/resourcedirectory")
+
+::
+
+For a successful response status, resource directory is retrieved from the response body.
+
+.. code-block:: python
+
+ if response.status == 200:
+        sys.stdout.write("\tFound resource directory at /rest/v1/resource" \
+                                                            "directory" + "\n")
+        SYSTEMS_RESOURCES["resources"] = response.dict["Instances"]
+        
+ else:
+        sys.stderr.write("\tResource directory missing at /rest/v1/resource" \
+                                                            "directory" + "\n")
+
+::
+
+        if bios_property not in bios_settings:
+            print ('\tBIOS Property "' + bios_property + '" is not supported ' 
+                  'on this system')
+            return
+
+::
+
+If this BIOS resource doesn't support PATCH (response header doesn't have PATCH),  get BIOS Settings.
+        
+::
+
+        if not operation_allowed(headers, 'PATCH'):   
+            bios_uri = bios_settings['links']['Settings']['href']
+            status, headers, bios_settings = rest_get(restobj, bios_uri, None)
+         
+::
+
+Only the BIOS property we want to change needs to be sent for PATCH request.
+
+::
+
+        new_bios_settings = dict()
+        new_bios_settings[bios_property] = value
+        request_headers = dict()
+        if bios_password:
+            bios_password_hash = hashlib.sha256(bios_password.encode()).hexdigest().upper()
+            request_headers['X-HPRESTFULAPI-AuthToken'] = bios_password_hash
+
+::
+
+BIOS property and it's new value are passed as a PATCH request to the BIOS settings uri.
+
+::
+
+        print 'PATCH ' + json.dumps(new_bios_settings) + ' to ' + bios_uri
+        status, headers, response = rest_patch(restobj, bios_uri,
+                                               new_bios_settings)
+        print 'PATCH response = ' + str(status)
+        print_extended_error(response)
+        assert status < 300
+
+::
+
+
+
+
+A successful PATCH response will set the BIOS property value to the new value provided in BIOS settings, however the BIOS setting changes will get affected only after a system reset or reboot.

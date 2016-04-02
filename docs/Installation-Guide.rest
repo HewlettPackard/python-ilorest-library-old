@@ -1,0 +1,116 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+|
+
+==================
+Installation Guide
+==================
+
+
+
+
+
+
+Installing Python 2.7.x
+=======================
+
+On Windows
+----------
+
+First download the latest version of Python2.7.x from `here <https://www.python.org/downloads/windows/>`_.               
+The Windows version is provided as an MSI package. Double click the downloaded file, MSI package format allows Windows Administrators to automate installation with their standard tools.
+
+By default, Python is installed to a directory with the version number embedded, e.g. Python version 2.7 will install at *C:\\Python27\\* .
+
+Assuming that Python is installed at *C:\\Python27\\*, add the following to **PATH** .
+
+::
+
+   C:\Python27\;C:\Python27\Scripts\
+
+::
+
+
+
+
+
+On Linux
+--------
+
+The latest versions of CentOS, Fedora, Redhat Enterprise (RHEL) and Ubuntu came with Python 2.7 out of the box.
+To check which version of Python is installed , from command prompt run
+
+::
+
+  $ python --version
+
+::
+
+In order to install Python from command line, first download the Python by running the following:
+
+::
+
+   wget --no-check-certificate https://www.python.org/ftp/python/2.7.11/Python-2.7.11.tgz
+   tar -xzf Python-2.7.11.tgz  
+   cd Python-2.7.11
+
+::
+
+Next read the README file to figure out the installation process, a typical installation may look like this
+
+::
+
+  ./configure
+  make
+  sudo make install
+
+
+::
+
+
+Checkout the Python iLO RESTful library
+=======================================
+
+
+Using SVN (Subversion)
+----------------------
+
+Assuming that SVN is already installed in your system and it is already in System Path, execute the following command from the directory where you want to copy the source.
+
+::
+
+  svn checkout https://github.hpe.com/jack-g-garcia/python-ilorestful-library.git
+  
+::
+
+Using GIT
+---------
+
+Execute the following command from the directory where you want to copy the source.
+
+::
+
+  git clone https://github.com/HewlettPackard/python-ilorest-sdk.git
+  
+::
+
+
+
+
+
+
+Building and installing HP REST library
+===================================
+
+First download the ilorest.zip file from the github. Next unzip ilorest.zip file to ilorest directory and from the command prompt go to the directory. Execute the following commands in order to install ilorest (assuming the version is 1.0.0).
+
+::
+
+  python setup.py sdist --formats=zip
+  cd dist
+  pip install --upgrade python-ilorest-library-1.0.0.zip
+
+::
+
+A successful installation will display that python-ilorest-library-x.x.x and the dependencies have been successfully installed.  

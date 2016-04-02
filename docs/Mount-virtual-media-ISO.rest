@@ -1,0 +1,94 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+|
+
+If not created already,  create an instance of Rest or Redfish Object using the  **RestObject** or **RedfishObject** class respectively. The class constructor takes iLO hostname/ ip address, iLO login username and password as arguments. The class also initializes a login session, gets systems resources and message registries.
+
+Rest Object creation:
+
+.. code-block:: python
+
+ REST_OBJ = RestObject(iLO_host, login_account, login_password)
+
+::
+
+Redfish Object creation:
+
+.. code-block:: python
+
+ REDFISH_OBJ = RedfishObject(iLO_host, login_account, login_password)
+
+::
+
+
+Example 17: Mount virtual media ISO
+===================================
+
+The method **ex17_mount_virtual_media_iso** takes an instance of rest object ( redfish object if using Redfish API ) ,  ISO image url and boolean boot on next server as arguments. The method mounts an ISO to virtual media and optionally specifies whether it should be the boot target for the next server reset. If iso_url is left out, it unmounts the iso image. If boot_on_next_server_reset is left out the option is not set.
+
+.. code-block:: python
+
+  def ex17_mount_virtual_media_iso(restobj, iso_url, boot_on_next_server_reset):
+
+::
+
+Find and get the system resource for manager. 
+
+.. code-block:: python
+
+
+     instances = restobj.search_for_type("Manager.")
+
+::
+
+
+Send HTTP GET request to the  manager URI(s).
+
+.. code-block:: python
+
+   for instance in instances:
+        rsp = restobj.rest_get(instance["href"])
+::
+
+Virtual media URI link found from the response body is used for another GET request.
+
+.. code-block:: python
+
+  
+        rsp = restobj.rest_get(rsp.dict["links"]["VirtualMedia"]["href"])
+
+::
+
+
+For each virtual media link URI send a GET request.
+
+.. code-block:: python
+
+  for vmlink in rsp.dict["links"]["Member"]:
+            response = restobj.rest_get(vmlink["href"])
+
+::
+
+For each virtual media link with successful respone status and dvd media type support, prepare the request body.
+
+.. code-block:: python
+
+            if response.status == 200 and "DVD" in response.dict["MediaTypes"]:
+                body = {"Image": iso_url}
+                
+                if (iso_url is not None and \
+                                        boot_on_next_server_reset is not None):
+                    body["Oem"] = {"Hp": {"BootOnNextServerReset": \
+                                                    boot_on_next_server_reset}}
+    
+::
+
+PATCH request is performed  and the response is checked, response 400 is found if virtual media is already in this state.
+
+.. code-block:: python
+
+                 response = restobj.rest_patch(vmlink["href"], body)
+                 restobj.error_handler(response)
+           
+:: 

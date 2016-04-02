@@ -1,0 +1,63 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+|
+
+.. toctree::
+   :maxdepth: 1
+
+========
+Examples
+========
+
+
+
+|
+
+
+RestfulApiExamples.py and RedfishAPiExamples.py modules contain few examples for performing different iLO tasks using legacy RESTful API and Redfish API respectively. The examples in this page are legacy RESTful examples and are very similar to their  Redfish equivalents. The HPE RESTful API 1.x expresses the root Uniform Resource Identifier (URI) protocol version as “**/rest/v1**”. Redfish 1.0 expresses
+the starting URI as “**/redfish/v1/**”.
+
+Redfish changes the linking between resources, for example  “**href**” is renamed to “**@odata.id**”. For more information about Redfish implementation click `here <http://www8.hp.com/h20195/v2/GetPDF.aspx/4AA6-1727ENW.pdf>`_ .
+
+
+
+The following examples can all be used as guidance for `managing iLO using iLO RESTful API <https://github.hpe.com/jack-g-garcia/python-ilorestful-library/blob/master/docs/Managing_HPE_Servers_Using_RESTful_API.md>`_.
+
+
+.. toctree::
+   :maxdepth: 1
+   
+   Get-resource-directory
+   Get-base-registry
+   Change-bios-setting
+   Reset-server
+   Enable-secure-boot
+   Revert-to-default-BIOS-setting
+   Change-UEFI-boot-order
+   Change-temporary-boot-order
+   Find-iLO-mac-address
+   Add-iLO-user-account
+   Modify-iLO-user-account
+   Remove-iLO-user-account
+   Dump-iLO-NIC-state
+   Create-use-delete-user-session
+   Set-UID-LED
+   Get-Computer-details
+   Mount-virtual-media-ISO
+   Set-server-asset-tag
+   Reset-iLO
+   Get-iLO-NIC
+   Set-iLO-NIC-active
+   Dump-Integrated-Management-Log
+   Get-iLO-Event-Log
+   Clear-Integrated-Management-Log
+   Clear-iLO-Event-Log
+   Configure-SNMP
+   Get-schema
+   Set-iLO-time-zone
+   Set-iLO-NTP-servers
+   Get-power-metrics-average
+   Set-license-key
+   
+

@@ -1,0 +1,124 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+   
+   
+
+|
+
+.. toctree::
+   :maxdepth: 1
+
+=================
+Quick Start Local
+=================
+
+
+Local machine iLO restful operation
+===================================
+
+Requirements
+-----------------------
+* You must be running on a server with iLO and the latest iLO drivers from the SPP.
+* You will need the download the HPREST Chif DLL/SO for your corresponding operating system from <insert link when available>.
+
+Restful operation on local HPE server uses the HpBlob interface. Instead of HTTP, blobstore is used for the transportation. The HPE python iLO Restful libarary provides support for both remote (HTTP) and in-band (blobstore) iLO Restful communication using HTTP and blobstore respectively.
+ 
+Make sure that ilorest library is imported.
+
+.. code-block:: python
+
+  import ilorest
+
+::
+
+Creation of local rest/redfish objects are same as remote rest/redfish object creation with the exception of the local hostname been **'blobstore://.'**. Once the object is created with proper hostname, the iLO Restful API provides the built-in support of performing RESTful requests on local machine iLO.
+
+Create a Redfish Object
+-----------------------
+
+A Redfish Rest object instance  is created by calling the  **redfish_client** method of the imported **ilorest** library. The **redfish_client** method returns an instance of the Redfish RESTful client and takes as parameters iLO hostname/ ip address('**blobstore://.**'), user name, password, default rest prefix ('**/redfish/v1**') and other optional arguments.
+
+
+.. code-block:: python
+
+   REST_OBJ = ilorest.redfish_client(base_url=host,username=login_account, 
+                                   password=login_password, default_prefix='/redfish/v1')
+::
+
+ 
+
+
+
+Create a Rest Object
+---------------------
+
+A Rest object instance is created by calling the **rest_client** method of the imported **ilorest** library. The **rest_client** method returns an instance of the RESTful client and takes as parameters iLO hostname/ ip address('**blobstore://.**'), user name, password, default rest prefix ('**/rest/v1**') and other optional arguments.
+
+.. code-block:: python
+
+   REST_OBJ = ilorest.rest_client(base_url=host,username=login_account,
+                                password=login_password, default_prefix='/rest/v1')
+
+
+::
+
+Create a login session
+----------------------
+
+Next the rest object's **login** method is called to initiate a rest session. The parameters for the login method are iLO user name, password and login type (default is Basic authentication). For "session" login, a session key is generated through a rest request.
+
+.. code-block:: python
+
+  REST_OBJ.login(auth="session")
+
+::
+
+Please remember to call  **logout** method once the session is completed.
+
+
+
+Perform first Restful API operation
+-----------------------------------
+
+This is a very simple request example that shows the basic libraries involved and how to properly form the request. The following example performs a GET operation on the systems resource (/rest/v1/systems/1) using the HPE Restful API for iLO. It does a blobstore GET request on the iLO and returns a HTTP style response.
+
+
+After creating a Redfish/Rest object as mentioned above in `Create a Rest Object`_ section followed by a login session. 
+
+Next the Rest object's **get** method is called with the system uri (/rest/v1/systems/1) as the parameter. For this simple GET example no additional parameter is required but the Rest object's **put** and **post** method may take request header and body as parameters while **patch** method can take request body as parameter.
+
+.. code-block:: python
+
+ response = REST_OBJ.get('/rest/v1/systems/1')
+
+::
+
+Print the HTTP GET response, the response includes response status, response header and response body.
+
+.. code-block:: python
+
+ sys.stdout.write("%s\n" % response)
+
+::
+
+
+
+Close the login session
+-----------------------
+
+Logout of the current session.
+
+.. code-block:: python
+
+  REST_OBJ.logout()
+
+::
+ 
+
+
+
+Additional Examples
+-------------------
+
+Please look into the `examples <Examples.html>`_ section for more details on how to perform certain iLO tasks through RESTful requests using scripts.

@@ -1,0 +1,117 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+|
+
+If not created already,  create an instance of Rest or Redfish Object using the  **RestObject** or **RedfishObject** class respectively. The class constructor takes iLO hostname/ ip address, iLO login username and password as arguments. The class also initializes a login session, gets systems resources and message registries.
+
+Rest Object creation:
+
+.. code-block:: python
+
+ REST_OBJ = RestObject(iLO_host, login_account, login_password)
+
+::
+
+Redfish Object creation:
+
+.. code-block:: python
+
+ REDFISH_OBJ = RedfishObject(iLO_host, login_account, login_password)
+
+::
+
+Example 21: Set iLO NIC active
+==============================
+
+The method **ex21_set_active_ilo_nic** takes an instance of rest object (or redfish object if using Redfish API)  and shared nic boolean as arguments.
+
+.. code-block:: python
+
+  def ex21_set_active_ilo_nic(restobj, shared_nic):
+
+::
+
+Find and get the system resource for manager. 
+
+.. code-block:: python
+
+
+     instances = restobj.search_for_type("Manager.")
+
+::
+
+Send a HTTP GET request to the  manager URI(s).
+
+.. code-block:: python
+
+      for instance in instances:
+          tmp = restobj.rest_get(instance["href"]) 
+
+::
+
+Send another GET request to the ethernet interfaces URI.
+
+.. code-block:: python
+
+  
+   response = restobj.rest_get(tmp.dict["links"]["EthernetNICs"]["href"])
+
+
+::
+
+Find the iLO NIC URI from the response body. 
+
+.. code-block:: python
+
+  
+   for nic in response.dict["Items"]:
+         try:
+            if (nic["Oem"]["Hp"]["SupportsFlexibleLOM"] == True and \
+                                                            shared_nic == True):
+                selected_nic_uri = nic["links"]["self"]["href"]
+                break
+         except KeyError:
+            pass
+    
+         try:
+            if (nic["Oem"]["Hp"]["SupportsLOM"] == True and \
+                                                            shared_nic == True):
+                selected_nic_uri = nic["links"]["self"]["href"]
+                break
+         except KeyError:
+            pass
+    
+         if not shared_nic:
+            selected_nic_uri = nic["links"]["self"]["href"]
+            break
+         elif not selected_nic_uri:
+            sys.stderr.write("\tShared NIC is not supported\n")
+            break
+
+::
+
+Set the request body.
+
+.. code-block:: python
+
+   if selected_nic_uri:
+            body = {"Oem": {"Hp": {"NICEnabled": True}}}
+
+::
+
+Perform PATCH request.
+
+.. code-block:: python
+
+          response = restobj.rest_patch(selected_nic_uri, body)
+          restobj.error_handler(response)
+
+::
+
+
+
+
+
+
+ 

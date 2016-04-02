@@ -1,0 +1,70 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+|
+
+
+
+If not created already,  create an instance of Rest or Redfish Object using the  **RestObject** or **RedfishObject** class respectively. The class constructor takes iLO hostname/ ip address, iLO login username and password as arguments. The class also initializes a login session, gets systems resources and message registries.
+
+Rest Object creation:
+
+.. code-block:: python
+
+ REST_OBJ = RestObject(iLO_host, login_account, login_password)
+
+::
+
+Redfish Object creation:
+
+.. code-block:: python
+
+ REDFISH_OBJ = RedfishObject(iLO_host, login_account, login_password)
+
+::
+
+Example 24: Clear Integrated Management Log
+==========================================
+
+The method **ex24_clear_iml** takes an instance of rest object ( or redfish object if using Redfish API ) as argument.
+
+
+.. code-block:: python
+
+
+  def ex24_clear_iml(restobj):
+
+::
+
+
+Find and get the system resource for log service. 
+
+.. code-block:: python
+
+
+     instances = restobj.search_for_type("LogService.")
+
+::
+
+
+Prepare request body to clear log.
+
+.. code-block:: python
+
+      for instance in instances:
+        if instance["href"].endswith("IML"):
+            body = {"Action": "ClearLog"}
+
+
+::
+
+
+
+Perform POST request to clear the log.
+
+.. code-block:: python
+
+            response = restobj.rest_post(instance["href"], body)
+            restobj.error_handler(response)
+
+::

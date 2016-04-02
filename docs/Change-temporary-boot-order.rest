@@ -1,0 +1,98 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+|
+
+
+
+
+
+
+
+
+If not created already,  create an instance of Rest or Redfish Object using the  **RestObject** or **RedfishObject** class respectively. The class constructor takes iLO hostname/ ip address, iLO login username and password as arguments. The class also initializes a login session, gets systems resources and message registries.
+
+Rest Object creation:
+
+.. code-block:: python
+
+ REST_OBJ = RestObject(iLO_host, login_account, login_password)
+
+::
+
+Redfish Object creation:
+
+.. code-block:: python
+
+ REDFISH_OBJ = RedfishObject(iLO_host, login_account, login_password)
+
+::
+
+
+
+Example 8: Change temporary boot order
+======================================
+
+The method **ex8_change_temporary_boot_order** takes an instance of rest object (or redfish object if using Redfish API), boot target and BIOS  password (default None) as arguments.
+
+
+.. code-block:: python
+
+
+    def ex8_change_temporary_boot_order(restobj, boottarget, bios_password=None):
+
+
+::
+
+
+Find and get the system URI(s) from the system resource collection. 
+
+.. code-block:: python
+
+
+     instances = restobj.search_for_type("ComputerSystem.")
+
+::
+
+Send a HTTP GET request to the  systems URI(s) retrieved.
+
+.. code-block:: python
+
+ for instance in instances:
+        response = restobj.rest_get(instance["href"])
+
+::
+
+Get the supported boot options from the response body and check if the boot target provided as argument is supported.
+
+.. code-block:: python
+ 
+  bootoptions = response.dict["Boot"]
+        
+  if boottarget not in bootoptions["BootSourceOverrideSupported"]:
+            sys.stderr.write("ERROR: %s is not a supported boot option.\n" % boottarget)
+
+Prepare the PATCH request body.
+
+.. code-block:: python
+
+ body = dict()
+ body["Boot"] = dict()
+ body["Boot"]["BootSourceOverrideTarget"] = boottarget
+
+::
+
+
+ 
+PATCH request is sent next and response error is handled if any.
+
+.. code-block:: python
+
+        response = restobj.rest_patch(instance["href"], body, optionalpassword=bios_password)            
+        restobj.error_handler(response)
+
+::
+
+
+A successful PATCH response will set the Boot order  in BIOS, however the settings remain pending until next reboot.
+

@@ -1,0 +1,94 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+|
+
+
+
+
+
+If not created already,  create an instance of Rest or Redfish Object using the  **RestObject** or **RedfishObject** class respectively. The class constructor takes iLO hostname/ ip address, iLO login username and password as arguments. The class also initializes a login session, gets systems resources and message registries.
+
+Rest Object creation:
+
+.. code-block:: python
+
+ REST_OBJ = RestObject(iLO_host, login_account, login_password)
+
+::
+
+Redfish Object creation:
+
+.. code-block:: python
+
+ REDFISH_OBJ = RedfishObject(iLO_host, login_account, login_password)
+
+::
+
+
+Example 10: Add iLO user account
+===============================
+
+The method **ex10_add_ilo_user_account** takes an instance of rest object , new iLO login name, new iLO user name, new iLO password, remote console privilege, iLO configuration privilege, virtual media privilege, user configuration privilege and virtual power and reset privilege.
+
+.. code-block:: python
+
+  def ex10_add_ilo_user_account(redfishobj, new_ilo_loginname, new_ilo_username, \
+                                 new_ilo_password, irc=None, cfg=None, \
+                                 virtual_media=None, usercfg=None, vpr=None):
+
+::
+
+Find and get the system resource for account service.
+
+.. code-block:: python
+
+
+     instances = restobj.search_for_type("AccountService.")
+
+::
+
+Send a HTTP GET request to the  account service URI(s).
+
+.. code-block:: python
+
+ for instance in instances:
+        rsp = restobj.rest_get(instance["href"])
+
+::
+
+Prepare the request body for new  user account. iLO has two user account properties, Login name is the string used as the user identity to log in, we use this for 'UserName'. User name is the friendly (or full) name of the user, potentially easy to reverse. Use the iLO account login name as 'UserName' in the API.
+
+.. code-block:: python
+
+ body = {"UserName": new_ilo_loginname, "Password": new_ilo_password, "Oem": {}}
+
+::
+
+Set up rest of the request body with the requested privileges to the  new user, by default only the login privilege is enabled..
+
+.. code-block:: python
+
+        body["Oem"]["Hp"] = {}
+        body["Oem"]["Hp"]["LoginName"] = new_ilo_username
+        body["Oem"]["Hp"]["Privileges"] = {}
+        body["Oem"]["Hp"]["Privileges"]["RemoteConsolePriv"] = irc
+        body["Oem"]["Hp"]["Privileges"]["iLOConfigPriv"] = cfg
+        body["Oem"]["Hp"]["Privileges"]["VirtualMediaPriv"] = virtual_media
+        body["Oem"]["Hp"]["Privileges"]["UserConfigPriv"] = usercfg
+        body["Oem"]["Hp"]["Privileges"]["VirtualPowerAndResetPriv"] = vpr
+::
+
+
+Create the account through a POST request.
+
+.. code-block:: python
+
+    newrsp = restobj.rest_post(rsp.dict["links"]["Accounts"]["href"], body)
+
+::
+
+
+   
+
+  
