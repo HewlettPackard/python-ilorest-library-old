@@ -35,7 +35,7 @@ Remote communication
 Inband communication
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
- To enable support for inband communications. You must download the DLL/SO for your system from <insert URL>. It must be placed in your working environment path.
+ To enable support for inband communications. You must download the DLL/SO for your system: `windows <ftp://ftp.hp.com/pub/softlib2/software1/pubsw-windows/p1463761240/v116452>`_ / `linux <ftp://ftp.hp.com/pub/softlib2/software1/pubsw-linux/p1093353304/v116451>`_. It must be placed in your working environment path.
 
 Usage
 ----------
