@@ -37,8 +37,8 @@ Inband communication
 
  To enable support for inband communications. You must download the DLL/SO for your system: windows_ / linux_. It must be placed in your working environment path. 
  
-.. _windows: http://www.python.org/
-.. _linux: http://www.python.org/
+.. _windows: ftp://ftp.hp.com/pub/softlib2/software1/pubsw-windows/p1463761240/v116452
+.. _linux: https://www.hp.com/swpublishing/MTX-5f86c051cbd042a6975250da39
 
 Usage
 ----------
