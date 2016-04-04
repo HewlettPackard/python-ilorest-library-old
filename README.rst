@@ -35,7 +35,7 @@ Remote communication
 Inband communication
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To enable support for inband communications. You must download the DLL/SO for your system: `windows <../../wiki>`_ / `linux <../../wiki>`_. It must be placed in your working environment path.
+ To enable support for inband communications. You must download the DLL/SO for your system: `windows <../../wiki>`_ / `linux <../../wiki>`_. It must be placed in your working environment path.
 
 Usage
 ----------
