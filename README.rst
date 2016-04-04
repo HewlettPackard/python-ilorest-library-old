@@ -35,9 +35,10 @@ Remote communication
 Inband communication
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
- To enable support for inband communications. You must download the DLL/SO for your system: Python_ / `linux <../../wiki>`_. It must be placed in your working environment path. 
+ To enable support for inband communications. You must download the DLL/SO for your system: windows_ / linux_. It must be placed in your working environment path. 
  
-.. _Python: http://www.python.org/
+.. _windows: http://www.python.org/
+.. _linux: http://www.python.org/
 
 Usage
 ----------
