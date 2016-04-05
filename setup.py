@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(name='python-ilorest-library',
       version='1.0.0',
-      description='Hewlett Packard Enterprise Python Library',
+      description='iLO Rest Python Library',
       classifiers=[
           'Development Status :: 3 - Alpha',
           'License :: OSI Approved :: Apache Software License',
