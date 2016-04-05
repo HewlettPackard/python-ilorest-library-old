@@ -4,6 +4,8 @@ from setuptools import setup, find_packages
 setup(name='python-ilorest-library',
       version='1.0.0',
       description='iLO Rest Python Library',
+	  author = 'Hewlett Packard Enterprise',
+	  author_email = 'jackgarcia77@gmail.com',
       classifiers=[
           'Development Status :: 3 - Alpha',
           'License :: OSI Approved :: Apache Software License',
