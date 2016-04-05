@@ -91,7 +91,7 @@ Execute the following command from the directory where you want to copy the sour
 
 ::
 
-  git clone https://github.com/HewlettPackard/python-ilorest-sdk.git
+  git clone https://github.com/HewlettPackard/python-ilorest-library.git
   
 ::
 

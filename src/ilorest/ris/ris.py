@@ -21,6 +21,7 @@
 
 import re
 import sys
+import urllib
 import logging
 import threading
 from Queue import Queue
@@ -104,7 +105,8 @@ class RisMonolithMember_v1_0_0(RisMonolithMemberBase):
                 headers[header[0]] = header[1]
 
             result[u'Headers'] = headers
-            result[u'ETag'] = headers['etag']
+            if 'etag' in headers:
+                result[u'ETag'] = headers['etag']
             result[u'OriginalUri'] = self._resp.request.path
             result[u'Content'] = self._resp.dict
             result[u'Patches'] = self._patches
@@ -309,6 +311,7 @@ class RisMonolith_v1_0_0(Dictable):
             if "/Logs/" in path:
                 return
 
+        path = urllib.pathname2url(path)
         LOGGER.debug(u'_loading %s', path)
         if not self.reload:
             if path.lower() in self._visited_urls:
@@ -359,6 +362,10 @@ class RisMonolith_v1_0_0(Dictable):
                     if path == "/rest/v1":
                         if str(match.full_path) == "links.Schemas.href" or \
                             str(match.full_path) == "links.Registries.href":
+                            continue
+                    else:
+                        if str(match.full_path) == "Registries.@odata.id" or \
+                            str(match.full_path) == "JsonSchemas.@odata.id":
                             continue
 
                     href = u'%s' % match.value

@@ -6,7 +6,7 @@ python-ilorestful-library
 Description
 ----------
 
- HPE RESTful API for iLO is a RESTful application programming interface for the management of iLO and iLO Chassis Manager based HPE servers. REST (Representational State Transfer) is a web based software architectural style consisting a set of constraints that focus on a system's resource. HPE REST library performs the basic HTTP operations GET, POST, PUT, PATCH and DELETE on resources using the HATEOS (Hypermedia as the Engine of Application) REST architecture. The API allows the clients to manage and interact with iLO through a fixed URL and several URIs. Go to the `wiki <../../wiki>`_ for more details.
+ HPE RESTful API for iLO is a RESTful application programming interface for the management of iLO and iLO Chassis Manager based HPE servers. REST (Representational State Transfer) is a web based software architectural style consisting of a set of constraints that focuses on a system's resources. iLO REST library performs the basic HTTP operations GET, POST, PUT, PATCH and DELETE on resources using the HATEOAS (Hypermedia as the Engine of Application State) REST architecture. The API allows the clients to manage and interact with iLO through a fixed URL and several URIs. Go to the `wiki <../../wiki>`_ for more details.
 
 Installing
 ----------
@@ -30,15 +30,12 @@ Requirements
 Remote communication
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
- No special requeriments.
+ No special requirements.
  
 Inband communication
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
- To enable support for inband communications. You must download the DLL/SO for your system: windows_ / linux_. It must be placed in your working environment path. 
- 
-.. _windows: https://www.hp.com/swpublishing/MTX-43efdf5067924c78a34bf384c9
-.. _linux: https://www.hp.com/swpublishing/MTX-5f86c051cbd042a6975250da39
+ To enable support for inband communications, you must download the DLL/SO for your system from <insert URL>. It must be placed in your working environment path.
 
 Usage
 ----------
@@ -48,7 +45,7 @@ Usage
 
 Create a Rest Object
 ~~~~~~~~~~~~~~~~~~~~~~~~~
- In RestfulApiExamples.py module, a rest object instance is created by calling the **rest_client** method with four parameters: ip address, iLO user name, iLO password and the default prefix.
+ In RestfulApiExamples.py module, a rest object instance is created by calling the **rest_client** method with four parameters: IP address, iLO user name, iLO password and the default prefix.
  
 .. code-block:: python
 
@@ -57,7 +54,7 @@ Create a Rest Object
 
 Create a Redfish Object
 ~~~~~~~~~~~~~~~~~~~~~~~~~
- Just like Rest object, a Redfisht object instance in RedfishAPiExamples.py is created by calling the **create_object** method with four parameters: ip address, iLO user name, iLO password and the default prefix.
+ Just like Rest object, a Redfish object instance in RedfishAPiExamples.py is created by calling the **redfish_client** method with four parameters: IP address, iLO user name, iLO password and the default prefix.
 
 .. code-block:: python
 
@@ -82,7 +79,7 @@ Perform a GET operation
 
 Logout the created session
 ~~~~~~~~~~~~~~~~~~~~~~~~~
- Make sure you logout every session you create as it will remain alive until it timesout.
+ Make sure you logout every session you create as it will remain alive until it times out.
 
 .. code-block:: python
 
@@ -107,7 +104,7 @@ Copyright and License
 
 ::
 
- Copyright 2016 Hewlett Packard Enterprise, Inc. All rights reserved.
+ Copyright 2016 Hewlett Packard Enterprise Development LP
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.

@@ -657,7 +657,8 @@ class RestClientBase(object):
         elif self.__authorization_key:
             headers['Authorization'] = self.__authorization_key
 
-        headers['Connection'] = 'keep-alive'
+        headers['Accept'] = '*/*'
+        headers['Connection'] = 'Keep-Alive'
 
         return headers
 

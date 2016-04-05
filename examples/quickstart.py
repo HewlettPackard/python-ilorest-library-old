@@ -16,8 +16,8 @@ login_password = "password"
 REST_OBJ = ilorest.rest_client(base_url=iLO_host,username=login_account, \
                       password=login_password, default_prefix='/rest/v1')
 
-# Create a REDFISH object
-#REST_OBJ = ilorest.redfish_client(base_url=host,username=login_account, \
+## Create a REDFISH object
+#REST_OBJ = ilorest.redfish_client(base_url=iLO_host,username=login_account, \
 #                          password=login_password, default_prefix='/redfish/v1')
 
 # Login into the server and create a session
