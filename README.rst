@@ -38,8 +38,8 @@ Inband communication
  To enable support for inband communications, you must download the DLL/SO for your system from: windows_ / linux_. It must be placed in your working environment path.
  
  
- _windows: https://www.hp.com/swpublishing/MTX-43efdf5067924c78a34bf384c9
- _linux: https://www.hp.com/swpublishing/MTX-5f86c051cbd042a6975250da39
+ .. _windows: https://www.hp.com/swpublishing/MTX-43efdf5067924c78a34bf384c9
+ .. _linux: https://www.hp.com/swpublishing/MTX-5f86c051cbd042a6975250da39
 
 Usage
 ----------
