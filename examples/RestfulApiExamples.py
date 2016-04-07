@@ -145,19 +145,26 @@ def ex2_get_base_registry(restobj):
     response = restobj.rest_get("/rest/v1/Registries")
     messages = {}
     
+    identifier = None
+    
     for entry in response.dict["Items"]:
-        if entry["Id"] not in ["Base", "iLO"]:
+        if "Id" in entry:
+            identifier = entry["Id"]
+        else:
+            identifier = entry["Schema"].split(".")[0]
+
+        if identifier not in ["Base", "iLO"]:
             continue
 
         for location in entry["Location"]:  
             reg_resp = restobj.rest_get(location["Uri"]["extref"])
 
             if reg_resp.status == 200:
-                sys.stdout.write("\tFound " + entry["Id"] + " at " + \
+                sys.stdout.write("\tFound " + identifier + " at " + \
                                             location["Uri"]["extref"] + "\n")
-                messages[entry["Id"]] = reg_resp.dict["Messages"]
+                messages[identifier] = reg_resp.dict["Messages"]
             else:
-                sys.stdout.write("\t" + entry["Id"] + " not found at "\
+                sys.stdout.write("\t" + identifier + " not found at "\
                                             + location["Uri"]["extref"] + "\n")
 
     return messages

@@ -87,6 +87,11 @@ class RmcApp(object):
         self._monolith = None
         self._multilevelbuffer = None
 
+        if not "--showwarnings" in Args:
+            self.logger.setLevel(logging.WARNING)
+            if self.logger.handlers and self.logger.handlers[0].name=='lerr':
+                self.logger.handlers.remove(self.logger.handlers[0])
+
     def restore(self):
         """Restore monolith from cache"""
         self._cm.uncache_rmc()
@@ -121,6 +126,18 @@ class RmcApp(object):
         LOGGER.error(msg)
         if inner_except is not None:
             LOGGER.error(inner_except)
+
+    def warning_handler(self, msg):
+        """Helper function for handling warning messages appropriately
+
+        :param msg: The warning message.
+        :type msg: str.
+
+        """
+        if LOGGER.getEffectiveLevel() == 40:
+            sys.stderr.write(msg)
+        else:
+            LOGGER.warning(msg)
 
     def warn(self, msg, inner_except=None):
         """Helper function for runtime warning
@@ -496,7 +513,7 @@ class RmcApp(object):
                 try:
                     if not "PATCH" in instance.resp._http_response.msg.\
                                                                     headers[0]:
-                        sys.stdout.write(u'Skipping read-only path: %s\n' % \
+                        self.warning_handler(u'Skipping read-only path: %s\n' % \
                                                     instance.resp.request.path)
                         skip = True
                 except Exception:
@@ -504,13 +521,13 @@ class RmcApp(object):
                         for item in instance.resp._headers:
                             if item.keys()[0] == "allow":
                                 if not "PATCH" in item.values()[0]:
-                                    sys.stdout.write(u'Skipping read-only ' \
+                                    self.warning_handler(u'Skipping read-only '\
                                      'path: %s\n' % instance.resp.request.path)
                                     skip = True
                                     break
                     except Exception:
                         if not "PATCH" in instance.resp._headers["allow"]:
-                            sys.stdout.write(u'Skipping read-only path: %s\n' \
+                            self.warning_handler(u'Skipping read-only path: %s\n'\
                                                 % instance.resp.request.path)
                             skip = True
 
@@ -587,7 +604,7 @@ class RmcApp(object):
                 matches = jsonpath_expr.find(currdict)
 
                 if not matches:
-                    sys.stderr.write("Property not found in selection '%s', " \
+                    self.warning_handler("Property not found in selection '%s', "\
                                  "skipping '%s'\n" % (instance.type, selector))
                     nochangesmade = False
 
@@ -629,11 +646,11 @@ class RmcApp(object):
                                     monolith=entrymono)
 
                             if valman == 'readonly':
-                                sys.stderr.write("Property is read-only" \
+                                self.warning_handler("Property is read-only" \
                                              " skipping '%s'\n" % selector)
                                 continue
                             elif valman == 'unique' and not uniqueoverride:
-                                sys.stderr.write("Property is unique to the "\
+                                self.warning_handler("Property is unique to the "\
                                                  "system skipping '%s'\n" \
                                                                     % selector)
                                 continue
@@ -641,7 +658,7 @@ class RmcApp(object):
                         if not validation_manager.validate(newdict, \
                                        selector=selector, currdict=entrydict, \
                                        monolith=entrymono, regloc=regloc):
-                            sys.stderr.write("Property is " \
+                            self.warning_handler("Property is " \
                                         "read-only skipping '%s'.\n" % selector)
                             continue
 
@@ -741,7 +758,7 @@ class RmcApp(object):
             skip = False
             try:
                 if not "PATCH" in instance.resp._http_response.msg.headers[0]:
-                    sys.stdout.write(u'Skipping read-only path: %s\n' % \
+                    self.warning_handler(u'Skipping read-only path: %s\n' % \
                                                     instance.resp.request.path)
                     skip = True
             except Exception:
@@ -749,13 +766,13 @@ class RmcApp(object):
                     for item in instance.resp._headers:
                         if item.keys()[0] == "allow":
                             if not "PATCH" in item.values()[0]:
-                                sys.stdout.write(u'Skipping read-only path:'\
+                                self.warning_handler(u'Skipping read-only path:'\
                                           ' %s\n' % instance.resp.request.path)
                                 skip = True
                                 break
                 except Exception:
                     if not "PATCH" in instance.resp._headers["allow"]:
-                        sys.stdout.write(u'Skipping read-only path: %s\n' % \
+                        self.warning_handler(u'Skipping read-only path: %s\n' % \
                                                     instance.resp.request.path)
                         skip = True
 
@@ -825,7 +842,7 @@ class RmcApp(object):
                             else:
                                 templist.append(item[0])
                         except ValueError, excp:
-                            sys.stderr.write("Skipping property {0}, not " \
+                            self.warning_handler("Skipping property {0}, not " \
                                          "found in current server.\n".format(\
                                                                     item[0]))
 
@@ -844,16 +861,18 @@ class RmcApp(object):
                     try:
                         if (item["Name"] in selectors) and item["ReadOnly"]:
                             readonly.extend(item["Name"])
-                            sys.stderr.write("Property is read-only" \
+                            self.warning_handler("Property is read-only" \
                                              " skipping '%s'\n" % item["Name"])
+
                             dicttolist = [x for x in dicttolist if x[0] != item["Name"]]
                         try:
                             if (item["Name"] in selectors) and \
                                                 item["IsSystemUniqueProperty"] \
                                                 and not uniqueoverride:
-                                sys.stderr.write("Property is unique to the "\
-                                                 "system skipping '%s'\n" % \
+                                self.warning_handler("Property is unique to the"\
+                                                 " system skipping '%s'\n" % \
                                                                 item["Name"])
+
                                 dicttolist= [x for x in dicttolist if x[0] != item["Name"]]
                         except Exception:
                             continue
@@ -870,8 +889,9 @@ class RmcApp(object):
                     if templist:
                         tempdict = copy.deepcopy(dicttolist)
                         for i in templist:
-                            sys.stderr.write("Property is read-only skipping "\
+                            self.warning_handler("Property is read-only skipping "\
                                              "'%s'\n" % str(i))
+
                         dicttolist = [x for x in tempdict if x[0] not in templist]
                 except Exception, excp:
                     raise excp
@@ -887,8 +907,9 @@ class RmcApp(object):
                 self._multilevelbuffer = newdict
                 matches = self.setmultiworker(newargs, self._multilevelbuffer)
                 if not matches:
-                    sys.stderr.write("Property not found in selection '%s', " \
+                    self.warning_handler("Property not found in selection '%s', " \
                                 "skipping '%s'\n" % (instance.type, outputline))
+
                 dicttolist = []
 
             for (itersel, iterval) in dicttolist:
@@ -896,7 +917,7 @@ class RmcApp(object):
                 matches = jsonpath_expr.find(currdict)
 
                 if not matches:
-                    sys.stderr.write("Property not found in selection '%s', " \
+                    self.warning_handler("Property not found in selection '%s', " \
                                  "skipping '%s'\n" % (instance.type, itersel))
                     nochangesmade = False
 
@@ -1092,7 +1113,7 @@ class RmcApp(object):
                 try:
                     if not "PATCH" in \
                     instance.resp._http_response.msg.headers[0]:
-                        sys.stdout.write(u'Skipping read-only path: %s\n' \
+                        self.warning_handler(u'Skipping read-only path: %s\n' \
                                          % instance.resp.request.path)
                         skip = True
                 except Exception:
@@ -1100,13 +1121,13 @@ class RmcApp(object):
                         for item in instance.resp._headers:
                             if item.keys()[0] == "allow":
                                 if not "PATCH" in item.values()[0]:
-                                    sys.stdout.write(u'Skipping read-only \
-                                    path: %s\n' % instance.resp.request.path)
+                                    self.warning_handler(u'Skipping read-only '\
+                                    'path: %s\n' % instance.resp.request.path)
                                     skip = True
                                     break
                     except Exception:
                         if not "PATCH" in instance.resp._headers["allow"]:
-                            sys.stdout.write(u'Skipping read-only path: %s\n' \
+                            self.warning_handler(u'Skipping read-only path: %s\n'\
                                              % instance.resp.request.path)
                             skip = True
 
@@ -1175,7 +1196,7 @@ class RmcApp(object):
                 matches = self.setmultiworker(newargs, self._multilevelbuffer)
 
                 if not matches:
-                    sys.stderr.write("Property not found in selection '%s', " \
+                    self.warning_handler("Property not found in selection '%s', " \
                                 "skipping '%s'\n" % (instance.type, outputline))
                 else:
                     entrydict = None
@@ -1192,7 +1213,7 @@ class RmcApp(object):
                                             attributeregistry[instance.type], \
                                             selector, currdict=entrydict, \
                                             monolith=entrymono):
-                                sys.stderr.write("Property is read-only" \
+                                self.warning_handler("Property is read-only" \
                                              " skipping '%s'\n" % selector)
                                 continue
                     except Exception:
@@ -1213,7 +1234,7 @@ class RmcApp(object):
                                     selector=selector, currdict=currdictcopy, \
                                         monolith=entrymono, newarg=newarg, \
                                                                 regloc=regloc):
-                            sys.stderr.write("Property is " \
+                            self.warning_handler("Property is " \
                                         "read-only skipping '%s'\n" % selector)
                             continue
 
@@ -1365,7 +1386,7 @@ class RmcApp(object):
 
             if not model and not bsmodel:
                 if newarg:
-                    sys.stderr.write("No data available for entry: '%s'\n" \
+                    self.warning_handler("No data available for entry: '%s'\n" \
                                                             % "/".join(newarg))
 
                     if autotest:
@@ -1409,11 +1430,11 @@ class RmcApp(object):
                                 else:
                                     found.print_help(selector, out=sys.stdout)
                             else:
-                                sys.stderr.write("No data available for entry:"\
+                                self.warning_handler("No data available for entry:"\
                                                  " '%s'\n" % ("/".join(newarg) \
                                                       if newarg else selector))
                 else:
-                    sys.stderr.write("Entry '%s' not found in current" \
+                    self.warning_handler("Entry '%s' not found in current" \
                                      " selection\n" \
                                     % ("/".join(newarg) if newarg else selector))
 
@@ -2177,9 +2198,10 @@ class RmcApp(object):
                     sys.stdout.write(u"[%d] The operation completed " \
                                             "successfully.\n" % results.status)
                 else:
-                    sys.stdout.write(u"The operation completed successfully.\n")
+                    self.warning_handler(u"The operation "\
+                                         "completed successfully.\n")
             else:
-                sys.stdout.write(u"[%d] No message returned by iLO.\n" % \
+                self.warning_handler(u"[%d] No message returned by iLO.\n" % \
                                                                 results.status)
 
             return
@@ -2200,7 +2222,7 @@ class RmcApp(object):
                         sys.stdout.write(u"[%d] %s\n" % (results.status, \
                                                                         output))
                     else:
-                        sys.stdout.write(u"%s\n" % output)
+                        self.warning_handler(u"%s\n" % output)
                 except Exception:
                     pass
             elif contents[0] == "iLO":
@@ -2214,7 +2236,7 @@ class RmcApp(object):
                         sys.stdout.write(u"[%d] %s\n" % (results.status, \
                                                                         output))
                     else:
-                        sys.stdout.write(u"%s\n" % output)
+                        self.warning_handler(u"%s\n" % output)
                 except Exception:
                     pass
             elif contents[0] == "HpCommon":
@@ -2228,7 +2250,7 @@ class RmcApp(object):
                         sys.stdout.write(u"[%d] %s\n" % (results.status, \
                                                                         output))
                     else:
-                        sys.stdout.write(u"%s\n" % output)
+                        self.warning_handler(u"%s\n" % output)
                 except Exception:
                     pass
             elif contents[0] == "iLOEvents":
@@ -2242,7 +2264,7 @@ class RmcApp(object):
                         sys.stdout.write(u"[%d] %s\n" % (results.status, \
                                                                         output))
                     else:
-                        sys.stdout.write(u"%s\n" % output)
+                        self.warning_handler(u"%s\n" % output)
                 except Exception:
                     pass
         else:
@@ -2251,9 +2273,9 @@ class RmcApp(object):
                     sys.stdout.write(u"[%d] The operation completed " \
                                             "successfully.\n" % results.status)
                 else:
-                    sys.stdout.write(u"The operation completed successfully.\n")
+                    self.warning_handler(u"The operation completed successfully.\n")
             else:
-                sys.stdout.write(u"[%d] No message returned by iLO.\n" % \
+                self.warning_handler(u"[%d] No message returned by iLO.\n" % \
                                                                 results.status)
 
     def select(self, query, sel=None, val=None):
@@ -2406,7 +2428,7 @@ class RmcApp(object):
             (newtag, paths) = self.gettypeswithetag()
             if (oldtag[instance.type] != newtag[instance.type]) and \
                                         not u'HpiLODateTime.' in instance.type:
-                sys.stdout.write("The property you are trying to change " \
+                self.warning_handler("The property you are trying to change " \
                                  "has been updated. Please check entry again " \
                                  " before manipulating it\n")
                 raise ValueChangedError()
@@ -2545,7 +2567,7 @@ class RmcApp(object):
                 skipcrawl = True
                 if selector.lower().startswith("log"):
                     skipcrawl = False
-                    sys.stderr.write("Full data retrieval enabled. You may" \
+                    self.warning_handler("Full data retrieval enabled. You may" \
                                         " experience longer download times.\n")
 
                 self.check_types_exists(entrytype, selector, monolith, \
@@ -2984,13 +3006,13 @@ class RmcApp(object):
             if autotest:
                 try:
                     if not regtype == attributeregistry[instance.type]:
-                        sys.stderr.write("Using latest registry.\nFound: %s\n" \
+                        self.warning_handler("Using latest registry.\nFound: %s\n" \
                                          "Using: %s\n" % \
                                             (attributeregistry[instance.type],\
                                             regtype))
                 except Exception:
                     if not schematype == currdict[type_str]:
-                        sys.stderr.write("Using latest schema.\nFound: %s\n" \
+                        self.warning_handler("Using latest schema.\nFound: %s\n" \
                                          "Using: %s\n" % \
                                             (currdict[type_str],\
                                             schematype))

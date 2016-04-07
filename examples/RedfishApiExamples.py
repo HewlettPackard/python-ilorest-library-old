@@ -118,6 +118,7 @@ import urlparse
 import jsonpatch
 
 from ilorest import AuthMethod, ilorest_logger, redfish_client
+from ilorest.rest.v1_helper import ServerDownOrUnreachableError
 
 
 #Config logger used by HPE Restful library
@@ -763,15 +764,21 @@ def ex31_set_license_key(redfishobj, iLO_Key):
 
 class RedfishObject(object):
     def __init__(self, host, login_account, login_password):
-        self.redfish_client = redfish_client(base_url=host, \
-                          username=login_account, password=login_password, \
-                          default_prefix="/redfish/v1")
+        try:
+            self.redfish_client = redfish_client(base_url=host, \
+                      username=login_account, password=login_password, \
+                      default_prefix="/redfish/v1")
+        except:
+            raise
         self.redfish_client.login(auth=AuthMethod.SESSION)
         self.SYSTEMS_RESOURCES = ex1_get_resource_directory(self)
         self.MESSAGE_REGISTRIES = ex2_get_base_registry(self)
 
     def __del__(self):
-        self.redfish_client.logout()
+        try:
+            self.redfish_client.logout()
+        except AttributeError, excp:
+            pass
 
     def search_for_type(self, type):
         instances = []
@@ -871,7 +878,14 @@ if __name__ == "__main__":
     login_password = "password"
 
     # Create a REDFISH object
-    REDFISH_OBJ = RedfishObject(iLO_host, login_account, login_password)
+    try:
+        REDFISH_OBJ = RedfishObject(iLO_host, login_account, login_password)
+    except ServerDownOrUnreachableError, excp:
+        sys.stderr.write("ERROR: server not reachable or doesn't support " \
+                                                                "RedFish.\n")
+        sys.exit()
+    except Exception, excp:
+        raise excp
 
     # These examples are comment out because they are now part of the RedfishObject
     # class. They are initiated when you create a RedfishObject class object.

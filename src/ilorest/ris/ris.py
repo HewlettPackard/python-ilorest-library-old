@@ -267,7 +267,10 @@ class RisMonolith_v1_0_0(Dictable):
 
         """
         if not skipinit:
-            sys.stdout.write("Discovering data from iLO...")
+            if LOGGER.getEffectiveLevel() == 40:
+                sys.stdout.write("Discovering data from iLO...")
+            else:
+                LOGGER.warning("Discovering data from iLO...")
             self.name = self.name + u' at %s' % self._client.base_url
             self.types = OrderedDict()
 
@@ -285,7 +288,10 @@ class RisMonolith_v1_0_0(Dictable):
         self.queue.join()
 
         if not skipinit:
-            sys.stdout.write("Done\n")
+            if LOGGER.getEffectiveLevel() == 40:
+                sys.stdout.write("Done\n")
+            else:
+                LOGGER.warning("Done\n")
 
     def _load(self, path, skipcrawl=False, originaluri=None, includelogs=False,\
                                              skipinit=False, loadtype='href'):
@@ -535,7 +541,8 @@ class RisMonolith_v1_0_0(Dictable):
 
         if not skipinit:
             self.progress += 1
-            self.update_progress()
+            if LOGGER.getEffectiveLevel() == 40:
+                self.update_progress()
 
     def update_member(self, member):
         """Adds member to this monolith. If the member already exists the"""
