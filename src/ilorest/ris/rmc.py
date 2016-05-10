@@ -1428,6 +1428,7 @@ class RmcApp(object):
                                 elif autotest:
                                     return True
                                 else:
+                                    #TODO: find a way to not print
                                     found.print_help(selector, out=sys.stdout)
                             else:
                                 self.warning_handler("No data available for entry:"\
@@ -1870,7 +1871,7 @@ class RmcApp(object):
 
     def patch_handler(self, put_path, body, optionalpassword=None,
                   verbose=False, providerheader=None, service=False, url=None, \
-                  sessionid=None, headers=None, iloresponse=False):
+                  sessionid=None, headers=None, iloresponse=False, silent=False):
         """Main worker function for raw patch command
 
         :param put_path: the URL path.
@@ -1910,11 +1911,11 @@ class RmcApp(object):
                                           providerheader=providerheader, \
                                                             headers=headers)
 
-        if not service:
+        if not silent and not service:
             (base_messages, ilo_messages, hpcommon_messages, \
                                 iloevent_messages) = self.get_error_messages()
-
-        self.invalid_return_handler(results, ilo_messages, base_messages, \
+        if not silent:
+            self.invalid_return_handler(results, ilo_messages, base_messages, \
                         iloevent_messages, hpcommon_messages, verbose=verbose)
 
         if iloresponse:
@@ -1972,7 +1973,7 @@ class RmcApp(object):
 
     def post_handler(self, put_path, body, verbose=False, providerheader=None, \
                                     service=False, url=None, sessionid=None,\
-                                    headers=None, iloresponse=False):
+                                    headers=None, iloresponse=False, silent=False):
         """Main worker function for raw post command
 
         :param put_path: the URL path.
@@ -2009,11 +2010,11 @@ class RmcApp(object):
                                                 providerheader=providerheader,\
                                                 headers=headers)
 
-        if not service:
+        if not silent and not service:
             (base_messages, ilo_messages, hpcommon_messages, \
                                 iloevent_messages) = self.get_error_messages()
-
-        self.invalid_return_handler(results, ilo_messages, base_messages, \
+        if not silent:
+            self.invalid_return_handler(results, ilo_messages, base_messages, \
                         iloevent_messages, hpcommon_messages, verbose=verbose)
 
         if iloresponse:
@@ -2198,8 +2199,8 @@ class RmcApp(object):
                     sys.stdout.write(u"[%d] The operation completed " \
                                             "successfully.\n" % results.status)
                 else:
-                    self.warning_handler(u"The operation "\
-                                         "completed successfully.\n")
+                    self.warning_handler(u"[%d] The operation completed " \
+                                            "successfully.\n" % results.status)
             else:
                 self.warning_handler(u"[%d] No message returned by iLO.\n" % \
                                                                 results.status)

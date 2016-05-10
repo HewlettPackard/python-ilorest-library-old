@@ -317,7 +317,6 @@ class RisMonolith_v1_0_0(Dictable):
             if "/Logs/" in path:
                 return
 
-        path = urllib.pathname2url(path)
         LOGGER.debug(u'_loading %s', path)
         if not self.reload:
             if path.lower() in self._visited_urls:

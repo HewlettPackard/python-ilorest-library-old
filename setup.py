@@ -1,6 +1,5 @@
 from setuptools import setup, find_packages
 
-
 setup(name='python-ilorest-library',
       version='1.0.0',
       description='iLO Rest Python Library',
