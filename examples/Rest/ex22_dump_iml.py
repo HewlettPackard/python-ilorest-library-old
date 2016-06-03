@@ -25,12 +25,19 @@ def ex22_dump_iml(restobj):
 
             for entry in tmp.dict["links"]["Entries"]:
                 response = restobj.rest_get(entry["href"])
-                
-                for log_entry in response.dict["Items"]:
-                    sys.stdout.write(log_entry["Severity"] + ": Class " + \
-                         str(log_entry["Oem"]["Hp"]["Class"]) + \
-                         " / Code " + str(log_entry["Oem"]["Hp"]["Code"]) + \
-                         ":\t" + log_entry["Message"] + "\n")
+                print_log_entries(response.dict["Items"])
+
+                while 'NextPage' in response.dict["links"]:
+                    response = restobj.rest_get(entry["href"] + '?page=' + str(response.dict["links"]['NextPage']['page']))
+                    print_log_entries(response.dict["Items"])
+
+
+def print_log_entries(log_entries):
+    for log_entry in log_entries:
+        sys.stdout.write(log_entry["Severity"] + ": Class " + \
+             str(log_entry["Oem"]["Hp"]["Class"]) + \
+             " / Code " + str(log_entry["Oem"]["Hp"]["Code"]) + \
+             ":\t" + log_entry["Message"] + "\n")
 
 if __name__ == "__main__":
     # When running on the server locally use the following commented values
