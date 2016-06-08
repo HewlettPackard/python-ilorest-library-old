@@ -19,7 +19,9 @@ from ilorest.rest.v1_helper import ServerDownOrUnreachableError
 def ex2_get_base_registry(redfishobj):
     sys.stdout.write("\nEXAMPLE 2: Find and return registry " + "\n")
     response = redfishobj.redfish_get("/redfish/v1/Registries/")
+
     messages = {}
+    location = None
     
     for entry in response.dict["Members"]:
         if not [x for x in ["/Base/", "/iLO/"] if x in entry["@odata.id"]]:
@@ -28,16 +30,20 @@ def ex2_get_base_registry(redfishobj):
             registry = redfishobj.redfish_get(entry["@odata.id"])
         
         for location in registry.dict["Location"]:  
-            reg_resp = redfishobj.redfish_get(location["Uri"]["extref"])
+            if "extref" in location["Uri"]:
+                location = location["Uri"]["extref"]
+            else:
+                location = location["Uri"]
 
+            reg_resp = redfishobj.redfish_get(location)
             if reg_resp.status == 200:
                 sys.stdout.write("\tFound " + reg_resp.dict["RegistryPrefix"] \
-                                    + " at " + location["Uri"]["extref"] + "\n")
+                                    + " at " + location + "\n")
                 messages[reg_resp.dict["RegistryPrefix"]] = \
                                                     reg_resp.dict["Messages"]
             else:
                 sys.stdout.write("\t" + reg_resp.dict["RegistryPrefix"] + \
-                         " not found at " + location["Uri"]["extref"] + "\n")
+                                            " not found at " + location + "\n")
 
     return messages
 
@@ -49,7 +55,7 @@ if __name__ == "__main__":
 
     # When running remotely connect using the iLO address, iLO account name, 
     # and password to send https requests
-    iLO_host = "https://16.83.63.43"
+    iLO_host = "https://10.0.0.100"
     iLO_account = "admin"
     iLO_password = "password"
 

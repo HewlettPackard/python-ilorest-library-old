@@ -61,7 +61,7 @@ if __name__ == "__main__":
 
     # When running remotely connect using the iLO address, iLO account name, 
     # and password to send https requests
-    iLO_host = "https://16.83.63.43"
+    iLO_host = "https://10.0.0.100"
     iLO_account = "admin"
     iLO_password = "password"
     

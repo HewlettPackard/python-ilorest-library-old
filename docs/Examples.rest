@@ -59,5 +59,19 @@ The following examples can all be used as guidance for `managing iLO using iLO R
    Set-iLO-NTP-servers
    Get-power-metrics-average
    Set-license-key
+   Set-BIOS-DHCP
+   Set-BIOS-service
+   Set-BIOS-UEFI-shell-startup
+   Set-BIOS-ISCSI
+   Set-BIOS-url-boot-file
+   Set-ESKM-primarykeyserver
+   Set-ESKM-username-password
+   Test-ESKM-connection
+   Reset-ESKM-Event-Log
+   Dump-ESKM-Event-Log
+   Get-ESKM
+   Get-encryption-settings
+   Get-logical-drives
+   Get-license-key
    
-
+   

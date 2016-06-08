@@ -40,11 +40,11 @@ Get in touch with the team
 If you have further questions, please contact the team:
 
 * `Jack Garcia <http://github.com/LumbaJack>`_
-* Matthew Kocurek
-* Prithvi Subrahmanya
+* `Matthew Kocurek <http://github.com/Yergidy>`_
+* `Prithvi Subrahmanya <http://github.com/PrithviBS>`_
 * `Tony Wang <http://github.com/injan0913>`_
 * `Willy Chen <http://github.com/catsass19>`_
-* `Shamimur Rahman <http://github.com/shamimur>`_
+* `Kevin Chang <http://github.com/kckaiwei>`_
 
 Contributors
 -------------

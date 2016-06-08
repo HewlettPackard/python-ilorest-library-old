@@ -1,0 +1,63 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+|
+
+.. toctree::
+   :maxdepth: 1
+   
+   
+If not created already,  create an instance of Rest or Redfish Object using the  **RestObject** or **RedfishObject** class respectively. The class constructor takes iLO hostname/ ip address, iLO login username and password as arguments. The class also initializes a login session, gets systems resources and message registries.
+
+Rest Object creation:
+
+.. code-block:: python
+
+ REST_OBJ = RestObject(iLO_host, login_account, login_password)
+
+::
+
+Redfish Object creation:
+
+.. code-block:: python
+
+ REDFISH_OBJ = RedfishObject(iLO_host, login_account, login_password)
+
+::
+
+Example 41: Dump ESKM Event Log
+==========================================
+
+The method **def ex41_dump_eskm_event_log** takes an instance of rest object ( or redfish object if using Redfish API ) as argument.
+
+.. code-block:: python
+
+
+  def ex41_dump_eskm_event_log(restobj):
+
+::
+
+
+Find and get the SecurityService URI from the systems resources collection.
+
+.. code-block:: python
+
+
+     instances = restobj.search_for_type("SecurityService.")
+
+::
+
+Send HTTP GET request to log ESKM URI(s).
+
+.. code-block:: python
+
+    for instance in instances:
+        tmp = restobj.rest_get(instance["href"])
+        response = restobj.rest_get(tmp.dict["links"]["ESKM"]["href"])
+        for entry in response.dict["ESKMEvents"]:
+            sys.stdout.write(entry["Timestamp"] + "\n" \
+                             + entry["Event"] + "\n")
+
+::
+
+A successful GET response fetch ESKM Events along with a timestamp.

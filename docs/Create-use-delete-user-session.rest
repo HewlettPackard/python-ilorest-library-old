@@ -32,7 +32,7 @@ The method **ex14_sessions** takes an instance of rest object( or redfish object
 
 .. code-block:: python
 
-  def ex12_sessions(restobj, login_account, login_password):
+  def ex14_sessions(restobj, login_account, login_password):
 
 ::
 

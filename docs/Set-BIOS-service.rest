@@ -1,0 +1,55 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+|
+
+
+If not created already,  create an instance of Rest or Redfish Object using the  **RestObject** or **RedfishObject** class respectively. The class constructor takes iLO hostname/ ip address, iLO login username and password as arguments. The class also initializes a login session, gets systems resources and message registries.
+
+Rest Object creation:
+
+.. code-block:: python
+
+ REST_OBJ = RestObject(iLO_host, login_account, login_password)
+
+::
+
+Redfish Object creation:
+
+.. code-block:: python
+
+ REDFISH_OBJ = RedfishObject(iLO_host, login_account, login_password)
+
+::
+
+Example 33: Set BIOS services
+=============================
+
+The method **ex33_set_bios_service** takes an instance of rest object ( or redfish object if using Redfish API ) and BIOS service settings as arguments.
+
+.. code-block:: python
+
+  def ex33_set_bios_service(restobj, bios_properties, bios_password=None):
+
+::
+
+Find and get the BIOS settings URI from the systems resources collection.
+
+.. code-block:: python
+
+
+     instances = restobj.search_for_type("Bios.")
+
+::
+
+For the BIOS service settings, prepare the request body with only the BIOS service settings we want to change and perform the PATCH request.
+
+.. code-block:: python
+
+    for instance in instances:
+        response = restobj.rest_patch(instance["href"], bios_properties, \
+                                      bios_password)
+        restobj.error_handler(response)
+::
+
+A successful PATCH response will set the BIOS service settings to the new values provided in BIOS settings, however the changes will go into effect only after a system reset or reboot.

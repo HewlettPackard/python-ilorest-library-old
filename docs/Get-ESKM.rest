@@ -1,0 +1,107 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+|
+
+.. toctree::
+   :maxdepth: 1
+   
+If not created already,  create an instance of Rest or Redfish Object using the  **RestObject** or **RedfishObject** class respectively. The class constructor takes iLO hostname/ ip address, iLO login username and password as arguments. The class also initializes a login session, gets systems resources and message registries.
+
+Rest Object creation:
+
+.. code-block:: python
+
+ REST_OBJ = RestObject(iLO_host, login_account, login_password)
+
+::
+
+Redfish Object creation:
+
+.. code-block:: python
+
+ REDFISH_OBJ = RedfishObject(iLO_host, login_account, login_password)
+
+::
+
+
+Example 42: Get ESKM
+================================
+
+The method **ex42_get_ESKM** takes an instance of rest object ( or redfish object if using Redfish API ) as argument.
+
+
+.. code-block:: python
+
+
+    def ex42_get_ESKM(restobj):
+
+::
+
+
+Find and get the system resource for SecurityService. 
+
+.. code-block:: python
+
+
+     instances = restobj.search_for_type("SecurityService.")
+
+::
+
+Send HTTP GET request to the system URI(s) in links ESKM.
+
+.. code-block:: python
+
+  for instance in instances:
+      tmp = restobj.rest_get(instance["href"])
+      response = restobj.rest_get(tmp.dict["links"]["ESKM"]["href"])
+
+::
+
+For each system print address port, redundancy requirement, account group, certificate name and certificate issuer from the response body.
+
+.. code-block:: python
+
+        sys.stdout.write("\tPrimaryKeyServerAddress:  " +
+                         json.dumps(response.dict["PrimaryKeyServerAddress"])\
+                         + "\n")
+        sys.stdout.write("\tPrimaryKeyServerPort:  " +
+                         json.dumps(response.dict["PrimaryKeyServerPort"])\
+                         + "\n")
+        sys.stdout.write("\tSecondaryKeyServerAddress:  " +
+                         json.dumps(response.dict["SecondaryKeyServerAddress"])\
+                          + "\n")
+        sys.stdout.write("\tSecondaryKeyServerPort:  " +
+                         json.dumps(response.dict["SecondaryKeyServerPort"])\
+                          + "\n")
+        sys.stdout.write("\tType:  " +
+                         json.dumps(response.dict["Type"]) + "\n")
+        sys.stdout.write("\tKeyServerRedundancyReq:  " +
+                         json.dumps(response.dict["KeyServerRedundancyReq"])\
+                          + "\n")
+
+        sys.stdout.write("\tAccountGroup:  " +
+                         json.dumps(response.dict["KeyManagerConfig"]\
+                                    ["AccountGroup"]) + "\n")
+        sys.stdout.write("\tESKMLocalCACertificateName:  " +
+                         json.dumps(response.dict["KeyManagerConfig"]\
+                                    ["ESKMLocalCACertificateName"]) + "\n")
+        sys.stdout.write("\tImportedCertificateIssuer:  " +
+                         json.dumps(response.dict["KeyManagerConfig"]\
+                                    ["ImportedCertificateIssuer"]) + "\n")
+::
+
+Next print a log of ESKM events if any.
+
+.. code-block:: python
+
+        sys.stdout.write("\tESKMEvents:  " +
+                         json.dumps(response.dict["ESKMEvents"]) + "\n")
+
+        tmp = response.dict["ESKMEvents"]
+        for entry in tmp:
+            sys.stdout.write("\tTimestamp : " + entry["Timestamp"] +\
+                              "Event:  " +
+                             json.dumps(entry["Event"]) + "\n")
+
+::

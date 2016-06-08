@@ -191,12 +191,13 @@ class RedfishObject(object):
             resources["resources"] = response.dict["Instances"]
             return resources
         else:
-            sys.stderr.write("\tResource directory missing at /redfish/v1/resource"\
-                                                                "directory" + "\n")
+            sys.stderr.write("\tResource directory missing at " \
+                                        "/redfish/v1/resourcedirectory" + "\n")
     
     def ex2_get_base_registry(self):
         response = self.redfish_get("/redfish/v1/Registries/")
         messages = {}
+        location = None
         
         for entry in response.dict["Members"]:
             if not [x for x in ["/Base/", "/iLO/"] if x in entry["@odata.id"]]:
@@ -205,13 +206,18 @@ class RedfishObject(object):
                 registry = self.redfish_get(entry["@odata.id"])
             
             for location in registry.dict["Location"]:  
-                reg_resp = self.redfish_get(location["Uri"]["extref"])
+                if "extref" in location["Uri"]:
+                    location = location["Uri"]["extref"]
+                else:
+                    location = location["Uri"]
+                reg_resp = self.redfish_get(location)
     
                 if reg_resp.status == 200:
                     messages[reg_resp.dict["RegistryPrefix"]] = \
-                                                        reg_resp.dict["Messages"]
+                                                    reg_resp.dict["Messages"]
                 else:
                     sys.stdout.write("\t" + reg_resp.dict["RegistryPrefix"] + \
-                             " not found at " + location["Uri"]["extref"] + "\n")
+                                            " not found at " + location + "\n")
     
         return messages
+

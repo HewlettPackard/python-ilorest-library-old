@@ -1,0 +1,66 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+|
+
+.. toctree::
+   :maxdepth: 1
+   
+If not created already,  create an instance of Rest or Redfish Object using the  **RestObject** or **RedfishObject** class respectively. The class constructor takes iLO hostname/ ip address, iLO login username and password as arguments. The class also initializes a login session, gets systems resources and message registries.
+
+Rest Object creation:
+
+.. code-block:: python
+
+ REST_OBJ = RestObject(iLO_host, login_account, login_password)
+
+::
+
+Redfish Object creation:
+
+.. code-block:: python
+
+ REDFISH_OBJ = RedfishObject(iLO_host, login_account, login_password)
+
+::
+
+Example 40: reset ESKM event log
+=============================
+
+The method **ex40_reset_ESKM_eventlog** takes an instance of rest object ( or redfish object if using Redfish API ) as arguments.
+
+.. code-block:: python
+
+  def ex40_reset_ESKM_eventlog(restobj):
+
+::
+
+Find and get the ESKM settings URI from the systems resources collection.
+
+.. code-block:: python
+
+
+     instances = restobj.search_for_type("ESKM.")
+
+::
+
+Prepare the request body with ClearESKMLog.
+
+.. code-block:: python
+
+    for instance in instances:
+        body = dict()
+        body["Action"] = "ClearESKMLog"
+
+::
+
+Send HTTP POST request to the system URI(s) using the prepared request body.
+
+.. code-block:: python
+
+    response = restobj.rest_post(instance["href"], body)
+    restobj.error_handler(response)
+
+::
+
+A successful POST response will set the ESKM action to "ClearESKMLog" and return a success code, however the changes will go into effect only after a system reset or reboot.

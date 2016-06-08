@@ -1,4 +1,4 @@
-# Copyright 2016 Hewlett Packard Enterprise Development LP
+# Copyright 2016 Hewlett Packard Enterprise Development, LP.
  #
  # Licensed under the Apache License, Version 2.0 (the "License"); you may
  # not use this file except in compliance with the License. You may obtain
@@ -25,9 +25,16 @@ def ex23_dump_ilo_event_log(restobj):
 
             for entry in tmp.dict["links"]["Entries"]:
                 response = restobj.rest_get(entry["href"])
-                
-                for log_entry in response.dict["Items"]:
-                    sys.stdout.write(log_entry["Message"] + "\n")
+                print_log_entries(response.dict["Items"])
+
+                while 'NextPage' in response.dict["links"]:
+                    response = restobj.rest_get(entry["href"] + '?page=' + str(response.dict["links"]['NextPage']['page']))
+                    print_log_entries(response.dict["Items"])
+
+
+def print_log_entries(log_entries):
+    for log_entry in log_entries:
+        sys.stdout.write(log_entry["Message"] + "\n")
 
 if __name__ == "__main__":
     # When running on the server locally use the following commented values
@@ -37,7 +44,7 @@ if __name__ == "__main__":
 
     # When running remotely connect using the iLO address, iLO account name, 
     # and password to send https requests
-    iLO_host = "https://16.83.63.43"
+    iLO_host = "https://10.0.0.100"
     iLO_account = "admin"
     iLO_password = "password"
     

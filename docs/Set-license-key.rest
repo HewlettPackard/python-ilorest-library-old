@@ -30,7 +30,7 @@ Redfish Object creation:
 Example 31: Set license key
 ===========================
 
-The method **ex29_set_ilicense_key** takes an instance of rest object ( or redfish object if using Redfish API ) and  iLO key as arguments.
+The method **ex31_set_ilicense_key** takes an instance of rest object ( or redfish object if using Redfish API ) and  iLO key as arguments.
 
 
 .. code-block:: python

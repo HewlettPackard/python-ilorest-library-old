@@ -1,4 +1,4 @@
- # Copyright 2016 Hewlett Packard Enterprise Development LP
+ # Copyright 2016 Hewlett Packard Enterprise Development, LP.
  #
  # Licensed under the Apache License, Version 2.0 (the "License"); you may
  # not use this file except in compliance with the License. You may obtain
@@ -28,6 +28,14 @@ def ex23_dump_ilo_event_log(redfishobj):
             for entry in rsp.dict["Members"]:
                 response = redfishobj.redfish_get(entry["@odata.id"])
                 sys.stdout.write(response.dict["Message"] + "\n")
+                
+                while 'NextPage' in rsp.dict["Members"]:
+                    response = redfishobj.redfish_get(entry["@odata.id"] + \
+                                                '?page=' + \
+                                                str(response.dict["Entries"] \
+                                                ['NextPage']['page']))
+                    
+                    sys.stdout.write(response.dict["Message"] + "\n")
 
 if __name__ == "__main__":
     # When running on the server locally use the following commented values
@@ -37,7 +45,7 @@ if __name__ == "__main__":
 
     # When running remotely connect using the iLO address, iLO account name, 
     # and password to send https requests
-    iLO_host = "https://16.83.63.43"
+    iLO_host = "https://10.0.0.100"
     iLO_account = "admin"
     iLO_password = "password"
 

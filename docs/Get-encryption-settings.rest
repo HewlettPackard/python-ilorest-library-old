@@ -1,0 +1,84 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+|
+
+.. toctree::
+   :maxdepth: 1
+   
+If not created already,  create an instance of Rest or Redfish Object using the  **RestObject** or **RedfishObject** class respectively. The class constructor takes iLO hostname/ ip address, iLO login username and password as arguments. The class also initializes a login session, gets systems resources and message registries.
+
+Rest Object creation:
+
+.. code-block:: python
+
+ REST_OBJ = RestObject(iLO_host, login_account, login_password)
+
+::
+
+Redfish Object creation:
+
+.. code-block:: python
+
+ REDFISH_OBJ = RedfishObject(iLO_host, login_account, login_password)
+
+::
+
+
+Example 44: Get Encryption Settings
+================================
+
+The method **ex44_get_EncryptionSettings** takes an instance of rest object ( or redfish object if using Redfish API ) as argument.
+
+
+.. code-block:: python
+
+
+    ex44_get_EncryptionSettings(restobj):
+
+::
+
+
+Find and get the system resource for HpSmartStorageArrayController. 
+
+.. code-block:: python
+
+
+     instances = restobj.search_for_type("HpSmartStorageArrayController.")
+
+::
+
+Place the list of Encryption settings into a list.
+
+.. code-block:: python
+
+    types = ["Name","Model","SerialNumber","EncryptionBootPasswordSet",\
+             "EncryptionCryptoOfficerPasswordSet",\
+             "EncryptionLocalKeyCacheEnabled","EncryptionMixedVolumesEnabled",\
+             "EncryptionPhysicalDriveCount","EncryptionRecoveryParamsSet",\
+             "EncryptionStandaloneModeEnabled","EncryptionUserPasswordSet"]
+::
+
+Send HTTP GET request to the system URI(s).
+
+.. code-block:: python
+
+  for instance in instances:
+        response = restobj.rest_get(instance["href"])
+
+::
+
+For each system print encryption settings from the response body.
+
+.. code-block:: python
+
+    for item in types:
+        sys.stdout.write("\tID:  " +
+                         str(response.dict["@odata.id"]) + "\n")
+        if item in response.dict:
+            sys.stdout.write("\t" + item +
+                             str(response.dict[item]) + "\n")
+        else:
+            sys.stderr.write("\t" + item + "is not " \
+                    "available on HpSmartStorageArrayController resource\n")
+::

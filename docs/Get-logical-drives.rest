@@ -1,0 +1,71 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+|
+
+.. toctree::
+   :maxdepth: 1
+   
+If not created already,  create an instance of Rest or Redfish Object using the  **RestObject** or **RedfishObject** class respectively. The class constructor takes iLO hostname/ ip address, iLO login username and password as arguments. The class also initializes a login session, gets systems resources and message registries.
+
+Rest Object creation:
+
+.. code-block:: python
+
+ REST_OBJ = RestObject(iLO_host, login_account, login_password)
+
+::
+
+Redfish Object creation:
+
+.. code-block:: python
+
+ REDFISH_OBJ = RedfishObject(iLO_host, login_account, login_password)
+
+::
+
+
+Example 45: Get logical drives
+================================
+
+The method **ex45_get_LogicalDrives** takes an instance of rest object ( or redfish object if using Redfish API ) as argument.
+
+
+.. code-block:: python
+
+
+    def ex45_get_LogicalDrives(restobj):
+
+::
+
+
+Find and get the system resource for HpSmartStorageArrayController. 
+
+.. code-block:: python
+
+
+     instances = restobj.search_for_type("HpSmartStorageArrayController.")
+
+::
+
+Send HTTP GET request to the system URI(s).
+
+.. code-block:: python
+
+    for instance in instances:
+        response = restobj.rest_get(instance["href"])
+
+::
+
+For each system print array controllers from the response body. Return an error if not available.
+
+.. code-block:: python
+
+        if "ArrayControllers" in response.dict:
+            sys.stdout.write("\tArrayControllers:  " +
+                           str(response.dict["ArrayControllers"]) + "\n")
+        else:
+            sys.stderr.write("\tArrayControllers is not " \
+                        "available on HpSmartStorageArrayController resource\n")
+::
+

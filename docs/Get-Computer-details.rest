@@ -32,7 +32,7 @@ The method **ex16_computer_details** takes an instance of rest object ( or redfi
 .. code-block:: python
 
 
-    def ex14_computer_details(restobj):
+    def ex16_computer_details(restobj):
 
 ::
 
