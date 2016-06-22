@@ -169,8 +169,6 @@ class HpIlo(object):
         error = self.dll.ChifPacketExchange(self.fhandle, ctypes.byref(buff),\
                                              ctypes.byref(recbuff), datarecv)
         if error != BlobReturnCodes.SUCCESS:
-            self.close()
-            self.unload()
             raise HpIloChifPacketExchangeError("Error %s occurred while "\
                                                "exchange chif packet" % error)
 
@@ -212,6 +210,9 @@ class HpIlo(object):
                 time.sleep(1)
 
                 if tries == (retries - 1):
+                    if os.name == 'nt':
+                        self.close()
+                        self.unload()
                     raise
 
             tries += 1
