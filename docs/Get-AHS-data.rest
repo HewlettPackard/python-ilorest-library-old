@@ -1,0 +1,75 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+|
+
+.. toctree::
+   :maxdepth: 1
+   
+ 
+If not created already,  create an instance of Rest or Redfish Object using the  **RestObject** or **RedfishObject** class respectively. The class constructor takes iLO hostname/ ip address, iLO login username and password as arguments. The class also initializes a login session, gets systems resources and message registries.
+
+Rest Object creation:
+
+.. code-block:: python
+
+ REST_OBJ = RestObject(iLO_host, login_account, login_password)
+
+::
+
+Redfish Object creation:
+
+.. code-block:: python
+
+ REDFISH_OBJ = RedfishObject(iLO_host, login_account, login_password)
+
+::
+
+Example 46: Get AHS data
+======================
+
+The method **ex46_get_ahs_data** takes an instance of rest object ( or redfish object if using Redfish API ) as an argument.
+
+.. code-block:: python
+
+  def ex46_get_ahs_data(restobj):
+
+::
+
+Send HTTP GET request to manager URI '/rest/v1/Manager'.  
+
+.. code-block:: python
+
+
+     response = restobj.rest_get("/rest/v1/Manager.")
+::
+
+
+
+From the response body find the ActiveHealthSystem URI.
+
+.. code-block:: python
+
+    for instance in instances:
+        tmp = restobj.rest_get(instance["href"])
+        response = restobj.rest_get(tmp.dict["Oem"]["Hp"]["links"]\
+                                    ["ActiveHealthSystem"]["href"])
+::
+
+Get the extref link for download through GET request.
+
+.. code-block:: python
+
+    ahslink = restobj.rest_get(response.dict["links"]["AHSLocation"]\
+                                   ["extref"])
+::
+
+Create and write to a binary file.
+
+.. code-block:: python
+
+        with open("data.ahs", 'wb') as ahsoutput:
+            ahsoutput.write(ahslink.read)
+            ahsoutput.close()
+
+::

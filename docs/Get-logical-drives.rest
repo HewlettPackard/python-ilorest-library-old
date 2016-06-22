@@ -25,16 +25,16 @@ Redfish Object creation:
 ::
 
 
-Example 45: Get logical drives
+Example 44: Get logical drives
 ================================
 
-The method **ex45_get_LogicalDrives** takes an instance of rest object ( or redfish object if using Redfish API ) as argument.
+The method **ex44_get_LogicalDrives** takes an instance of rest object ( or redfish object if using Redfish API ) as argument.
 
 
 .. code-block:: python
 
 
-    def ex45_get_LogicalDrives(restobj):
+    def ex44_get_LogicalDrives(restobj):
 
 ::
 

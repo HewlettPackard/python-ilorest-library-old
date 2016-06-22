@@ -25,16 +25,16 @@ Redfish Object creation:
 ::
 
 
-Example 46: Get license key
+Example 45: Get license key
 ================================
 
-The method **ex46_get_license_key** takes an instance of rest object ( or redfish object if using Redfish API ) as argument.
+The method **ex45_get_license_key** takes an instance of rest object ( or redfish object if using Redfish API ) as argument.
 
 
 .. code-block:: python
 
 
-    def ex46_get_license_key(restobj):
+    def ex45_get_license_key(restobj):
 
 ::
 

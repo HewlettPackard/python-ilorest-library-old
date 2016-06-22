@@ -25,16 +25,16 @@ Redfish Object creation:
 ::
 
 
-Example 44: Get Encryption Settings
+Example 43: Get Encryption Settings
 ================================
 
-The method **ex44_get_EncryptionSettings** takes an instance of rest object ( or redfish object if using Redfish API ) as argument.
+The method **ex43_get_EncryptionSettings** takes an instance of rest object ( or redfish object if using Redfish API ) as argument.
 
 
 .. code-block:: python
 
 
-    ex44_get_EncryptionSettings(restobj):
+    ex43_get_EncryptionSettings(restobj):
 
 ::
 
