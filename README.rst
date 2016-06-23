@@ -1,4 +1,5 @@
-python-ilorestful-library
+python-ilorestful-library .. image:: https://travis-ci.org/HewlettPackard/python-ilorest-library.svg?branch=master
+    :target: https://travis-ci.org/HewlettPackard/python-ilorest-library
 ==============
 
 .. contents:: :depth: 1
