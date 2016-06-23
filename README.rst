@@ -8,8 +8,6 @@ python-ilorestful-library
 	:target: https://raw.githubusercontent.com/HewlettPackard/python-ilorest-library/master/LICENSE
 .. image:: https://img.shields.io/pypi/pyversions/python-ilorest-library.svg?maxAge=2592000
 	:target: https://pypi.python.org/pypi/python-ilorest-library
-.. image:: https://img.shields.io/github/forks/HewlettPackard/python-ilorest-library.svg
-	:target: https://github.com/HewlettPackard/python-ilorest-library/network
 .. image:: https://api.codacy.com/project/badge/Grade/1283adc3972d42b4a3ddb9b96660bc07
 	:target: https://www.codacy.com/app/rexysmydog/python-ilorest-library?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=HewlettPackard/python-ilorest-library&amp;utm_campaign=Badge_Grade
 
@@ -28,12 +26,12 @@ Installing
 
 	pip install python-ilorest-library
 
-Installing from source
+Building from zip file source
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: console
 
-	python setup.py sdist --formats=zip
+	python setup.py sdist --formats=zip (this will produce a .zip file)
 	cd dist
 	pip install python-ilorest-library-x.x.x.zip
 
