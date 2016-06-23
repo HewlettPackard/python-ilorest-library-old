@@ -1,0 +1,18 @@
+language: python
+python:
+  - "2.7"
+
+# command to run tests
+script: nosetests
+
+deploy:
+    # test pypi
+  - provider: pypi
+    server: https://pypi.python.org/pypi
+    user: "lumbajack"
+    password:
+      secure: "bPot4d6AV//30SwxFfbfkjvk/1+FCuaeRzWwayykErYuPtz55gzE0WFLS0bTHIPJM/6izOKNzAq1cDX1ERXExsEEJ7Lq0L/Kukiuqk7ggXAd45vnNZVidQ4ZXd180ekRg8JIdz4iIobe0GWvy7qCETn1JttCeO3dUUhW8r0Gm60="
+    on:
+      branch: master
+      tags: true
+      condition: $TRAVIS_PYTHON_VERSION = "2.7"
