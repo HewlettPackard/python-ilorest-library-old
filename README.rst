@@ -2,6 +2,8 @@ python-ilorestful-library
 ==============
 .. image:: https://travis-ci.org/HewlettPackard/python-ilorest-library.svg?branch=master
     :target: https://travis-ci.org/HewlettPackard/python-ilorest-library
+.. image:: https://img.shields.io/github/forks/HewlettPackard/python-ilorest-library.svg
+	:target: https://github.com/HewlettPackard/python-ilorest-library/network
 
 
 .. contents:: :depth: 1
