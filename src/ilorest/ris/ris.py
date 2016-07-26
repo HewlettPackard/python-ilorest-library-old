@@ -1,12 +1,12 @@
 ###
 # Copyright 2016 Hewlett Packard Enterprise, Inc. All rights reserved.
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,6 @@
 
 import re
 import sys
-import urllib
 import logging
 import threading
 from Queue import Queue
@@ -94,7 +93,7 @@ class RisMonolithMember_v1_0_0(RisMonolithMemberBase):
             result[u'Type'] = self.type
 
             if self.maj_type == u'Collection.1' and \
-                                u'MemberType' in self._resp.dict:
+                                            u'MemberType' in self._resp.dict:
                 result[u'MemberType'] = self._resp.dict[u'MemberType']
 
             result[u'links'] = OrderedDict()
@@ -206,7 +205,7 @@ class RisMonolithMember_v1_0_0(RisMonolithMemberBase):
             result[u'Type'] = self.type
 
             if self.maj_type == u'Collection.1' and \
-                                u'MemberType' in self._resp.dict:
+                                            u'MemberType' in self._resp.dict:
                 result[u'MemberType'] = self._resp.dict[u'MemberType']
 
             self._reducer(self._resp.dict)
@@ -324,8 +323,8 @@ class RisMonolith_v1_0_0(Dictable):
 
         resp = self._client.get(path)
 
-        #TODO: need to remove this hard coded BIOS dependency
-        if resp.status != 200 and path.lower() == "/rest/v1/systems/1/bios":
+        if resp.status != 200 and path.lower() == self._client.typepath.defs.\
+                                                                    BiosPath:
             raise BiosUnregisteredError()
         elif resp.status != 200:
             path = path + '/'
@@ -366,18 +365,20 @@ class RisMonolith_v1_0_0(Dictable):
                 for match in matches:
                     if path == "/rest/v1":
                         if str(match.full_path) == "links.Schemas.href" or \
-                            str(match.full_path) == "links.Registries.href":
+                                str(match.full_path) == "links.Registries.href":
                             continue
                     else:
                         if str(match.full_path) == "Registries.@odata.id" or \
-                            str(match.full_path) == "JsonSchemas.@odata.id":
+                                str(match.full_path) == "JsonSchemas.@odata.id":
                             continue
+
+                    if match.value == path:
+                        continue
 
                     href = u'%s' % match.value
                     self._load(href, skipcrawl=skipcrawl, \
-                                                   originaluri=originaluri, \
-                                                   includelogs=includelogs, \
-                                                   skipinit=skipinit)
+                           originaluri=originaluri, includelogs=includelogs, \
+                           skipinit=skipinit)
             elif not skipcrawl:
                 href = u'%s' % dirmatch.value
                 self._load(href, skipcrawl=skipcrawl, originaluri=originaluri, \
@@ -429,11 +430,11 @@ class RisMonolith_v1_0_0(Dictable):
 
                     instance = list()
                     if u'st' in self.types:
-                        for x in self.types[u'st'][u'Instances']:
-                            instance.append(x)
+                        for stitem in self.types[u'st'][u'Instances']:
+                            instance.append(stitem)
                     if u'ob' in self.types:
-                        for x in self.types[u'ob'][u'Instances']:
-                            instance.append(x)
+                        for obitem in self.types[u'ob'][u'Instances']:
+                            instance.append(obitem)
 
                     for item in instance:
                         if jsonfile in item.resp._rest_request._path:
@@ -446,12 +447,14 @@ class RisMonolith_v1_0_0(Dictable):
                             if listmatch:
                                 start = listmatch.regs[0][0]
                                 end = listmatch.regs[0][1]
-                                newitempath = [itempath[:start],\
-                                               itempath[end:]]
+
+                                newitempath = [itempath[:start], itempath[end:]]
                                 start = jsonpointer.JsonPointer(newitempath[0])
                                 end = jsonpointer.JsonPointer(newitempath[1])
+
                                 del start.parts[-1], end.parts[-1]
                                 vals = start.resolve(respcopy)
+
                                 count = 0
 
                                 for val in vals:
@@ -557,6 +560,7 @@ class RisMonolith_v1_0_0(Dictable):
         found = False
         for indices in xrange(len(self.types[member.maj_type][u'Instances'])):
             inst = self.types[member.maj_type][u'Instances'][indices]
+
             if inst.resp.request.path == member.resp.request.path:
                 self.types[member.maj_type][u'Instances'][indices] = member
                 self.types[member.maj_type][u'Instances'][indices].patches.\
@@ -598,8 +602,10 @@ class RisMonolith_v1_0_0(Dictable):
             type_entry = OrderedDict()
             type_entry[u'Type'] = typ
             type_entry[u'Instances'] = list()
+
             for inst in self.types[typ][u'Instances']:
                 type_entry[u'Instances'].append(inst.to_dict())
+
             types_list.append(type_entry)
 
         result[u'Types'] = types_list
@@ -615,8 +621,10 @@ class RisMonolith_v1_0_0(Dictable):
         for typ in self.types.keys():
             type_entry = OrderedDict()
             type_entry[u'Type'] = typ
+
             for inst in self.types[typ][u'Instances']:
                 type_entry[u'Instances'] = inst.reduce()
+
             types_list.append(type_entry)
 
         result[u'Types'] = types_list

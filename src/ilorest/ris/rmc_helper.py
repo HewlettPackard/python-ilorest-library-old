@@ -1,12 +1,12 @@
 ###
 # Copyright 2016 Hewlett Packard Enterprise, Inc. All rights reserved.
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,6 @@ import json
 import errno
 import logging
 import hashlib
-import tempfile
 import urlparse2
 import ilorest.rest
 
@@ -55,8 +54,7 @@ class FailureDuringCommitError(HprmcError):
     pass
 
 class UndefinedClientError(Exception):
-    """Raised when there are no clients active (usually when user hasn't"""
-    """ logged in)"""
+    """Raised when there are no clients active (usually when user hasn't logged in"""
     pass
 
 class InstanceNotFoundError(Exception):
@@ -100,6 +98,10 @@ class LoadSkipSettingError(Exception):
     """Raised when one or more settings are absent in given server"""
     pass
 
+class InvalidPathError(Exception):
+    """Raised when requested path is not found"""
+    pass
+
 class ValidationError(Exception):
     """Raised when there is a problem with user input"""
     def __init__(self, errlist):
@@ -112,19 +114,20 @@ class ValidationError(Exception):
 
 class RmcClient(object):
     """RMC client base class"""
-    def __init__(self, url=None, username=None, password=None, \
+    def __init__(self, url=None, username=None, password=None, typepath=None, \
                         biospassword=None, sessionkey=None, is_redfish=False):
         if is_redfish:
-            self._rest_client = ilorest.rest.v1.redfish_client(
-                base_url=url, username=username, password=password,
-                biospassword=biospassword,
-                sessionkey=sessionkey, is_redfish=is_redfish)
+            self._rest_client = ilorest.rest.v1.redfish_client(base_url=url, \
+                           username=username, password=password, \
+                           biospassword=biospassword, sessionkey=sessionkey, \
+                           is_redfish=is_redfish)
         else:
-            self._rest_client = ilorest.rest.v1.rest_client(
-                base_url=url, username=username, password=password,
-                biospassword=biospassword,
-                sessionkey=sessionkey, is_redfish=is_redfish)
+            self._rest_client = ilorest.rest.v1.rest_client(base_url=url, \
+                            username=username, password=password, \
+                            biospassword=biospassword, sessionkey=sessionkey, \
+                            is_redfish=is_redfish)
 
+        self.typepath = typepath
         self._get_cache = dict()
         self._monolith = RisMonolith(self)
         self._selector = None
@@ -237,8 +240,22 @@ class RmcClient(object):
             self._get_cache[path] = resp
         return resp
 
-    def set(self, path, args=None, body=None, optionalpassword=None,
-            providerheader=None, headers=None):
+    def head(self, path, args=None, headers=None):
+        """Perform a HEAD request on path argument.
+
+        :param path: The URL to perform a GET request on.
+        :type path: str.
+        :param args: GET arguments.
+        :type args: str.
+        :returns: a RestResponse object containing the response data.
+        :rtype: ilorest.rest.v1.RestResponse.
+
+        """
+        resp = self._rest_client.head(path=path, args=args, headers=headers)
+        return resp
+
+    def set(self, path, args=None, body=None, optionalpassword=None, \
+                                            providerheader=None, headers=None):
         """Perform a PATCH request on path argument.
 
         :param path: The URL to perform a PATCH request on.
@@ -258,13 +275,13 @@ class RmcClient(object):
         resp = self._rest_client.get(path=path, args=args)
         self._get_cache[path] = resp
 
-        return self._rest_client.patch(path=path, args=args, body=body,
-                                       optionalpassword=optionalpassword,
-                                       providerheader=providerheader, 
-                                       headers=headers)
+        return self._rest_client.patch(path=path, args=args, body=body, \
+                                           optionalpassword=optionalpassword, \
+                                           providerheader=providerheader, \
+                                           headers=headers)
 
-    def toolpost(self, path, args=None, body=None, providerheader=None,
-                 headers=None):
+    def toolpost(self, path, args=None, body=None, providerheader=None, \
+                                                                headers=None):
         """Perform a POST request on path argument.
 
         :param path: The URL to perform a POST request on.
@@ -282,11 +299,11 @@ class RmcClient(object):
         resp = self._rest_client.get(path=path, args=args)
         self._get_cache[path] = resp
 
-        return self._rest_client.post(path=path, args=args, body=body,
-                                      providerheader=providerheader, headers=headers)
+        return self._rest_client.post(path=path, args=args, body=body, \
+                              providerheader=providerheader, headers=headers)
 
-    def toolput(self, path, args=None, body=None, optionalpassword=None,
-                providerheader=None, headers=None):
+    def toolput(self, path, args=None, body=None, optionalpassword=None, \
+                                            providerheader=None, headers=None):
         """
         Perform a PUT request on path argument.
 
@@ -306,9 +323,10 @@ class RmcClient(object):
         resp = self._rest_client.get(path=path, args=args)
         self._get_cache[path] = resp
 
-        return self._rest_client.put(path=path, args=args, body=body,
-                                     optionalpassword=optionalpassword,
-                                     providerheader=providerheader, headers=headers)
+        return self._rest_client.put(path=path, args=args, body=body, \
+                                     optionalpassword=optionalpassword, \
+                                     providerheader=providerheader, \
+                                     headers=headers)
 
     def tooldelete(self, path, args=None, providerheader=None, headers=None):
         """Perform a PUT request on path argument.
@@ -543,13 +561,16 @@ class RmcFileCacheManager(RmcCacheManager):
                     if u'url' not in login_data:
                         continue
 
-                    rmc_client = RmcClient(
+                    self._rmc.getGen(url=login_data.get('url', None))
+                    rmc_client = RmcClient(\
                         username=login_data.get('username', 'Administrator'), \
                         password=login_data.get('password', None), \
                         url=login_data.get('url', None), \
                         biospassword=login_data.get('bios_password', None), \
-                        sessionkey=login_data.get('session_key', None)
-                    )
+                        sessionkey=login_data.get('session_key', None), \
+                        typepath=self._rmc.typepath, \
+                        is_redfish=login_data.get('redfish', None))
+
                     rmc_client._rest_client.set_authorization_key(\
                                             login_data.get('authorization_key'))
                     rmc_client._rest_client.set_session_key(\
@@ -574,9 +595,9 @@ class RmcFileCacheManager(RmcCacheManager):
                                                         method='GET', path=key)
 
                         getdata[key]['restreq'] = restreq
-                        rmc_client._get_cache[key] = (
-                            ilorest.rest.v1_helper.StaticRestResponse(
-                                **getdata[key]))
+                        rmc_client._get_cache[key] = (\
+                                  ilorest.rest.v1_helper.StaticRestResponse(\
+                                                                **getdata[key]))
 
                     rmc_client._monolith = RisMonolith(rmc_client)
                     rmc_client._monolith.load_from_dict(client['monolith'])
@@ -599,7 +620,7 @@ class RmcFileCacheManager(RmcCacheManager):
                 else:
                     raise
 
-        index_map = dict() # dict to prevent recalculating the md5
+        index_map = dict()
         index_cache = list()
         for client in self._rmc._rmc_clients:
             md5 = hashlib.md5()
@@ -607,12 +628,8 @@ class RmcFileCacheManager(RmcCacheManager):
             md5str = md5.hexdigest()
 
             index_map[client.get_base_url()] = md5str
-            index_data = dict(
-                url=client.get_base_url(),
-                href=u'%s' % md5str,
-            )
+            index_data = dict(url=client.get_base_url(), href=u'%s' % md5str,)
             index_cache.append(index_data)
-
 
         indexfh = open(u'%s/index' % cachedir, 'w')
         json.dump(index_cache, indexfh, indent=2, cls=JSONEncoder)
@@ -622,16 +639,16 @@ class RmcFileCacheManager(RmcCacheManager):
 
         if self._rmc._rmc_clients:
             for client in self._rmc._rmc_clients:
-                login_data = dict(
+                login_data = dict(\
                     username=client.get_username(), \
-                    password=client.get_password(), \
-                    url=client.get_base_url(), \
+                    password=client.get_password(), url=client.get_base_url(), \
                     session_key=client.get_session_key(), \
                     session_location=client.get_session_location(), \
                     authorization_key=client.get_authorization_key(), \
-                    bios_password=client.bios_password
-                )
-                clients_cache.append(
+                    bios_password=client.bios_password, \
+                    redfish=client.monolith.is_redfish)
+
+                clients_cache.append(\
                     dict(selector=client.selector, login=login_data, \
                          filter_attr=client._filter_attr, \
                          filter_value=client._filter_value, \

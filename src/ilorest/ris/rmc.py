@@ -1,12 +1,12 @@
 ###
 # Copyright 2016 Hewlett Packard Enterprise, Inc. All rights reserved.
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,6 +29,7 @@ from collections import OrderedDict, Mapping
 import jsonpatch
 import jsonpath_rw
 import jsonpointer
+import ilorest.ris.tpdefs
 import ilorest.ris.validation
 
 from ilorest.ris.validation import ValidationManager, RepoRegistryEntry
@@ -39,7 +40,7 @@ from ilorest.ris.rmc_helper import (UndefinedClientError, InstanceNotFoundError,
                               RmcClient, RmcConfig, RmcFileCacheManager, \
                               NothingSelectedSetError, ValueChangedError, \
                               LoadSkipSettingError, InvalidCommandLineError, \
-                              FailureDuringCommitError)
+                              FailureDuringCommitError, InvalidPathError)
 
 #---------End of imports---------
 
@@ -89,8 +90,10 @@ class RmcApp(object):
 
         if not "--showwarnings" in Args:
             self.logger.setLevel(logging.WARNING)
-            if self.logger.handlers and self.logger.handlers[0].name=='lerr':
+            if self.logger.handlers and self.logger.handlers[0].name == 'lerr':
                 self.logger.handlers.remove(self.logger.handlers[0])
+
+        self.typepath = ilorest.ris.tpdefs.typesandpathdefines()
 
     def restore(self):
         """Restore monolith from cache"""
@@ -297,14 +300,14 @@ class RmcApp(object):
         else:
             try:
                 self.add_rmc_client(RmcClient(username=username, \
-                              password=password, url=base_url, \
-                              biospassword=biospassword, is_redfish=is_redfish))
+                    password=password, url=base_url, typepath=self.typepath, \
+                    biospassword=biospassword, is_redfish=is_redfish))
             except Exception, excp:
                 raise excp
 
         try:
             if base_url == "blobstore://." and \
-                            float(self.getiloversion(skipschemas=True)) >= 2.20:
+                            float(self.getiloversion(skipschemas=True)) >= 4.220:
                 self.current_client.login()
             elif username and password:
                 self.current_client.login()
@@ -553,8 +556,9 @@ class RmcApp(object):
                     regs = zip(regs, i)
 
                     for item in sorted(regs, reverse=True):
-                        extref = self.get_handler(reglist[item[1]][u'Location']\
-                                    [0]["Uri"]["extref"], verbose=False, \
+                        locationdict = self.geturidict\
+                                            (reglist[item[1]][u'Location'][0])
+                        extref = self.get_handler(locationdict, verbose=False, \
                                     service=True, silent=True)
 
                         if extref:
@@ -585,12 +589,12 @@ class RmcApp(object):
                     LOGGER.warn(u"Unable to locate registry/schema for '%s'", \
                                                             currdict[type_str])
                     continue
-                elif float(iloversion) >= 2.10:
+                elif float(iloversion) >= 4.210:
                     try:
+                        locationdict = self.geturidict(regfound.Location[0])
                         self.check_type_and_download(\
-                                        self.current_client.monolith, \
-                                        regfound.Location[0]["Uri"]["extref"], \
-                                        skipcrawl=True, loadtype='ref')
+                                self.current_client.monolith, \
+                                locationdict, skipcrawl=True, loadtype='ref')
                     except Exception, excp:
                         raise excp
 
@@ -604,8 +608,8 @@ class RmcApp(object):
                 matches = jsonpath_expr.find(currdict)
 
                 if not matches:
-                    self.warning_handler("Property not found in selection '%s', "\
-                                 "skipping '%s'\n" % (instance.type, selector))
+                    self.warning_handler("Property not found in selection " \
+                         "'%s', skipping '%s'\n" % (instance.type, selector))
                     nochangesmade = False
 
                 for match in matches:
@@ -634,7 +638,7 @@ class RmcApp(object):
                     entrydict = None
                     entrymono = None
 
-                    if float(iloversion) >= 2.10:
+                    if float(iloversion) >= 4.210:
                         entrydict = currdict
                         entrymono = self.current_client.monolith
 
@@ -647,12 +651,11 @@ class RmcApp(object):
 
                             if valman == 'readonly':
                                 self.warning_handler("Property is read-only" \
-                                             " skipping '%s'\n" % selector)
+                                                 " skipping '%s'\n" % selector)
                                 continue
                             elif valman == 'unique' and not uniqueoverride:
-                                self.warning_handler("Property is unique to the "\
-                                                 "system skipping '%s'\n" \
-                                                                    % selector)
+                                self.warning_handler("Property is unique to " \
+                                     "the system skipping '%s'\n" % selector)
                                 continue
                     except Exception:
                         if not validation_manager.validate(newdict, \
@@ -707,7 +710,7 @@ class RmcApp(object):
             return results
 
     def loadset(self, dicttolist=None, selector=None, val=None, newargs=None,\
-                latestschema=False, uniqueoverride=False):
+                                    latestschema=False, uniqueoverride=False):
         """Optimized version of the old style of set properties
 
         :param selector: the type selection for the set operation.
@@ -833,7 +836,7 @@ class RmcApp(object):
                 itemslower = [x.lower() for x in items]
                 templist = []
                 try:
-                    for ind,item in enumerate(dicttolist):
+                    for ind, item in enumerate(dicttolist):
                         try:
                             if not isinstance(item[1], list):
                                 dicttolist[ind] = items[itemslower.index(\
@@ -850,7 +853,8 @@ class RmcApp(object):
                             settingskipped = True
 
                     if templist:
-                        dicttolist=[x for x in dicttolist if x[0] not in templist]
+                        dicttolist = [x for x in dicttolist if x[0] not in \
+                                                                    templist]
                 except Exception, excp:
                     raise excp
 
@@ -864,16 +868,18 @@ class RmcApp(object):
                             self.warning_handler("Property is read-only" \
                                              " skipping '%s'\n" % item["Name"])
 
-                            dicttolist = [x for x in dicttolist if x[0] != item["Name"]]
+                            dicttolist = [x for x in dicttolist if x[0] != \
+                                                                item["Name"]]
                         try:
                             if (item["Name"] in selectors) and \
                                                 item["IsSystemUniqueProperty"] \
-                                                and not uniqueoverride:
-                                self.warning_handler("Property is unique to the"\
-                                                 " system skipping '%s'\n" % \
-                                                                item["Name"])
+                                                        and not uniqueoverride:
+                                self.warning_handler("Property is unique to " \
+                                                 "the system skipping '%s'\n" \
+                                                                % item["Name"])
 
-                                dicttolist= [x for x in dicttolist if x[0] != item["Name"]]
+                                dicttolist = [x for x in dicttolist if x[0] != \
+                                                                item["Name"]]
                         except Exception:
                             continue
                     except Exception, excp:
@@ -889,10 +895,11 @@ class RmcApp(object):
                     if templist:
                         tempdict = copy.deepcopy(dicttolist)
                         for i in templist:
-                            self.warning_handler("Property is read-only skipping "\
-                                             "'%s'\n" % str(i))
+                            self.warning_handler("Property is read-only "   \
+                                                    "skipping '%s'\n" % str(i))
 
-                        dicttolist = [x for x in tempdict if x[0] not in templist]
+                        dicttolist = [x for x in tempdict if x[0] not in \
+                                                                    templist]
                 except Exception, excp:
                     raise excp
 
@@ -907,8 +914,8 @@ class RmcApp(object):
                 self._multilevelbuffer = newdict
                 matches = self.setmultiworker(newargs, self._multilevelbuffer)
                 if not matches:
-                    self.warning_handler("Property not found in selection '%s', " \
-                                "skipping '%s'\n" % (instance.type, outputline))
+                    self.warning_handler("Property not found in selection " \
+                         "'%s', skipping '%s'\n" % (instance.type, outputline))
 
                 dicttolist = []
 
@@ -917,8 +924,8 @@ class RmcApp(object):
                 matches = jsonpath_expr.find(currdict)
 
                 if not matches:
-                    self.warning_handler("Property not found in selection '%s', " \
-                                 "skipping '%s'\n" % (instance.type, itersel))
+                    self.warning_handler("Property not found in selection " \
+                             "'%s', skipping '%s'\n" % (instance.type, itersel))
                     nochangesmade = False
 
                 for match in matches:
@@ -960,7 +967,7 @@ class RmcApp(object):
             entrydict = None
             entrymono = None
 
-            if float(iloversion) >= 2.10:
+            if float(iloversion) >= 4.210:
                 entrydict = oridict
                 entrymono = self.current_client.monolith
 
@@ -968,10 +975,17 @@ class RmcApp(object):
                 if attributeregistry[instance.type]:
                     validation_manager.bios_validate(newdict, \
                             attributeregistry[instance.type], checkall=True, \
-                            currdict=entrydict, monolith=entrymono)
-            except Exception:
-                validation_manager.validate(newdict, checkall=True, \
                                         currdict=entrydict, monolith=entrymono)
+            except Exception:
+                attrreg = validation_manager.validate(newdict, checkall=True, \
+                                        currdict=entrydict, monolith=entrymono)
+                if isinstance(attrreg, dict):
+                    attrreg = self.get_handler(attrreg[self.current_client.\
+                            monolith._hrefstring], service=True, silent=True)
+                    attrreg = RepoRegistryEntry(attrreg.dict)
+                    validation_manager.validate(newdict, checkall=True, \
+                                        currdict=entrydict, monolith=entrymono,\
+                                        attrreg=attrreg)
 
             validation_errors = validation_manager.get_errors()
             if validation_errors and len(validation_errors) > 0:
@@ -1097,24 +1111,28 @@ class RmcApp(object):
                 currdictcopy = currdict
                 newarg = newargs[:-1]
                 newarg.append(name)
+
                 for i in range(len(newargs)):
                     for item in currdictcopy.iterkeys():
                         if newarg[i].lower() == item.lower():
                             selector = item
                             newarg[i] = item
+
                             if not newarg[i].lower() == newarg[-1].lower():
                                 currdictcopy = currdictcopy[item]
                                 break
+
                 if not selector:
                     continue
+
                 skip = False
                 val = self.checkforintvalue(selector, val, iloversion, \
-                                    validation_manager, instance, newarg)
+                                        validation_manager, instance, newarg)
                 try:
                     if not "PATCH" in \
-                    instance.resp._http_response.msg.headers[0]:
+                                    instance.resp._http_response.msg.headers[0]:
                         self.warning_handler(u'Skipping read-only path: %s\n' \
-                                         % instance.resp.request.path)
+                                                % instance.resp.request.path)
                         skip = True
                 except Exception:
                     try:
@@ -1122,13 +1140,13 @@ class RmcApp(object):
                             if item.keys()[0] == "allow":
                                 if not "PATCH" in item.values()[0]:
                                     self.warning_handler(u'Skipping read-only '\
-                                    'path: %s\n' % instance.resp.request.path)
+                                     'path: %s\n' % instance.resp.request.path)
                                     skip = True
                                     break
                     except Exception:
                         if not "PATCH" in instance.resp._headers["allow"]:
-                            self.warning_handler(u'Skipping read-only path: %s\n'\
-                                             % instance.resp.request.path)
+                            self.warning_handler(u'Skipping read-only path: ' \
+                                            '%s\n' % instance.resp.request.path)
                             skip = True
 
                 if skip:
@@ -1152,14 +1170,17 @@ class RmcApp(object):
                     regs = zip(regs, i)
 
                     for item in sorted(regs, reverse=True):
-                        extref = self.get_handler(reglist[item[1]][u'Location']\
-                                    [0]["Uri"]["extref"], \
-                                    verbose=False, service=True, silent=True)
+                        locationdict = self.geturidict\
+                                            (reglist[item[1]][u'Location'][0])
+                        extref = self.get_handler(locationdict, verbose=False, \
+                                                    service=True, silent=True)
+
                         if extref:
                             regtype = item[0]
                             break
                 else:
                     schematype = currdict[type_string]
+
                     try:
                         regtype = attributeregistry[instance.type]
                     except Exception:
@@ -1167,25 +1188,25 @@ class RmcApp(object):
 
                 try:
                     if attributeregistry[instance.type]:
-                        regfound = validation_manager.find_bios_registry(regtype)
+                        regfound = validation_manager.find_bios_registry(\
+                                                                        regtype)
                 except Exception:
                     regfound = validation_manager.find_schema(schematype)
 
                 if self.current_client.monolith.is_redfish and regfound:
-                    regfound = self.get_handler(regfound[u'@odata.id'],
-                                                verbose=False,
-                                                service=True,
-                                                silent=True).obj
+                    regfound = self.get_handler(regfound[u'@odata.id'], \
+                                verbose=False, service=True, silent=True).obj
                     regloc = regfound
+
                 if not regfound:
                     LOGGER.warn(u"Unable to locate registry/schema for '%s'",\
-                                                            currdict[type_string])
+                                                        currdict[type_string])
                     continue
-                elif float(iloversion) >= 2.10:
+                elif float(iloversion) >= 4.210:
                     try:
+                        locationdict = self.geturidict(regfound.Location[0])
                         self.check_type_and_download(\
-                                self.current_client.monolith, \
-                                regfound.Location[0]["Uri"]["extref"], \
+                                self.current_client.monolith, locationdict, \
                                 skipcrawl=True, loadtype='ref')
                     except Exception, excp:
                         raise excp
@@ -1196,25 +1217,24 @@ class RmcApp(object):
                 matches = self.setmultiworker(newargs, self._multilevelbuffer)
 
                 if not matches:
-                    self.warning_handler("Property not found in selection '%s', " \
-                                "skipping '%s'\n" % (instance.type, outputline))
+                    self.warning_handler("Property not found in selection " \
+                         "'%s', skipping '%s'\n" % (instance.type, outputline))
                 else:
                     entrydict = None
                     entrymono = None
 
-                    if float(iloversion) >= 2.10:
+                    if float(iloversion) >= 4.210:
                         entrydict = currdict
                         entrymono = self.current_client.monolith
 
                     try:
                         if attributeregistry[instance.type]:
                             if not validation_manager.bios_validate(\
-                                            newdict, \
-                                            attributeregistry[instance.type], \
-                                            selector, currdict=entrydict, \
-                                            monolith=entrymono):
+                                    newdict, attributeregistry[instance.type], \
+                                    selector, currdict=entrydict, \
+                                    monolith=entrymono):
                                 self.warning_handler("Property is read-only" \
-                                             " skipping '%s'\n" % selector)
+                                                 " skipping '%s'\n" % selector)
                                 continue
                     except Exception:
                         selector = newarg[-1]
@@ -1223,8 +1243,7 @@ class RmcApp(object):
                         for elem in newarg:
                             for item in newdictcopy.iterkeys():
                                 if elem.lower() == item.lower():
-                                    if not elem.lower() == \
-                                                            newarg[-1].lower():
+                                    if not elem.lower() == newarg[-1].lower():
                                         newdictcopy = newdictcopy[item]
 
                         newdictcopy[type_string] = newdict[type_string]
@@ -1232,10 +1251,10 @@ class RmcApp(object):
 
                         if not validation_manager.validate(newdictcopy, \
                                     selector=selector, currdict=currdictcopy, \
-                                        monolith=entrymono, newarg=newarg, \
-                                                                regloc=regloc):
-                            self.warning_handler("Property is " \
-                                        "read-only skipping '%s'\n" % selector)
+                                    monolith=entrymono, newarg=newarg, \
+                                    regloc=regloc):
+                            self.warning_handler("Property is read-only " \
+                                                "skipping '%s'\n" % selector)
                             continue
 
                     validation_errors = validation_manager.get_errors()
@@ -1265,12 +1284,14 @@ class RmcApp(object):
                                 entry = item.patch[0]["path"].split('/')[1:]
                             except Exception:
                                 entry = item[0]["path"].split('/')[1:]
+
                             if len(entry) == len(newarg):
                                 check = 0
-                                
+
                                 for ind, elem in enumerate(entry):
                                     if elem == newarg[ind]:
                                         check += 1
+
                                 if check == len(newarg):
                                     instance.patches.remove(item)
                                     patchremoved = True
@@ -1308,13 +1329,16 @@ class RmcApp(object):
             for attr, val in currdict.iteritems():
                 if attr.lower() == name.lower():
                     found = True
+
                     if value:
                         if value[0] == "[" and value[-1] == "]":
                             value = value[1:-1].split(',')
                             currdict[attr] = '"' + str(value) + '"'
                         else:
-                            if value.lower() == "true" or value.lower() == "false":
-                                value = value.lower() in ("yes", "true", "t", "1")
+                            if value.lower() == "true" or value.lower() == \
+                                                                        "false":
+                                value = value.lower() in ("yes", "true", "t", \
+                                                                            "1")
                             currdict[attr] = value
                     else:
                         currdict[attr] = value
@@ -1322,8 +1346,7 @@ class RmcApp(object):
         return found
 
     def info(self, selector=None, ignorelist=None, dumpjson=False, \
-                                        autotest=False, newarg=None, \
-                                        latestschema=False):
+                            autotest=False, newarg=None, latestschema=False):
         """Main function for info command
 
         :param selector: the type selection for the get operation.
@@ -1359,6 +1382,7 @@ class RmcApp(object):
             if selector:
                 if newarg:
                     currdictcopy = currdict
+
                     for ind, elem in enumerate(newarg):
                         if isinstance(currdictcopy, dict):
                             for item in currdictcopy.iterkeys():
@@ -1366,8 +1390,7 @@ class RmcApp(object):
                                     selector = item
                                     newarg[ind] = item
 
-                                    if not elem.lower() == \
-                                                            newarg[-1].lower():
+                                    if not elem.lower() == newarg[-1].lower():
                                         currdictcopy = currdictcopy[item]
                                         break
                         else:
@@ -1395,7 +1418,7 @@ class RmcApp(object):
                         break
                 else:
                     LOGGER.warn(u"Unable to locate registry model for " \
-                                                        ":'%s'", selector)
+                                                            ":'%s'", selector)
                     continue
 
             if selector:
@@ -1417,6 +1440,7 @@ class RmcApp(object):
 
                             if biosmode:
                                 found = model.get_validator_bios(key)
+
                                 if not found and bsmodel:
                                     found = bsmodel.get_validator(key)
                             else:
@@ -1431,13 +1455,13 @@ class RmcApp(object):
                                     #TODO: find a way to not print
                                     found.print_help(selector, out=sys.stdout)
                             else:
-                                self.warning_handler("No data available for entry:"\
-                                                 " '%s'\n" % ("/".join(newarg) \
-                                                      if newarg else selector))
+                                self.warning_handler("No data available for " \
+                                         "entry: '%s'\n" % ("/".join(newarg) \
+                                                    if newarg else selector))
                 else:
                     self.warning_handler("Entry '%s' not found in current" \
-                                     " selection\n" \
-                                    % ("/".join(newarg) if newarg else selector))
+                                            " selection\n" % ("/".join(newarg) \
+                                                      if newarg else selector))
 
                 results.append("Success")
             else:
@@ -1473,7 +1497,7 @@ class RmcApp(object):
         return (None, None)
 
     def getiloversion(self, skipschemas=False):
-        """Function that returns the current BIOS family
+        """Function that returns the current iLO version
 
         :param skipschemas: flag to determine whether to skip schema download.
         :type skipschemas: boolean.
@@ -1485,14 +1509,18 @@ class RmcApp(object):
                                    default_prefix, silent=True, service=True)
 
         try:
-            if results.dict["Oem"]["Hp"]["Manager"]:
-                oemjson = results.dict["Oem"]["Hp"]["Manager"]
-                iloversion = oemjson[0]["ManagerFirmwareVersion"]
+            if results.dict["Oem"][self.typepath.defs.OemHp]["Manager"]:
+                oemjson = results.dict["Oem"][self.typepath.defs.\
+                                                            OemHp]["Manager"]
+                ilogen = oemjson[0]["ManagerType"]
+                ilover = oemjson[0]["ManagerFirmwareVersion"]
+                iloversion = ilogen.split(' ')[-1] + '.' + \
+                                                    ''.join(ilover.split('.'))
         except Exception:
             pass
 
         if not skipschemas:
-            if iloversion and float(iloversion) > 2.10:
+            if iloversion and float(iloversion) > 4.210:
                 self.verifyschemasdownloaded(self.current_client.monolith)
 
         return iloversion
@@ -1529,7 +1557,8 @@ class RmcApp(object):
                         try:
                             if attributeregistry[instance.type]:
                                 regfound = validation_manager.\
-                                find_bios_registry(attributeregistry[instance.type])
+                                            find_bios_registry(\
+                                               attributeregistry[instance.type])
                         except Exception:
                             pass
 
@@ -1628,6 +1657,7 @@ class RmcApp(object):
         """
         changesmade = False
         instances = self.get_commit_selection()
+
         if not instances or len(instances) == 0:
             raise NothingSelectedError()
 
@@ -1672,6 +1702,7 @@ class RmcApp(object):
                     if len(patch.patch):
                         if "/" in patch.patch[0]["path"][1:]:
                             newdict = self.commitworkerfunc(patch)
+
                             if newdict:
                                 self.merge_dict(currdict, newdict)
                         else:
@@ -1713,9 +1744,8 @@ class RmcApp(object):
                             if patch[0]["value"]:
                                 if patch[0]["value"][0] == '"' and\
                                             patch[0]["value"][-1] == '"' and \
-                                            len(patch[0]["value"]) == 2:
-                                    currdict[patch[0]["path"][1:]] = \
-                                                            ''
+                                                    len(patch[0]["value"]) == 2:
+                                    currdict[patch[0]["path"][1:]] = ''
                                 elif patch[0]["value"][0] == '"' and\
                                                 patch[0]["value"][-1] == '"':
                                     currdict[patch[0]["path"][1:]] = \
@@ -1733,7 +1763,7 @@ class RmcApp(object):
                 changesmade = True
                 if verbose:
                     out.write(u'Changes made to path: %s\n' % \
-                             instance.resp.request.path)
+                                                    instance.resp.request.path)
 
                 put_path = instance.resp.request.path
                 results = self.current_client.set(put_path, body=currdict, \
@@ -1742,8 +1772,7 @@ class RmcApp(object):
                 (base_messages, ilo_messages, hpcommon_messages, \
                                 iloevent_messages) = self.get_error_messages()
                 self.invalid_return_handler(results, ilo_messages, \
-                                            base_messages, iloevent_messages,\
-                                            hpcommon_messages)
+                            base_messages, iloevent_messages, hpcommon_messages)
 
                 if not results.status == 200:
                     raise FailureDuringCommitError("Failed to commit with " \
@@ -1762,6 +1791,7 @@ class RmcApp(object):
         """
         for k, itemv2 in newdict.items():
             itemv1 = currdict.get(k)
+
             if isinstance(itemv1, Mapping) and\
                  isinstance(itemv2, Mapping):
                 self.merge_dict(itemv1, itemv2)
@@ -1771,6 +1801,7 @@ class RmcApp(object):
     def get_error_messages(self):
         """Handler of error messages from iLO"""
         iloversion = self.getiloversion()
+        typestr = self.current_client.monolith._typestring
         validation_manager = self.get_validation_manager(iloversion)
         regfound = validation_manager.find_registry("Base")
 
@@ -1781,97 +1812,99 @@ class RmcApp(object):
 
         if not regfound:
             LOGGER.warn(u"Unable to locate registry for '%s'", "Base")
-        elif float(iloversion) >= 2.10:
+        elif float(iloversion) >= 4.210:
             try:
-                self.check_type_and_download(\
-                                 self.current_client.monolith, \
-                                regfound.Location[0]["Uri"]["extref"], \
-                                skipcrawl=True, loadtype='ref')
+                locationdict = self.geturidict(regfound.Location[0])
+                self.check_type_and_download(self.current_client.monolith, \
+                                 locationdict, skipcrawl=True, loadtype='ref')
             except Exception:
                 pass
         if regfound:
             validation_manager._base_messages = regfound.get_registry_model(\
-                                skipcommit=True, currdict={"Type": "Base"}, \
-                                monolith=self.current_client.monolith, \
-                                searchtype="MessageRegistry.")
+                            skipcommit=True, currdict={typestr: "Base"}, \
+                            monolith=self.current_client.monolith, \
+                            searchtype=self.typepath.defs.MessageRegistryType)
 
         regfound = validation_manager.find_registry("iLO")
 
         if self.current_client.monolith.is_redfish and regfound:
-            regfound = self.get_handler(regfound[u'@odata.id'], \
-                            verbose=False, service=True, silent=True).obj
+            regfound = self.get_handler(regfound[u'@odata.id'], verbose=False, \
+                                                service=True, silent=True).obj
             regfound = RepoRegistryEntry(regfound)
 
         if not regfound:
             LOGGER.warn(u"Unable to locate registry for '%s'", "iLO")
-        elif float(iloversion) >= 2.10:
+        elif float(iloversion) >= 4.210:
             try:
+                locationdict = self.geturidict(regfound.Location[0])
                 self.check_type_and_download(self.current_client.monolith, \
-                                    regfound.Location[0]["Uri"]["extref"], \
-                                    skipcrawl=True, loadtype='ref')
+                                locationdict, skipcrawl=True, loadtype='ref')
             except Exception:
                 pass
+
         if regfound:
             validation_manager._ilo_messages = regfound.get_registry_model(\
-                                    skipcommit=True, currdict={"Type": "iLO"}, \
-                                    monolith=self.current_client.monolith, \
-                                    searchtype="MessageRegistry.")
+                            skipcommit=True, currdict={typestr: "iLO"}, \
+                            monolith=self.current_client.monolith, \
+                            searchtype=self.typepath.defs.MessageRegistryType)
 
-        regfound = validation_manager.find_registry("HpCommon")
+        regfound = validation_manager.find_registry(\
+                                                self.typepath.defs.HpCommonType)
 
         if self.current_client.monolith.is_redfish and regfound:
-            regfound = self.get_handler(regfound[u'@odata.id'], \
-                            verbose=False, service=True, silent=True).obj
+            regfound = self.get_handler(regfound[u'@odata.id'], verbose=False, \
+                                                service=True, silent=True).obj
             regfound = RepoRegistryEntry(regfound)
 
         if not regfound:
-            LOGGER.warn(u"Unable to locate registry for '%s'", "HpCommon")
-        elif float(iloversion) >= 2.10:
+            LOGGER.warn(u"Unable to locate registry for '%s'", \
+                                                self.typepath.defs.HpCommonType)
+        elif float(iloversion) >= 4.210:
             try:
+                locationdict = self.geturidict(regfound.Location[0])
                 self.check_type_and_download(self.current_client.monolith, \
-                                regfound.Location[0]["Uri"]["extref"], \
-                                skipcrawl=True, loadtype='ref')
+                                 locationdict, skipcrawl=True, loadtype='ref')
             except Exception:
                 pass
         if regfound:
             validation_manager._hpcommon_messages = \
-                                regfound.get_registry_model(skipcommit=True, \
-                                currdict={"Type": "HpCommon"}, \
-                                monolith=self.current_client.monolith, \
-                                searchtype="MessageRegistry.")
+                        regfound.get_registry_model(skipcommit=True, \
+                        currdict={typestr: self.typepath.defs.HpCommonType}, \
+                        monolith=self.current_client.monolith, \
+                        searchtype=self.typepath.defs.MessageRegistryType)
 
         regfound = validation_manager.find_registry("iLOEvents")
 
         if self.current_client.monolith.is_redfish and regfound:
-            regfound = self.get_handler(regfound[u'@odata.id'], \
-                            verbose=False, service=True, silent=True).obj
+            regfound = self.get_handler(regfound[u'@odata.id'], verbose=False, \
+                                                service=True, silent=True).obj
             regfound = RepoRegistryEntry(regfound)
 
         if not regfound:
             LOGGER.warn(u"Unable to locate registry for '%s'", "iLOEvents")
-        elif float(iloversion) >= 2.10:
+        elif float(iloversion) >= 4.210:
             try:
+                locationdict = self.geturidict(regfound.Location[0])
                 self.check_type_and_download(self.current_client.monolith, \
-                                    regfound.Location[0]["Uri"]["extref"], \
-                                    skipcrawl=True, loadtype='ref')
+                                locationdict, skipcrawl=True, loadtype='ref')
             except Exception:
                 pass
 
         if regfound:
             validation_manager._iloevents_messages = \
                             regfound.get_registry_model(skipcommit=True, \
-                                    currdict={"Type": "iLOEvents"}, \
-                                    monolith=self.current_client.monolith, \
-                                    searchtype="MessageRegistry.")
+                            currdict={typestr: "iLOEvents"}, \
+                            monolith=self.current_client.monolith, \
+                            searchtype=self.typepath.defs.MessageRegistryType)
 
         return (validation_manager._base_messages, \
-                validation_manager._ilo_messages, \
-                validation_manager._hpcommon_messages, \
-                validation_manager._iloevents_messages)
+                                        validation_manager._ilo_messages, \
+                                        validation_manager._hpcommon_messages, \
+                                        validation_manager._iloevents_messages)
 
-    def patch_handler(self, put_path, body, optionalpassword=None,
-                  verbose=False, providerheader=None, service=False, url=None, \
-                  sessionid=None, headers=None, iloresponse=False, silent=False):
+    def patch_handler(self, put_path, body, optionalpassword=None, \
+              verbose=False, providerheader=None, service=False, url=None, \
+              sessionid=None, headers=None, iloresponse=False, silent=False):
         """Main worker function for raw patch command
 
         :param put_path: the URL path.
@@ -1901,15 +1934,18 @@ class RmcApp(object):
         iloevent_messages = None
         hpcommon_messages = None
 
+        (put_path, body) = self.checkpostpatch(body=body, path=put_path, \
+                    verbose=verbose, service=False, url=None, sessionid=None, \
+                    headers=None, iloresponse=False, silent=True, patch=True)
+
         if sessionid:
             results = RmcClient(url=url, sessionkey=sessionid).set(put_path, \
                                body=body, optionalpassword=optionalpassword, \
-                                providerheader=providerheader, headers=headers)
+                               providerheader=providerheader, headers=headers)
         else:
             results = self.current_client.set(put_path, body=body, \
-                                          optionalpassword=optionalpassword, \
-                                          providerheader=providerheader, \
-                                                            headers=headers)
+                              optionalpassword=optionalpassword, \
+                              providerheader=providerheader, headers=headers)
 
         if not silent and not service:
             (base_messages, ilo_messages, hpcommon_messages, \
@@ -1921,9 +1957,9 @@ class RmcApp(object):
         if iloresponse:
             return results
 
-    def get_handler(self, put_path, silent=False, verbose=False, service=False,
-                                    url=None, sessionid=None, uncache=False, \
-                                    headers=None, iloresponse=False):
+    def get_handler(self, put_path, silent=False, verbose=False, \
+                                service=False, url=None, sessionid=None, \
+                                uncache=False, headers=None, iloresponse=False):
         """main worker function for raw get command
 
         :param put_path: the URL path.
@@ -1953,10 +1989,10 @@ class RmcApp(object):
 
         if sessionid:
             results = RmcClient(url=url, sessionkey=sessionid).get(put_path, \
-                                                            headers=headers)
+                                                               headers=headers)
         else:
             results = self.current_client.get(put_path, uncache=uncache, \
-                                              headers=headers)
+                                                                headers=headers)
 
         if not silent and not service:
             (base_messages, ilo_messages, hpcommon_messages, \
@@ -1972,8 +2008,8 @@ class RmcApp(object):
             return None
 
     def post_handler(self, put_path, body, verbose=False, providerheader=None, \
-                                    service=False, url=None, sessionid=None,\
-                                    headers=None, iloresponse=False, silent=False):
+                                service=False, url=None, sessionid=None,\
+                                headers=None, iloresponse=False, silent=False):
         """Main worker function for raw post command
 
         :param put_path: the URL path.
@@ -2001,14 +2037,17 @@ class RmcApp(object):
         iloevent_messages = None
         hpcommon_messages = None
 
+        (put_path, body) = self.checkpostpatch(body=body, path=put_path, \
+                    verbose=verbose, service=False, url=None, sessionid=None,\
+                    headers=None, iloresponse=False, silent=True)
+
         if sessionid:
             results = RmcClient(url=url, sessionkey=sessionid).toolpost(\
                             put_path, body=body, providerheader=providerheader,\
                             headers=headers)
         else:
             results = self.current_client.toolpost(put_path, body=body, \
-                                                providerheader=providerheader,\
-                                                headers=headers)
+                                providerheader=providerheader, headers=headers)
 
         if not silent and not service:
             (base_messages, ilo_messages, hpcommon_messages, \
@@ -2021,9 +2060,9 @@ class RmcApp(object):
             return results
 
     def put_handler(self, put_path, body, optionalpassword=None, \
-                                    verbose=False, providerheader=None, \
-                                    service=False, url=None, sessionid=None, \
-                                    headers=None, iloresponse=False):
+                            verbose=False, providerheader=None, service=False, \
+                            url=None, sessionid=None, headers=None, \
+                            iloresponse=False, silent=False):
         """Main worker function for raw put command
 
         :param put_path: the URL path.
@@ -2058,25 +2097,25 @@ class RmcApp(object):
                                            put_path, body=body, \
                                            optionalpassword=optionalpassword, \
                                            providerheader=providerheader, \
-                                                                headers=headers)
+                                           headers=headers)
         else:
             results = self.current_client.toolput(put_path, body=body, \
                                           optionalpassword=optionalpassword, \
                                           providerheader=providerheader, \
-                                                                headers=headers)
+                                          headers=headers)
 
-        if not service:
+        if not silent and not service:
             (base_messages, ilo_messages, hpcommon_messages, \
                                 iloevent_messages) = self.get_error_messages()
-
-        self.invalid_return_handler(results, ilo_messages, \
+        if not silent:
+            self.invalid_return_handler(results, ilo_messages, \
                                             base_messages, iloevent_messages,\
                                             hpcommon_messages, verbose=verbose)
         if iloresponse:
             return results
 
     def delete_handler(self, put_path, verbose=False, providerheader=None, \
-                        service=False, url=None, sessionid=None, headers=None):
+            service=False, url=None, sessionid=None, headers=None, silent=True):
         """Main worker function for raw delete command
 
         :param put_path: the URL path.
@@ -2102,24 +2141,22 @@ class RmcApp(object):
 
         if sessionid:
             results = RmcClient(url=url, sessionkey=sessionid).tooldelete(\
-                                      put_path, providerheader=providerheader, \
-                                      headers=headers)
+                      put_path, providerheader=providerheader, headers=headers)
         else:
             results = self.current_client.tooldelete(put_path, \
-                                                 providerheader=providerheader,\
-                                                 headers=headers)
+                                 providerheader=providerheader, headers=headers)
 
-        if not service:
+        if not silent and not service:
             (base_messages, ilo_messages, hpcommon_messages, \
                                 iloevent_messages) = self.get_error_messages()
-
-        self.invalid_return_handler(results, ilo_messages, base_messages, \
+        if not silent:
+            self.invalid_return_handler(results, ilo_messages, base_messages, \
                         iloevent_messages, hpcommon_messages, verbose=verbose)
 
         return results
 
     def head_handler(self, put_path, verbose=False, service=False, url=None,\
-                                                                sessionid=None):
+                                                sessionid=None, silent=False):
         """Main worker function for raw head command
 
         :param put_path: the URL path.
@@ -2140,15 +2177,15 @@ class RmcApp(object):
         hpcommon_messages = None
 
         if sessionid:
-            results = RmcClient(url=url, sessionkey=sessionid).get(put_path)
+            results = RmcClient(url=url, sessionkey=sessionid).head(put_path)
         else:
-            results = self.current_client.get(put_path)
+            results = self.current_client.head(put_path)
 
-        if not service:
+        if not service and not silent:
             (base_messages, ilo_messages, hpcommon_messages, \
                                 iloevent_messages) = self.get_error_messages()
-
-        self.invalid_return_handler(results, ilo_messages, \
+        if not silent:
+            self.invalid_return_handler(results, ilo_messages, \
                                             base_messages, iloevent_messages,\
                                             hpcommon_messages, verbose=verbose)
 
@@ -2194,18 +2231,22 @@ class RmcApp(object):
         try:
             contents = results.dict["Messages"][0]["MessageID"].split('.')
         except Exception:
-            if results.status == 200 or results.status == 201:
-                if verbose:
-                    sys.stdout.write(u"[%d] The operation completed " \
+            try:
+                contents = results.dict["error"]["@Message.ExtendedInfo"][0]\
+                                                        ["MessageId"].split('.')
+            except Exception:
+                if results.status == 200 or results.status == 201:
+                    if verbose:
+                        sys.stdout.write(u"[%d] The operation completed " \
+                                            "successfully.\n" % results.status)
+                    else:
+                        self.warning_handler(u"[%d] The operation completed " \
                                             "successfully.\n" % results.status)
                 else:
-                    self.warning_handler(u"[%d] The operation completed " \
-                                            "successfully.\n" % results.status)
-            else:
-                self.warning_handler(u"[%d] No message returned by iLO.\n" % \
+                    self.warning_handler(u"[%d] No message returned by iLO.\n" %\
                                                                 results.status)
 
-            return
+                return
 
         if results.status == 401:
             raise SessionExpired()
@@ -2240,7 +2281,7 @@ class RmcApp(object):
                         self.warning_handler(u"%s\n" % output)
                 except Exception:
                     pass
-            elif contents[0] == "HpCommon":
+            elif contents[0] == self.typepath.defs.HpCommonType:
                 try:
                     if hpcommonmessages[contents[-1]]["NumberOfArgs"] == 0:
                         output = hpcommonmessages[contents[-1]]["Message"]
@@ -2274,7 +2315,8 @@ class RmcApp(object):
                     sys.stdout.write(u"[%d] The operation completed " \
                                             "successfully.\n" % results.status)
                 else:
-                    self.warning_handler(u"The operation completed successfully.\n")
+                    self.warning_handler(u"The operation completed "\
+                                                            "successfully.\n")
             else:
                 self.warning_handler(u"[%d] No message returned by iLO.\n" % \
                                                                 results.status)
@@ -2303,7 +2345,9 @@ class RmcApp(object):
                                                 str(val).endswith(("'", '"')):
                     val = val[1:-1]
 
+            query = self.checkSelectForGen(query)
             selection = self.get_selection(selector=query, sel=sel, val=val)
+
             if selection and len(selection) > 0:
                 self.current_client.selector = query
 
@@ -2313,6 +2357,7 @@ class RmcApp(object):
                 else:
                     self.current_client.filter_attr = None
                     self.current_client.filter_value = None
+
                 self.save()
                 return selection
 
@@ -2338,11 +2383,12 @@ class RmcApp(object):
             if isinstance(query, list):
                 if len(query) == 0:
                     raise InstanceNotFoundError(u"Unable to locate instance " \
-                                                "for '%s'" % query)
+                                                            "for '%s'" % query)
                 else:
                     query = query[0]
 
             selection = self.get_selection(selector=query, sel=sel, val=val)
+
             if selection and len(selection) > 0:
                 self.current_client.selector = query
                 self.current_client.filter_attr = sel
@@ -2350,6 +2396,39 @@ class RmcApp(object):
                 self.save()
 
             return selection
+
+    def filter_output(self, output, sel, val):
+        """Filters a list of dictionaries based on a key:value pair
+
+        :param output: output list.
+        :type output: list.
+        :param sel: the key for the property to be filtered by.
+        :type sel: str.
+        :param val: value for the property be filtered by.
+        :type val: str.
+
+        """
+        newOutput = []
+        if isinstance(output, list):
+            for entry in output:
+                if isinstance(entry, dict):
+                    if '/' in sel:
+                        selList = sel.split('/')
+                        newEntry = copy.copy(entry)
+                        for item in selList:
+                            if item in newEntry.keys():
+                                if item == selList[-1] and str(newEntry[item])\
+                                                                     == val:
+                                    newOutput.append(entry)
+                                else:
+                                    newEntry = newEntry[item]
+                    else:
+                        if sel in entry.keys() and entry[sel] == val:
+                            newOutput.append(entry)
+                else:
+                    return output
+
+        return newOutput
 
     def types(self, fulltypes=False):
         """Main function for types command
@@ -2428,7 +2507,7 @@ class RmcApp(object):
             self.reloadmonolith(paths[instance.type])
             (newtag, paths) = self.gettypeswithetag()
             if (oldtag[instance.type] != newtag[instance.type]) and \
-                                        not u'HpiLODateTime.' in instance.type:
+                        not self.typepath.defs.HpiLODateTimeType in instance.type:
                 self.warning_handler("The property you are trying to change " \
                                  "has been updated. Please check entry again " \
                                  " before manipulating it\n")
@@ -2474,7 +2553,8 @@ class RmcApp(object):
 
         """
         for ristype in monolith.types:
-            if "HpiLOResourceDirectory.".lower() in ristype.lower():
+            if self.typepath.defs.ResourceDirectoryType.lower() \
+                                                in ristype.lower():
                 return (True, ristype)
 
         return (False, None)
@@ -2517,7 +2597,8 @@ class RmcApp(object):
                 else:
                     raise excp
 
-    def check_types_exists(self, entrytype, currtype, monolith, skipcrawl=False):
+    def check_types_exists(self, entrytype, currtype, monolith, \
+                                                            skipcrawl=False):
         """Check if type exists in current monolith
 
         :param entrytype: the found entry type.
@@ -2533,7 +2614,7 @@ class RmcApp(object):
         if u'Instances' in monolith.types[entrytype]:
             for instance in monolith.types[entrytype][u'Instances']:
                 for item in instance.resp.dict["Instances"]:
-                    if monolith._typestring in item.keys() and \
+                    if item and monolith._typestring in item.keys() and \
                         currtype.lower() in item[monolith._typestring].lower():
                         self.check_type_and_download(monolith, \
                              item[monolith._hrefstring], skipcrawl=skipcrawl)
@@ -2568,8 +2649,8 @@ class RmcApp(object):
                 skipcrawl = True
                 if selector.lower().startswith("log"):
                     skipcrawl = False
-                    self.warning_handler("Full data retrieval enabled. You may" \
-                                        " experience longer download times.\n")
+                    self.warning_handler("Full data retrieval enabled. You " \
+                                    "may experience longer download times.\n")
 
                 self.check_types_exists(entrytype, selector, monolith, \
                                                             skipcrawl=skipcrawl)
@@ -2603,8 +2684,7 @@ class RmcApp(object):
                         odata = ''
 
                     if qinstance.lower() in instance.type.lower() \
-                                                    or qinstance == '"*"' or \
-                                                    qinstance.lower() in odata:
+                            or qinstance == '"*"' or qinstance.lower() in odata:
                         if setenable:
                             try:
                                 if instance.resp.obj["AttributeRegistry"]:
@@ -2619,6 +2699,7 @@ class RmcApp(object):
 
                         if not sel is None and not val is None:
                             currdict = instance.resp.dict
+
                             try:
                                 if not "/" in sel:
                                     if val[-1] == "*":
@@ -2749,10 +2830,10 @@ class RmcApp(object):
                                 instances["Comments"]["Model"] = \
                                                     instance.resp.obj["Model"]
 
-                            if instance.resp.obj["Oem"]["Hp"]["Bios"]\
-                                                                    ["Current"]:
-                                oemjson = instance.resp.obj["Oem"]["Hp"]\
-                                                            ["Bios"]["Current"]
+                            if instance.resp.obj["Oem"][self.typepath.\
+                                                defs.OemHp]["Bios"]["Current"]:
+                                oemjson = instance.resp.obj["Oem"]\
+                                    [self.typepath.defs.OemHp]["Bios"]["Current"]
                                 instances["Comments"]["BIOSFamily"] = \
                                                             oemjson["Family"]
                                 instances["Comments"]["BIOSDate"] = \
@@ -2807,7 +2888,7 @@ class RmcApp(object):
         """
         monolith = None
 
-        if float(iloversion) >= 2.10:
+        if float(iloversion) >= 4.210:
             monolith = self.current_client.monolith
 
         (romfamily, biosversion) = self.getbiosfamilyandversion()
@@ -2815,7 +2896,8 @@ class RmcApp(object):
                             local_path=self._config.get_schemadir(), \
                             bios_local_path=self._config.get_biosschemadir(), \
                             romfamily=romfamily, biosversion=biosversion, \
-                            iloversion=iloversion, monolith=monolith)
+                            iloversion=iloversion, monolith=monolith, \
+                            defines=self.typepath)
 
         return validation_manager
 
@@ -2829,6 +2911,7 @@ class RmcApp(object):
         biosmode = False
         iloversion = self.getiloversion()
         type_str = self.current_client.monolith._typestring
+        isredfish = self.current_client.monolith.is_redfish
 
         (_, attributeregistry) = self.get_selection(setenable=True)
         validation_manager = self.get_validation_manager(iloversion)
@@ -2846,31 +2929,38 @@ class RmcApp(object):
                 regfound = validation_manager.find_bios_registry(regtype)
                 biosschemafound = validation_manager.find_schema(schematype)
 
-                if self.current_client.monolith.is_redfish and biosschemafound:
+                if isredfish and biosschemafound:
                     regfound = self.get_handler(regfound[u'@odata.id'], \
                                 verbose=False, service=True, silent=True).obj
                     regfound = RepoRegistryEntry(regfound)
         except Exception:
             regfound = validation_manager.find_schema(schematype)
 
+        if isredfish and regfound:
+            regfound = self.get_handler(regfound[u'@odata.id'], \
+                                verbose=False, service=True, silent=True).obj
+            regfound = RepoRegistryEntry(regfound)
         if not regfound:
             LOGGER.warn(u"Unable to locate registry/schema for '%s'", \
                                                                 body[type_str])
             return None, None, None
-        elif float(iloversion) >= 2.10:
+        elif float(iloversion) >= 4.210:
             try:
+                locationdict = self.geturidict(regfound.Location[0])
                 self.check_type_and_download(self.current_client.monolith, \
-                                        regfound.Location[0]["Uri"]["extref"], \
+                                        locationdict, \
                                         skipcrawl=True, loadtype='ref')
             except Exception, excp:
                 raise excp
+
         if biosmode:
-            if float(iloversion) >= 2.10:
+            if float(iloversion) >= 4.210:
                 model = regfound.get_registry_model_bios_version(\
                         currdict=body, monolith=self.current_client.monolith)
-        elif float(iloversion) >= 2.10:
+        elif float(iloversion) >= 4.210:
             model = regfound.get_registry_model(currdict=body, \
                                         monolith=self.current_client.monolith)
+
         if model and biosmode:
             outdict = self.remove_readonly_helper_bios(body, model)
         elif model:
@@ -2918,11 +3008,14 @@ class RmcApp(object):
 
         """
         templist = []
+
         for key in model.keys():
+            readonly = True
             try:
                 if isinstance(model[key], dict):
                     try:
-                        if model[key].readonly:
+                        readonly = model[key].readonly
+                        if readonly:
                             templist.append(key)
                             continue
                     except:
@@ -2932,6 +3025,7 @@ class RmcApp(object):
                         if key in body.keys():
                             newdict = self.remove_readonly_helper(body[key], \
                                                     model[key]['properties'])
+
                             if newdict:
                                 body[key] = newdict
                             else:
@@ -2943,6 +3037,8 @@ class RmcApp(object):
                                 for item in body[key]:
                                     self.remove_readonly_helper(item, \
                                             model[key]['items']['properties'])
+                    elif readonly == True:
+                        templist.append(key)
             except:
                 continue
 
@@ -2980,26 +3076,40 @@ class RmcApp(object):
         bsmodel = None
         biosmode = False
         type_str = self.current_client.monolith._typestring
+        isredfish = self.current_client.monolith.is_redfish
+        href_str = self.current_client.monolith._hrefstring
 
         if latestschema:
             schematype = currdict[type_str].split('.')[0] + '.'
-            reglist = validation_manager._classes_registry[0][u'Items']
 
-            for item in validation_manager._classes[0][u'Items']:
-                if item and item[u'Schema'].startswith(schematype):
-                    schematype = item[u'Schema']
-                    break
+            if isredfish:
+                schematype = schematype[1:-1]
 
-            regs = [x[u'Schema'] for x in reglist if x[u'Schema']\
-                    .lower().startswith('hpbiosattributeregistry')]
-            i = [reglist.index(x) for x in reglist if x[u'Schema']\
-                 .lower().startswith('hpbiosattributeregistry')]
-            regs = zip(regs, i)
+                reglist = validation_manager._classes_registry[0][u'Members']
+                regs = [x[href_str] for x in reglist if\
+                        'hpbiosattributeregistry' in x[href_str].lower()]
+                i = [reglist.index(x) for x in reglist if x[href_str]\
+                     .lower().startswith('hpbiosattributeregistry')]
+                regs = zip(regs, i)
+            else:
+                reglist = validation_manager._classes_registry[0][u'Items']
+
+                for item in validation_manager._classes[0][u'Items']:
+                    if item and item[u'Schema'].startswith(schematype):
+                        schematype = item[u'Schema']
+                        break
+
+                regs = [x[u'Schema'] for x in reglist if x[u'Schema']\
+                        .lower().startswith('hpbiosattributeregistry')]
+                i = [reglist.index(x) for x in reglist if x[u'Schema']\
+                     .lower().startswith('hpbiosattributeregistry')]
+                regs = zip(regs, i)
 
             for item in sorted(regs, reverse=True):
-                extref = self.get_handler(reglist[item[1]][u'Location'][0]\
-                            ["Uri"]["extref"], \
-                            verbose=False, service=True, silent=True)
+                locationdict = self.geturidict(reglist[item[1]][u'Location'][0])
+                extref = self.get_handler(locationdict, verbose=False, \
+                                                    service=True, silent=True)
+
                 if extref:
                     regtype = item[0]
                     break
@@ -3007,16 +3117,16 @@ class RmcApp(object):
             if autotest:
                 try:
                     if not regtype == attributeregistry[instance.type]:
-                        self.warning_handler("Using latest registry.\nFound: %s\n" \
-                                         "Using: %s\n" % \
-                                            (attributeregistry[instance.type],\
-                                            regtype))
+                        self.warning_handler("Using latest registry.\nFound: " \
+                                            "%s\nUsing: %s\n" % \
+                                            (attributeregistry[instance.type], \
+                                             regtype))
                 except Exception:
                     if not schematype == currdict[type_str]:
-                        self.warning_handler("Using latest schema.\nFound: %s\n" \
-                                         "Using: %s\n" % \
-                                            (currdict[type_str],\
-                                            schematype))
+                        self.warning_handler("Using latest schema.\nFound: " \
+                                             "%s\nUsing: %s\n" % \
+                                            (currdict[type_str], \
+                                             schematype))
         else:
             schematype = currdict[type_str]
             try:
@@ -3025,66 +3135,158 @@ class RmcApp(object):
                 pass
         try:
             if attributeregistry[instance.type]:
-                regfound = validation_manager.\
-                find_bios_registry(regtype)
+                regfound = validation_manager.find_bios_registry(regtype)
                 biosmode = True
-                biosschemafound = \
-                    validation_manager.find_schema(schematype)
-                if self.current_client.monolith.is_redfish and biosschemafound:
-                    regfound = self.get_handler(regfound[u'@odata.id'],
-                                                verbose=False,
-                                                service=True,
-                                                silent=True).obj
+                biosschemafound = validation_manager.find_schema(schematype)
+
+                if isredfish and biosschemafound:
+                    regfound = self.get_handler(regfound[u'@odata.id'], \
+                                verbose=False, service=True, silent=True).obj
                     regfound = RepoRegistryEntry(regfound)
         except Exception:
             regfound = validation_manager.find_schema(schematype)
-        if self.current_client.monolith.is_redfish and regfound:
-            regfound = self.get_handler(regfound[u'@odata.id'],
-                                        verbose=False,
-                                        service=True,
-                                        silent=True).obj
+
+        if isredfish and regfound:
+            regfound = self.get_handler(regfound[u'@odata.id'], \
+                                verbose=False, service=True, silent=True).obj
             regfound = RepoRegistryEntry(regfound)
+
         if not regfound:
-            LOGGER.warn(u"Unable to locate registry/schema for '%s'",
-                        currdict[type_str])
+            LOGGER.warn(u"Unable to locate registry/schema for '%s'", \
+                                                            currdict[type_str])
             return None, None, None
-        elif float(iloversion) >= 2.10:
+        elif float(iloversion) >= 4.210:
             try:
-                self.check_type_and_download(
-                    self.current_client.monolith,
-                    regfound.Location[0]["Uri"]["extref"],
-                    skipcrawl=True, loadtype='ref')
+                locationdict = self.geturidict(regfound.Location[0])
+                self.check_type_and_download(self.current_client.monolith, \
+                                locationdict, skipcrawl=True, loadtype='ref')
 
                 if biosschemafound:
-                    self.check_type_and_download(
-                        self.current_client.monolith,
-                        biosschemafound.Location[0]["Uri"]["extref"],
-                        skipcrawl=True, loadtype='ref')
+                    locationdict = self.geturidict(biosschemafound.Location[0])
+                    self.check_type_and_download(self.current_client.monolith, \
+                                 locationdict, skipcrawl=True, loadtype='ref')
             except Exception, excp:
                 raise excp
 
         if biosmode:
-            if float(iloversion) >= 2.10:
+            if float(iloversion) >= 4.210:
                 model = regfound.get_registry_model_bios_version(\
-                                currdict=currdict, \
-                                monolith=self.current_client.monolith)
+                    currdict=currdict, monolith=self.current_client.monolith)
 
             if biosschemafound:
                 bsmodel = biosschemafound.get_registry_model(\
-                                currdict=currdict, \
-                                monolith=self.current_client.monolith, \
-                                latestschema=latestschema)
+                    currdict=currdict, monolith=self.current_client.monolith, \
+                    latestschema=latestschema)
             if not biosschemafound and not model:
-                model = regfound.get_registry_model_bios_version(\
-                                                             currdict)
+                model = regfound.get_registry_model_bios_version(currdict)
         else:
-            if float(iloversion) >= 2.10:
-                model = regfound.get_registry_model(\
-                                currdict=currdict, \
-                                monolith=self.current_client.monolith, \
-                                newarg=newarg, latestschema=latestschema)
+            if float(iloversion) >= 4.210:
+                model = regfound.get_registry_model(currdict=currdict, \
+                                    monolith=self.current_client.monolith, \
+                                    newarg=newarg, latestschema=latestschema)
             else:
                 model = regfound.get_registry_model(currdict)
 
         return model, biosmode, bsmodel
 
+    def geturidict(self, Locationobj):
+        """Return the external reference link."""
+        if self.typepath.defs.IsGen10:
+            try:
+                return Locationobj["Uri"]
+            except Exception:
+                raise InvalidPathError("Error accessing Uri path!/n")
+        elif self.typepath.defs.IsGen9:
+            try:
+                return Locationobj["Uri"]["extref"]
+            except Exception:
+                raise InvalidPathError("Error accessing extref path!/n")
+
+    def getGen(self, url=None):
+        """Updates the defines object based on the iLO manager version"""
+        self.typepath.getGen(url=url, logger=LOGGER)
+
+    def updateDefinesFlag(self, redfishFlag=None):
+        """Updates the redfish and rest flag depending on system and
+        user input"""
+        if self.typepath.defs:
+            is_redfish = redfishFlag or self.typepath.defs.IsGen10
+            self.typepath.defs.flagforrest = not is_redfish
+            if is_redfish:
+                self.typepath.defs.redfishchange()
+
+            return is_redfish
+        else:
+            return redfishFlag
+
+    #TODO: need to see if we do have a dependency on the verbose flag here
+    def checkpostpatch(self, body=None, path=None, verbose=False, \
+                        service=False, url=None, sessionid=None, headers=None, \
+                        iloresponse=False, silent=False, patch=False):
+        """Make the post file compatible with the system generation"""
+        try:
+            if self.typepath.defs.flagforrest == True:
+                if u"Target" not in body and not patch:
+                    if u"/Oem/Hp" in path:
+                        body[u"Target"] = self.typepath.defs.oempath
+
+                if path.startswith(u"/redfish/v1"):
+                    path = path.replace(u"/redfish", u"/rest", 1)
+
+                if u"/Actions/" in path:
+                    ind = path.find(u"/Actions/")
+                    path = path[:ind]
+            elif path.startswith(u"/rest/") and self.typepath.defs.IsGen9:
+                results = self.get_handler(put_path=path, service=service, \
+                              url=url, sessionid=sessionid, headers=headers, \
+                              iloresponse=iloresponse, silent=silent)
+                if results and results.status == 200:
+                    if results.dict:
+                        if u"Target" in body:
+                            actions = results.dict[u"Oem"][self.typepath.defs.\
+                                                            OemHp][u"Actions"]
+                        elif u"Actions" in body:
+                            actions = results.dict[u"Actions"]
+                        else:
+                            return (path, body)
+
+                    allkeys = actions.keys()
+                    targetkey = [x for x in allkeys if x.endswith(body\
+                                                                  [u"Action"])]
+
+                    if targetkey[0].startswith(u"#"):
+                        targetkey[0] = targetkey[0][1:]
+
+                path = path.replace(u"/rest", u"/redfish", 1)
+                path = path+u"/Actions"
+
+                if u"Target" in body:
+                    path = path+self.typepath.defs.oempath
+                    del body["Target"]
+
+                if targetkey:
+                    path = path + u"/" + targetkey[0] + u"/"
+
+            return (path, body)
+        except Exception as excp:
+            raise excp
+
+    def checkSelectForGen(self, query):
+        """Changes the query to match the Generation's HP string."""
+        query = query.lower()
+        returnval = query
+
+        if self.typepath.defs.IsGen9:
+            if query.startswith((u"hpeeskm", u"#hpeeskm")) or \
+                                    query.startswith((u"hpeskm", u"#hpeskm")):
+                returnval = self.typepath.defs.HpESKMType
+            elif query.startswith((u"hpe", u"#hpe")):
+                returnval = query[:4].replace(u"hpe", u"hp")+query[4:]
+        else:
+            if query.startswith((u"hpeskm", u"#hpeskm")) or \
+                                    query.startswith((u"hpeeskm", u"#hpeeskm")):
+                returnval = self.typepath.defs.HpESKMType
+            elif not query.startswith((u"hpe", u"#hpe")):
+                returnval = query[:3].replace(u"hp", u"hpe")+query[3:]
+
+        return returnval

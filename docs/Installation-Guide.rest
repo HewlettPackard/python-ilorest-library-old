@@ -103,13 +103,13 @@ Execute the following command from the directory where you want to copy the sour
 Building and installing HP REST library
 ===================================
 
-First download the ilorest.zip file from the github. Next unzip ilorest.zip file to ilorest directory and from the command prompt go to the directory. Execute the following commands in order to install ilorest (assuming the version is 1.0.0).
+First download the ilorest.zip file from the github. Next unzip ilorest.zip file to ilorest directory and from the command prompt go to the directory. Execute the following commands in order to install ilorest (assuming the version is 1.2.0).
 
 ::
 
   python setup.py sdist --formats=zip
   cd dist
-  pip install --upgrade python-ilorest-library-1.0.0.zip
+  pip install --upgrade python-ilorest-library-1.2.0.zip
 
 ::
 

@@ -1,12 +1,12 @@
 ###
 # Copyright 2016 Hewlett Packard Enterprise, Inc. All rights reserved.
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -69,14 +69,14 @@ class ValidationManager(object):
     """Keep track of all the schemas and registries and provides helpers"""
     """ to simplify validation """
     def __init__(self, local_path, bios_local_path, romfamily=None, \
-                            biosversion=None, iloversion=None, monolith=None):
+                biosversion=None, iloversion=None, monolith=None, defines=None):
         super(ValidationManager, self).__init__()
 
         defaultilopath = None
         defaultbiospath = None
         schemamainfolder = None
 
-        if float(iloversion) < 2.10:
+        if float(iloversion) < 4.210:
             if os.name == 'nt':
                 defaultilopath = r".\hp-rest-classes-ilo4"
                 defaultbiospath = r".\hp-rest-classes-bios"
@@ -164,6 +164,8 @@ class ValidationManager(object):
         self._hpcommon_messages = list()
         self._iloevents_messages = list()
 
+        #type and path defines object
+        self.defines = defines
         # error
         self._errors = list()
 
@@ -229,7 +231,7 @@ class ValidationManager(object):
         :type iloversion: str.
 
         """
-        if float(iloversion) < 2.10:
+        if float(iloversion) < 4.210:
             iloversion = u'2.00'
 
         tempstr = "hp-rest-classes-ilo4-" + iloversion.replace(".", "")
@@ -241,8 +243,8 @@ class ValidationManager(object):
 
         return None
 
-    def add_location(self, schema_path=None, registry_path=None,
-                     biossection=False, monolith=None):
+    def add_location(self, schema_path=None, registry_path=None, \
+                                            biossection=False, monolith=None):
         """Add schema_path and registry_path to the list of locations to"""
         """ search for schemas and registries
 
@@ -275,8 +277,8 @@ class ValidationManager(object):
             raise ValueError(u"'schema_path' and 'registry_path' " \
                                                                 "are undefined")
 
-    def _update_location_map(self, biossection=False, registries=False,
-                             monolith=None):
+    def _update_location_map(self, biossection=False, registries=False, \
+                                                                monolith=None):
         """Searches locations to build a map of type to filename
 
         :param biossection: flag to determine if within BIOS section.
@@ -336,8 +338,8 @@ class ValidationManager(object):
         classesdataholder = []
 
         for itemtype in monolith.types:
-            if itemtype.startswith("#SchemaFileCollection.") or \
-                                    itemtype.startswith("Collection.") and \
+            if itemtype.startswith(self.defines.defs.SchemaFileCollectionType)\
+                                    or itemtype.startswith("Collection.") and \
                                     u'Instances' in monolith.types[itemtype]:
                 for instance in monolith.types[itemtype][u'Instances']:
                     if self._schemaid[0] in instance.resp.request.path.\
@@ -368,8 +370,8 @@ class ValidationManager(object):
         try:
             if monolith._typestring in classesdataholder and ('Collection.' in \
                                     classesdataholder[monolith._typestring] or \
-                                    ('#SchemaFileCollection.' in \
-                                    classesdataholder[monolith._typestring] \
+                                    (self.defines.defs.SchemaFileCollectionType\
+                                    in classesdataholder[monolith._typestring] \
                                     and monolith.is_redfish)):
                 newclass = Classes.parse(classesdataholder)
                 newclass.set_root(root)
@@ -389,8 +391,8 @@ class ValidationManager(object):
         else:
             pass
 
-    def load_file(self, filepath, root=None, biossection=False,
-                  registries=False, datareturn=False):
+    def load_file(self, filepath, root=None, biossection=False, \
+                                            registries=False, datareturn=False):
         """Loads the types from filepath.
 
         :param filepath: path to a file to load, local or URL.
@@ -472,8 +474,8 @@ class ValidationManager(object):
 
         return datareturn
 
-    def validate(self, item, selector=None, currdict=None, monolith=None,
-                 newarg=None, checkall=False, regloc=None):
+    def validate(self, item, selector=None, currdict=None, monolith=None, \
+                        newarg=None, checkall=False, regloc=None, attrreg=None):
         """Search for matching schemas and attribute registries and"""
         """ ensure that item is valid.
 
@@ -493,15 +495,19 @@ class ValidationManager(object):
         :type regloc: str.
 
         """
-        if regloc:
+        if regloc and not attrreg:
             attrreg = RepoRegistryEntry(regloc)
-        else:
+        elif not attrreg:
             attrreg = self.find_schema(schname=item[monolith._typestring])
 
         if attrreg:
-            tempvalue = attrreg.validate(item, self._errors, selector=selector,
-                                         currdict=currdict, monolith=monolith,
-                                         newarg=newarg, checkall=checkall)
+            try:
+                tempvalue = attrreg.validate(item, self._errors, \
+                                        selector=selector, currdict=currdict, \
+                                        monolith=monolith, newarg=newarg, \
+                                        checkall=checkall)
+            except:
+                return attrreg
 
             if tempvalue is True:
                 return False
@@ -510,8 +516,8 @@ class ValidationManager(object):
 
         return True
 
-    def bios_validate(self, item, regname, selector=None, currdict=None,
-                      checkall=False, monolith=None):
+    def bios_validate(self, item, regname, selector=None, currdict=None, \
+                                                checkall=False, monolith=None):
         """BIOS Search for matching schemas and attribute registries and"""
         """ ensure that item is valid
 
@@ -678,7 +684,7 @@ class Classes(RisObject):
         result = None
         if hasattr(self, 'Items') and isinstance(self.Items, list):
             for entry in self.Items:
-                if entry and (u'Schema' in entry and
+                if entry and (u'Schema' in entry and \
                         entry[u'Schema'].lower().startswith(regname.lower())):
                     regentry = RepoRegistryEntry.parse(entry)
                     regentry.set_root(self._root)
@@ -705,8 +711,8 @@ class Classes(RisObject):
         result = None
         if hasattr(self, 'Items') and isinstance(self.Items, list):
             for entry in self.Items:
-                if (u'Schema' in entry and entry[u'Schema'].lower() ==
-                        schname.lower()):
+                if u'Schema' in entry and entry[u'Schema'].lower() == \
+                                                                schname.lower():
                     regentry = RepoRegistryEntry.parse(entry)
                     regentry.set_root(self._root)
                     result = regentry
@@ -725,7 +731,7 @@ class Classes(RisObject):
         if hasattr(self, 'Items') and isinstance(self.Items, list):
             for entry in self.Items:
                 if entry and (u'Schema' in entry and regname.lower() in \
-                        entry[u'Schema'].lower()):
+                                                    entry[u'Schema'].lower()):
                     regentry = RepoRegistryEntry.parse(entry)
                     regentry.set_root(self._root)
                     result = regentry
@@ -765,8 +771,8 @@ class RepoBaseEntry(RisObject):
             fqpath = os.path.join(root, xref)
 
             if not os.path.isfile(fqpath):
-                errlist.append(SchemaValidationError(
-                    u"Unable to location ArchiveUri '%s'" % fqpath))
+                errlist.append(SchemaValidationError(\
+                                u"Unable to location ArchiveUri '%s'" % fqpath))
             else:
                 result = None
                 if fqpath.endswith('.json'):
@@ -994,7 +1000,9 @@ class RepoRegistryEntry(RepoBaseEntry):
                                     u'Instances' in monolith.types[itemtype]:
                     for instance in monolith.types[itemtype][u'Instances']:
                         try:
-                            if monolith.is_redfish:
+                            if monolith.is_redfish and 'title' in instance.\
+                                        resp.dict and not instance.resp.dict\
+                                                    ["title"].startswith('#'):
                                 currtype = currdict[instance._typestring].\
                                                                 split('#')[-1]
                                 currtype = currtype.split('.')[0] + '.'
@@ -1289,8 +1297,10 @@ class HpPropertiesRegistry(RisObject):
         for tkey in tdict:
             try:
                 if self[tkey] and hasattr(self[tkey], "type"):
-                    temp = self.validate_attribute(self[tkey], tdict[tkey], \
-                                                                        tkey)
+                    keyval = list()
+                    keyval.append(tdict[tkey])
+                    temp = self.validate_attribute(self[tkey], keyval, tkey)
+                    tdict[tkey] = keyval[0]
 
                     for err in temp:
                         if isinstance(err, RegistryValidationError):
@@ -1316,7 +1326,10 @@ class HpPropertiesRegistry(RisObject):
             for item in self.Attributes:
                 try:
                     if item["Name"] == tkey and hasattr(item, "Type"):
-                        temp = self.validate_attribute(item, tdict[tkey], tkey)
+                        keyval = list()
+                        keyval.append(tdict[tkey])
+                        temp = self.validate_attribute(item, keyval, tkey)
+                        tdict[tkey] = keyval[0]
 
                         for err in temp:
                             if isinstance(err, RegistryValidationError):
@@ -1407,7 +1420,7 @@ class HpPropertiesRegistry(RisObject):
 
         return None
 
-    def validate_attribute(self, attrentry, attrval, name):
+    def validate_attribute(self, attrentry, attrvallist, name):
         """Function to validate attribute against iLO schema
 
         :param attrname: attribute name to be used for validation.
@@ -1420,9 +1433,11 @@ class HpPropertiesRegistry(RisObject):
         """
         result = list()
         validator = None
+        attrval = attrvallist[0]
 
         if EnumValidator.is_type(attrentry):
             validator = EnumValidator.parse(attrentry)
+            attrval = attrvallist
         elif StringValidator.is_type(attrentry):
             validator = StringValidator.parse(attrentry)
         elif IntegerValidator.is_type(attrentry):
@@ -1488,7 +1503,7 @@ class EnumValidator(BaseValidator):
 
         return False
 
-    def validate(self, newval, name):
+    def validate(self, keyval, name):
         """Validate against iLO schema
 
         :param newval: new value to be used for validation.
@@ -1498,19 +1513,21 @@ class EnumValidator(BaseValidator):
 
         """
         result = list()
+        newval = keyval[0]
 
         try:
             for possibleval in self.enum:
                 if possibleval.lower() == newval.lower():
+                    keyval[0] = possibleval
                     return result
         except Exception:
             for possibleval in self.Value:
                 if possibleval.ValueName.lower() == str(newval).lower():
+                    keyval[0] = possibleval.ValueName
                     return result
 
-        result.append(RegistryValidationError(u"'%s' is not a valid setting "
-                                              "for '%s'" % (newval, name),
-                                              regentry=self))
+        result.append(RegistryValidationError(u"'%s' is not a valid setting " \
+                                  "for '%s'" % (newval, name), regentry=self))
 
         return result
 
@@ -1631,11 +1648,9 @@ class BoolValidator(BaseValidator):
             return result
 
         result.append(
-            RegistryValidationError(
-                u"'%s' is not a valid setting for '%s'" % (newval, name),
-                regentry=self
-            )
-        )
+            RegistryValidationError(u"'%s' is not a valid setting for '%s'" % \
+                                                (newval, name), regentry=self))
+
         return result
 
     def print_help(self, name, out=sys.stdout):
@@ -1736,13 +1751,11 @@ class StringValidator(BaseValidator):
 
         return False
 
-    def validate(self, newval, name):
+    def validate(self, newval, _):
         """Validate against iLO schema
 
         :param newval: new value to be used for validation.
         :type newval: str.
-        :param name: clean name for outputting.
-        :type name: str.
 
         """
         result = list()
@@ -1875,13 +1888,11 @@ class IntegerValidator(BaseValidator):
 
         return False
 
-    def validate(self, newval, name):
+    def validate(self, newval, _):
         """Validate against iLO schema
 
         :param newval: new value to be used for validation.
         :type newval: str.
-        :param name: clean name for outputting.
-        :type name: str.
 
         """
         result = list()
@@ -2011,13 +2022,11 @@ class ObjectValidator(BaseValidator):
 
         return False
 
-    def validate(self, newval, name):
+    def validate(self, _, __):
         """Validate against iLO schema
 
         :param newval: new value to be used for validation.
         :type newval: str.
-        :param name: clean name for outputting.
-        :type name: str.
 
         """
         #TODO need to add so logic for objects class?
@@ -2118,13 +2127,11 @@ class PasswordValidator(BaseValidator):
 
         return False
 
-    def validate(self, newval, name):
+    def validate(self, newval, _):
         """Validate against iLO schema
 
         :param newval: new value to be used for validation.
         :type newval: str.
-        :param name: clean name for outputting.
-        :type name: str.
 
         """
         result = list()

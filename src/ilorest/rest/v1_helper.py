@@ -1,12 +1,12 @@
 ###
 # Copyright 2016 Hewlett Packard Enterprise, Inc. All rights reserved.
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -115,11 +115,7 @@ class RestRequest(object):
 
     def __str__(self):
         """Format string"""
-        strvars = dict(
-            body=self.body,
-            method=self.method,
-            path=self.path
-        )
+        strvars = dict(body=self.body, method=self.method, path=self.path)
 
         # set None to '' for strings
         if not strvars['body']:
@@ -249,8 +245,8 @@ class RestResponse(object):
             headerstr += u'%s %s\n' % (header[0], header[1])
 
         return u"%(status)s\n%(headerstr)s\n\n%(body)s" % \
-            {'status': self.status, 'headerstr': headerstr, \
-             'body': self.text.decode('utf-8', 'ignore')}
+                            {'status': self.status, 'headerstr': headerstr, \
+                             'body': self.text.decode('utf-8', 'ignore')}
 
 class JSONEncoder(json.JSONEncoder):
     """JSON Encoder class"""
@@ -283,7 +279,6 @@ class JSONDecoder(json.JSONDecoder):
 
         """
         parsed_dict = super(JSONDecoder, self).decode(json_string)
-
         return parsed_dict
 
 class _FakeSocket(StringIO):
@@ -403,13 +398,10 @@ class RestClientBase(object):
         url = url if url else self.__url
         if url.scheme.upper() == "HTTPS":
             if sys.version_info < (2, 7, 9):
-                self._conn = httplib.HTTPSConnection(
-                    url.netloc)
+                self._conn = httplib.HTTPSConnection(url.netloc)
             else:
-                self._conn = httplib.HTTPSConnection(
-                    url.netloc,
-                    # pylint: disable=protected-access
-                    context=ssl._create_unverified_context())
+                self._conn = httplib.HTTPSConnection(url.netloc, \
+                                    context=ssl._create_unverified_context())
         elif url.scheme.upper() == "HTTP":
             self._conn = httplib.HTTPConnection(url.netloc)
         else:
@@ -546,10 +538,23 @@ class RestClientBase(object):
         :params args: dict.
 
         """
-        return self._rest_request(path, method='GET', args=args, headers=headers)
+        return self._rest_request(path, method='GET', args=args, \
+                                                                headers=headers)
 
-    def post(self, path, args=None, body=None, providerheader=None,
-             headers=None):
+    def head(self, path, args=None, headers=None):
+        """Perform a HEAD request
+
+        :param path: the URL path.
+        :param path: str.
+        :params args: the arguments to get.
+        :params args: dict.
+
+        """
+        return self._rest_request(path, method='HEAD', args=args, \
+                                                                headers=headers)
+
+    def post(self, path, args=None, body=None, providerheader=None, \
+                                                                headers=None):
         """Perform a POST request
 
         :param path: the URL path.
@@ -562,12 +567,11 @@ class RestClientBase(object):
         :type providerheader: str.
 
         """
-        return self._rest_request(path, method='POST', args=args, body=body,
-                                  providerheader=providerheader,
-                                  headers=headers)
+        return self._rest_request(path, method='POST', args=args, body=body, \
+                              providerheader=providerheader, headers=headers)
 
-    def put(self, path, args=None, body=None, optionalpassword=None,
-            providerheader=None, headers=None):
+    def put(self, path, args=None, body=None, optionalpassword=None, \
+                                            providerheader=None, headers=None):
         """Perform a PUT request
 
         :param path: the URL path.
@@ -582,12 +586,12 @@ class RestClientBase(object):
         :type providerheader: str.
 
         """
-        return self._rest_request(path, method='PUT', args=args, body=body,
-                                  optionalpassword=optionalpassword,
-                                  providerheader=providerheader, headers=headers)
+        return self._rest_request(path, method='PUT', args=args, body=body, \
+                              optionalpassword=optionalpassword, \
+                              providerheader=providerheader, headers=headers)
 
-    def patch(self, path, args=None, body=None, optionalpassword=None,
-              providerheader=None, headers=None):
+    def patch(self, path, args=None, body=None, optionalpassword=None, \
+                                            providerheader=None, headers=None):
         """Perform a PUT request
 
         :param path: the URL path.
@@ -602,13 +606,13 @@ class RestClientBase(object):
         :type providerheader: str.
 
         """
-        return self._rest_request(path, method='PATCH', args=args, body=body,
-                                  optionalpassword=optionalpassword,
-                                  providerheader=providerheader, headers=headers)
+        return self._rest_request(path, method='PATCH', args=args, body=body, \
+                              optionalpassword=optionalpassword, \
+                              providerheader=providerheader, headers=headers)
 
 
-    def delete(self, path, args=None, optionalpassword=None,
-               providerheader=None, headers=None):
+    def delete(self, path, args=None, optionalpassword=None, \
+                                            providerheader=None, headers=None):
         """Perform a DELETE request
 
         :param path: the URL path.
@@ -621,13 +625,12 @@ class RestClientBase(object):
         :type providerheader: str.
 
         """
-        return self._rest_request(path, method='DELETE', args=args,
-                                  optionalpassword=optionalpassword,
-                                  providerheader=providerheader,
-                                  headers=headers)
+        return self._rest_request(path, method='DELETE', args=args, \
+                              optionalpassword=optionalpassword, \
+                              providerheader=providerheader, headers=headers)
 
-    def _get_req_headers(self, headers=None, providerheader=None,
-                         optionalpassword=None):
+    def _get_req_headers(self, headers=None, providerheader=None, \
+                                                        optionalpassword=None):
         """Get the request headers
 
         :param headers: additional headers to be utilized
@@ -662,9 +665,8 @@ class RestClientBase(object):
 
         return headers
 
-    def _rest_request(self, path, method='GET', args=None, body=None,
-                      headers=None, optionalpassword=None,
-                      providerheader=None):
+    def _rest_request(self, path, method='GET', args=None, body=None, \
+                      headers=None, optionalpassword=None, providerheader=None):
         """Rest request main function
 
         :param path: path within tree
@@ -687,7 +689,7 @@ class RestClientBase(object):
                                                             optionalpassword)
         reqpath = path.replace('//', '/')
 
-        if body:
+        if body is not None:
             if isinstance(body, dict) or isinstance(body, list):
                 headers['Content-Type'] = u'application/json'
                 body = json.dumps(body)
@@ -747,7 +749,8 @@ class RestClientBase(object):
 
                     if resp.getheader('Connection') == 'close':
                         self.__destroy_connection()
-                    if resp.status not in range(300, 399):
+                    if resp.status not in range(300, 399) or \
+                                                            resp.status == 304:
                         break
 
                     newloc = resp.getheader('location')
@@ -805,21 +808,19 @@ class RestClientBase(object):
         self.__password = password if password else self.__password
 
         if auth == AuthMethod.BASIC:
-            auth_key = base64.b64encode(
-                ('%s:%s' % (self.__username,
+            auth_key = base64.b64encode(('%s:%s' % (self.__username, \
                             self.__password)).encode('utf-8')).decode('utf-8')
             self.__authorization_key = u'Basic %s' % auth_key
 
             headers = dict()
             headers['Authorization'] = self.__authorization_key
 
-            respvalidate = self._rest_request(
-                '%s%s' % (self.__url.path, self.login_url),
-                headers=headers)
+            respvalidate = self._rest_request('%s%s' % (self.__url.path, \
+                                            self.login_url), headers=headers)
 
             if respvalidate.status == 401:
                 raise InvalidCredentialsError(\
-                    self.root.Oem.Hp.Sessions.LoginFailureDelay)
+                                    self.root.Oem.Hp.Sessions.LoginFailureDelay)
         elif auth == AuthMethod.SESSION:
             data = dict()
             data['UserName'] = self.__username
@@ -827,7 +828,7 @@ class RestClientBase(object):
 
             headers = dict()
             resp = self._rest_request(self.login_url, method="POST", \
-                                      body=data, headers=headers)
+                                                    body=data, headers=headers)
 
             LOGGER.info(json.loads(u'%s' % resp.text))
             LOGGER.info('Login returned code %s: %s', resp.status, resp.text)
@@ -835,8 +836,8 @@ class RestClientBase(object):
             self.__session_key = resp.session_key
             self.__session_location = resp.session_location
             if not self.__session_key and not resp.status == 200:
-                raise InvalidCredentialsError(
-                    self.root.Oem.Hp.Sessions.LoginFailureDelay)
+                raise InvalidCredentialsError(\
+                                    self.root.Oem.Hp.Sessions.LoginFailureDelay)
             else:
                 self.set_username(None)
                 self.set_password(None)
@@ -851,7 +852,8 @@ class RestClientBase(object):
                 session_loc = self.__session_location.replace("https://", '')
                 session_loc = session_loc.replace(' ', '%20')
             else:
-                session_loc = self.__session_location.replace(self.__base_url, '')
+                session_loc = self.__session_location.replace(\
+                                                          self.__base_url, '')
 
             resp = self.delete(session_loc)
             LOGGER.info("User logged out: %s", resp.text)
@@ -864,8 +866,8 @@ class RestClientBase(object):
 class HttpClient(RestClientBase):
     """A client for Rest"""
     def __init__(self, base_url, username=None, password=None, \
-                 default_prefix='/rest/v1', biospassword=None, \
-                 sessionkey=None, is_redfish=False):
+                                 default_prefix='/rest/v1', biospassword=None, \
+                                 sessionkey=None, is_redfish=False):
         self.is_redfish = is_redfish
         super(HttpClient, self).__init__(base_url, username=username, \
                              password=password, default_prefix=default_prefix, \
@@ -896,11 +898,11 @@ class HttpClient(RestClientBase):
         :type providerheader: str
 
         """
-        if (not self.is_redfish and
-                self.default_prefix in path and path[-1] == '/'):
+        if not self.is_redfish and self.default_prefix in path and \
+                                                                path[-1] == '/':
             path = path[0:-1]
-        elif (self.is_redfish and
-              self.default_prefix in path and path[-1] != '/'):
+        elif self.is_redfish and self.default_prefix in path and \
+                                                                path[-1] != '/':
             path = path + '/'
         else:
             pass
@@ -922,9 +924,8 @@ class HttpClient(RestClientBase):
         :type optionalpassword: str
 
         """
-        headers = super(HttpClient, self)._get_req_headers(headers,
-                                                           providerheader,
-                                                           optionalpassword)
+        headers = super(HttpClient, self)._get_req_headers(headers, \
+                                               providerheader, optionalpassword)
         if self.is_redfish:
             headers['OData-Version'] = '4.0'
 
@@ -934,24 +935,20 @@ class Blobstore2RestClient(RestClientBase):
     """A client for Rest that uses the blobstore2 as the transport"""
     _http_vsn_str = 'HTTP/1.1'
 
-    def __init__(self, base_url, default_prefix='/rest/v1', username=None,
-                 password=None, sessionkey=None, is_redfish=False):
+    def __init__(self, base_url, default_prefix='/rest/v1', username=None, \
+                            password=None, sessionkey=None, is_redfish=False):
         self.is_redfish = is_redfish
         super(Blobstore2RestClient, self).__init__(base_url, \
-                                            username=username, \
-                                            password=password, \
-                                            default_prefix=default_prefix, \
-                                            sessionkey=sessionkey)
+                        username=username, password=password, \
+                        default_prefix=default_prefix, sessionkey=sessionkey)
 
-        self._method = None
         if self.is_redfish:
             self.login_url = self.root.Links.Sessions['@odata.id']
         else:
             self.login_url = self.root.links.Sessions.href
 
     def _rest_request(self, path='', method="GET", args=None, body=None,
-                      headers=None, optionalpassword=None,
-                      providerheader=None):
+                      headers=None, optionalpassword=None, providerheader=None):
         """Rest request for blob store client
 
         :param path: path within tree
@@ -970,21 +967,21 @@ class Blobstore2RestClient(RestClientBase):
         :type providerheader: str
 
         """
-        headers = self._get_req_headers(headers, providerheader,
-                                        optionalpassword)
+        headers = self._get_req_headers(headers, providerheader, \
+                                                            optionalpassword)
 
-        if (not self.is_redfish and
-                self.default_prefix in path and path[-1] == '/'):
+        if not self.is_redfish and self.default_prefix in path and \
+                                                                path[-1] == '/':
             path = path[0:-1]
-        elif (self.is_redfish and
-              self.default_prefix in path and path[-1] != '/'):
+        elif self.is_redfish and self.default_prefix in path and \
+                                                                path[-1] != '/':
             path = path + '/'
         else:
             pass
 
         reqpath = path.replace('//', '/')
 
-        if body:
+        if body is not None:
             if isinstance(body, dict) or isinstance(body, list):
                 headers['Content-Type'] = u'application/json'
                 body = json.dumps(body)
@@ -1016,9 +1013,15 @@ class Blobstore2RestClient(RestClientBase):
 
             headers['Content-Length'] = len(body)
 
-        self._method = method
-        str1 = '%s %s %s\r\n' % (method, reqpath,\
-                                Blobstore2RestClient._http_vsn_str)
+        if args:
+            if method == 'GET':
+                reqpath += '?' + urllib.urlencode(args)
+            elif method == 'PUT' or method == 'POST' or method == 'PATCH':
+                headers['Content-Type'] = u'application/x-www-form-urlencoded'
+                body = urllib.urlencode(args)
+
+        str1 = '%s %s %s\r\n' % (method, reqpath, \
+                                            Blobstore2RestClient._http_vsn_str)
 
         str1 += 'Host: \r\n'
         str1 += 'Accept-Encoding: identity\r\n'
@@ -1050,6 +1053,14 @@ class Blobstore2RestClient(RestClientBase):
         restreq = RestRequest(reqpath, method=method, body=body)
         rest_response = RisRestResponse(restreq, resp_txt)
 
+        if rest_response.status in range(300, 399) and \
+                                                    rest_response.status != 304:
+            newloc = rest_response.getheader("location")
+            newurl = urlparse2.urlparse(newloc)
+
+            rest_response = self._rest_request(newurl.path, method, args, \
+                               body, headers, optionalpassword, providerheader)
+
         try:
             if rest_response.getheader('content-encoding') == 'gzip':
                 compressedfile = StringIO(rest_response.text)
@@ -1058,18 +1069,10 @@ class Blobstore2RestClient(RestClientBase):
         except StandardError:
             pass
 
-        if rest_response.status in range(300, 399):
-            newloc = rest_response.getheader("location")
-            newurl = urlparse2.urlparse(newloc)
-
-            rest_response = self._rest_request(newurl.path, \
-                               method, args, body, headers, \
-                               optionalpassword, providerheader)
-
         return rest_response
 
     def _get_req_headers(self, headers=None, providerheader=None, \
-                                                optionalpassword=None):
+                                                        optionalpassword=None):
         """Get the request headers for blob store client
 
         :param headers: additional headers to be utilized
@@ -1081,17 +1084,16 @@ class Blobstore2RestClient(RestClientBase):
 
         """
         headers = super(Blobstore2RestClient,
-                        self)._get_req_headers(headers,
-                                               providerheader,
-                                               optionalpassword)
+                        self)._get_req_headers(headers, providerheader, \
+                                                            optionalpassword)
         if self.is_redfish:
             headers['OData-Version'] = '4.0'
 
         return headers
 
-def get_client_instance(base_url=None, username=None, password=None,
-                        default_prefix='/rest/v1', biospassword=None,
-                        sessionkey=None, is_redfish=False):
+def get_client_instance(base_url=None, username=None, password=None, \
+                                default_prefix='/rest/v1', biospassword=None, \
+                                sessionkey=None, is_redfish=False):
     """Create and return appropriate RESTful/REDFISH client instance."""
     """ Instantiates appropriate Rest/Redfish object based on existing"""
     """ configuration. Use this to retrieve a pre-configured Rest object
@@ -1121,12 +1123,13 @@ def get_client_instance(base_url=None, username=None, password=None,
             if not os.path.isdir('/dev/hpilo'):
                 raise ChifDriverMissingOrNotFound()
 
-        return Blobstore2RestClient(base_url=base_url, default_prefix=default_prefix,
-                                    username=username, password=password,
-                                    sessionkey=sessionkey, is_redfish=is_redfish)
+        return Blobstore2RestClient(base_url=base_url, \
+                            default_prefix=default_prefix, username=username, \
+                            password=password, sessionkey=sessionkey, \
+                            is_redfish=is_redfish)
     else:
-        return HttpClient(base_url=base_url, username=username, password=password,
-                          default_prefix=default_prefix,
-                          biospassword=biospassword, sessionkey=sessionkey,
+        return HttpClient(base_url=base_url, username=username, \
+                          password=password, default_prefix=default_prefix, \
+                          biospassword=biospassword, sessionkey=sessionkey, \
                           is_redfish=is_redfish)
 

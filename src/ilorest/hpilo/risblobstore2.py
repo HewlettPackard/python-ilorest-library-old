@@ -1,12 +1,12 @@
 ###
 # Copyright 2016 Hewlett Packard Enterprise, Inc. All rights reserved.
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -213,12 +213,11 @@ class BlobStore2(object):
                 count = blobsize - bytes_read
 
             read_block_size = bytes_read
-            recvpkt = self.read_fragment(key, namespace, read_block_size,\
-                                                                        count)
+            recvpkt = self.read_fragment(key, namespace, read_block_size, count)
 
             newreadsize = readhead + 4
-            bytesread = struct.unpack("<I", bytes(\
-                                    recvpkt[readhead:(newreadsize)]))[0]
+            bytesread = struct.unpack("<I", bytes(recvpkt[readhead:\
+                                                            (newreadsize)]))[0]
             data.extend(recvpkt[newreadsize:newreadsize + bytesread])
             bytes_read += bytesread
 
@@ -286,17 +285,15 @@ class BlobStore2(object):
 
                 write_blob_size = bytes_written
 
-                self.write_fragment(
-                    key, namespace=namespace,
-                    data=data[write_blob_size:write_blob_size+count],
-                    offset=write_blob_size, count=count)
+                self.write_fragment(key, namespace=namespace, \
+                            data=data[write_blob_size:write_blob_size+count], \
+                            offset=write_blob_size, count=count)
 
                 bytes_written += count
 
         return self.finalize(key, namespace=namespace)
 
-    def write_fragment(self, key, namespace, data=None, offset=0, \
-                                                                    count=1):
+    def write_fragment(self, key, namespace, data=None, offset=0, count=1):
         """Fragmented version of write function for large blobs
 
         :param key: The blob key to be written.
@@ -478,7 +475,8 @@ class BlobStore2(object):
             self.create(rqt_key, rsp_namespace)
             self.write(rqt_key, rsp_namespace, req_data)
 
-            lib.rest_immediate_blobdesc.argtypes = [c_char_p, c_char_p, c_char_p]
+            lib.rest_immediate_blobdesc.argtypes = [c_char_p, c_char_p, \
+                                                                    c_char_p]
             lib.rest_immediate_blobdesc.restype = POINTER(c_ubyte)
 
             name = create_string_buffer(rqt_key)
@@ -503,7 +501,8 @@ class BlobStore2(object):
         recvmode = struct.unpack("<I", bytes(resp[12:16]))[0]
 
         fixdlen = lib.size_of_restResponseFixed()
-        response = resp[fixdlen:struct.unpack("<I", bytes(resp[16:20]))[0] + fixdlen]
+        response = resp[fixdlen:struct.unpack("<I", bytes(resp[16:20]))[0] + \
+                                                                        fixdlen]
 
         tmpresponse = None
         if errorcode == BlobReturnCodes.SUCCESS and not mode:
