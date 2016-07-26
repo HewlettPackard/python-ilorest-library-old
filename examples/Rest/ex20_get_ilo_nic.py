@@ -14,7 +14,7 @@
 
 import sys
 import json
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex20_get_ilo_nic(restobj, get_active):
     sys.stdout.write("\nEXAMPLE 20: Get iLO's NIC configuration\n")

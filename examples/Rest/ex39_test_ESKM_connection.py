@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex39_test_ESKM_connection(restobj):
     sys.stdout.write("\nEXAMPLE 39: Test ESKM connection\n")

@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex34_set_bios_uefi_shell_startup(restobj, uefienabled="Enabled", \
                                      networkpath="", urlpath="", \

@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex36_set_bios_url_boot_file(restobj, path='', bios_password=None):
     sys.stdout.write("\nEXAMPLE 36: Set BIOS url boot file\n")

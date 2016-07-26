@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex24_clear_iml(restobj):
     sys.stdout.write("\nEXAMPLE 24: Clear Integrated Management Log\n")

@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from redfishobject import RedfishObject
+from _redfishobject import RedfishObject
 from ilorest.rest.v1_helper import ServerDownOrUnreachableError
 
 def ex36_set_bios_url_boot_file(redfishobj, path='', bios_password=None):

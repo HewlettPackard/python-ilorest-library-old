@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex3_change_bios_setting(restobj, bios_property, property_value, \
                                                             bios_password=None):

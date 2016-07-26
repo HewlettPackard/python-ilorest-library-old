@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex40_reset_ESKM_eventlog(restobj):
     sys.stdout.write("\nEXAMPLE 40: Reset ESKM event logs\n")

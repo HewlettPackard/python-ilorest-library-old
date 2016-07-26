@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from redfishobject import RedfishObject
+from _redfishobject import RedfishObject
 from ilorest.rest.v1_helper import ServerDownOrUnreachableError
 
 def ex11_modify_ilo_user_account(redfishobj, ilo_login_name_to_modify, \

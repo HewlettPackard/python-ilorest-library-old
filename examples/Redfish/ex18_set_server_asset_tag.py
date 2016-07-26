@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from redfishobject import RedfishObject
+from _redfishobject import RedfishObject
 from ilorest.rest.v1_helper import ServerDownOrUnreachableError
 
 def ex18_set_server_asset_tag(redfishobj, asset_tag):

@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex9_find_ilo_mac_address(restobj):
     sys.stdout.write("\nEXAMPLE 9: Find iLO's MAC Addresses\n")

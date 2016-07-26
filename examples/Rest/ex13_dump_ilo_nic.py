@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex13_dump_ilo_nic(restobj):
     sys.stdout.write("\nEXAMPLE 13: Get iLO NIC state\n")

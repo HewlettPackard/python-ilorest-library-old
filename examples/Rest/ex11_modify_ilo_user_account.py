@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex11_modify_ilo_user_account(restobj, ilo_login_name_to_modify, \
                 new_ilo_loginname, new_ilo_username, new_ilo_password, \

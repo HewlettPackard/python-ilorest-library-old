@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex21_set_active_ilo_nic(restobj, shared_nic):
     sys.stdout.write("\nEXAMPLE 21: Set the active iLO NIC\n")

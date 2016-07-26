@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from redfishobject import RedfishObject
+from _redfishobject import RedfishObject
 from ilorest.rest.v1_helper import ServerDownOrUnreachableError
 
 def ex7_change_boot_order(redfishobj, bios_password=None):

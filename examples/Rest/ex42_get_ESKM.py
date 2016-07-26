@@ -14,7 +14,7 @@
 
 import sys
 import json
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex42_get_ESKM(restobj):
     sys.stdout.write("\nEXAMPLE 42: Get ESKM configuration\n")

@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex45_get_license_key(restobj):
     sys.stdout.write("\nEXAMPLE 45: Get iLO License Key\n")

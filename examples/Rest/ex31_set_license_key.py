@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex31_set_license_key(restobj, iLO_Key):
     sys.stdout.write("\nEXAMPLE 31: Set iLO License Key\n")

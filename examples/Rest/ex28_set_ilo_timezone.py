@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex28_set_ilo_timezone(restobj, olson_timezone):
     sys.stdout.write("\nEXAMPLE 28: Set iLO's Timezone\n")

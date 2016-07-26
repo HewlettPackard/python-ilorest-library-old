@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex26_configure_snmp(restobj, snmp_mode, snmp_alerts):
     sys.stdout.write("\nEXAMPLE 26: Configure iLO SNMP Settings\n")

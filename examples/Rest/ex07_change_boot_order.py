@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex7_change_boot_order(restobj, bios_password=None):
     sys.stdout.write("\nEXAMPLE 7: Change Boot Order (UEFI)\n")

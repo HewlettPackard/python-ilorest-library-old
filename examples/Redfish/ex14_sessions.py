@@ -14,7 +14,7 @@
 
 import sys
 import urlparse
-from redfishobject import RedfishObject
+from _redfishobject import RedfishObject
 from ilorest.rest.v1_helper import ServerDownOrUnreachableError
 
 def ex14_sessions(redfishobj, login_account, login_password):

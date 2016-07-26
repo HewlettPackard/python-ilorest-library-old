@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex41_dump_eskm_event_log(restobj):
     sys.stdout.write("\nEXAMPLE 41: Dump ESKM Event Log\n")

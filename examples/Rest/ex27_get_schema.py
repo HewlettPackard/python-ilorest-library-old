@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex27_get_schema(restobj, schema_prefix):
     sys.stdout.write("\nEXAMPLE 27:  Find and return schema " + \

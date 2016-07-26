@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex35_set_bios_iscsi(restobj, bios_properties, bios_password=None):
     sys.stdout.write("\nEXAMPLE 35: Set ISCSI Config\n")

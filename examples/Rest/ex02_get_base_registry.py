@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex2_get_base_registry(restobj):
     sys.stdout.write("\nEXAMPLE 2: Find and return registry " + "\n")

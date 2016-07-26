@@ -14,7 +14,7 @@
 
 import sys
 import urlparse
-from restobject import RestObject
+from _restobject import RestObject
 
 
 def ex14_sessions(restobj, login_account, login_password):

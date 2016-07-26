@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex18_set_server_asset_tag(restobj, asset_tag):
     sys.stdout.write("\nEXAMPLE 18: Set Computer Asset Tag\n")

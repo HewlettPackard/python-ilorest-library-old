@@ -14,7 +14,7 @@
 
 import sys
 import json
-from redfishobject import RedfishObject
+from _redfishobject import RedfishObject
 from ilorest.rest.v1_helper import ServerDownOrUnreachableError
 
 def ex42_get_ESKM(redfishobj):

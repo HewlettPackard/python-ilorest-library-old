@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex6_bios_revert_default(restobj):
     sys.stdout.write("\nEXAMPLE 6: Revert BIOS settings to default\n")

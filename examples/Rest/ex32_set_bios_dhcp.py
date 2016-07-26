@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex32_set_bios_dhcp(restobj, bios_properties, bios_password=None):
     sys.stdout.write("\nEXAMPLE 32: Set DHCP\n")

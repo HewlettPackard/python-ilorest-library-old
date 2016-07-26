@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex38_set_ESKM_username_password(restobj, username, password, accountgroup):
     sys.stdout.write("\nEXAMPLE 38: Set ESKM username, password\n")

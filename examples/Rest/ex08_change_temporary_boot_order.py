@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex8_change_temporary_boot_order(restobj, boottarget, bios_password=None):
     sys.stdout.write("\nEXAMPLE 8: Change temporary boot order (one time boot" \

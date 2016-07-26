@@ -14,7 +14,7 @@
 
 import sys
 import json
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex29_set_ilo_ntp_servers(restobj, ntp_servers):
     sys.stdout.write("\nEXAMPLE 29:  Set iLO's NTP Servers\n")

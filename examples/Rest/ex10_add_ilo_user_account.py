@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex10_add_ilo_user_account(restobj, new_ilo_loginname, new_ilo_username, \
                                  new_ilo_password, irc=None, cfg=None, \

@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex22_dump_iml(restobj):
     sys.stdout.write("\nEXAMPLE 22: Dump Integrated Management Log\n")

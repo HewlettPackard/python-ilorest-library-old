@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex12_remove_ilo_account(restobj, ilo_loginname_to_remove):
     sys.stdout.write("\nEXAMPLE 12: Remove an iLO account\n")

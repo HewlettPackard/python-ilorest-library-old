@@ -14,7 +14,7 @@
 
 import sys
 import json
-from redfishobject import RedfishObject
+from _redfishobject import RedfishObject
 from ilorest.rest.v1_helper import ServerDownOrUnreachableError
 
 def ex29_set_ilo_ntp_servers(redfishobj, ntp_servers):

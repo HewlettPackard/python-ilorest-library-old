@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex1_get_resource_directory(restobj):
     sys.stdout.write("\nEXAMPLE 1: Find and store the resource directory " + "\n")

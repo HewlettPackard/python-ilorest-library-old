@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex15_set_uid_light(restobj, uid):
     sys.stdout.write("\nEXAMPLE 15: Set UID Light on or off\n")

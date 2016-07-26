@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex16_computer_details(restobj):
     sys.stdout.write("\nEXAMPLE 16: Dump host computer details\n")

@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex5_enable_secure_boot(restobj, secure_boot_enable, bios_password=None):
     sys.stdout.write("\nEXAMPLE 5: Enable/Disable UEFI Secure Boot\n")

@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex25_clear_ilo_event_log(restobj):
     sys.stdout.write("\nEXAMPLE 25: Clear iLO Event Log\n")

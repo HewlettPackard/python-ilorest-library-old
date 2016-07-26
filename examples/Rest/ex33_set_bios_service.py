@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex33_set_bios_service(restobj, bios_properties, bios_password=None):
     sys.stdout.write("\nEXAMPLE 33: Set Bios Service\n")

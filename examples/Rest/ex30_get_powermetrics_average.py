@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex30_get_powermetrics_average(restobj):
     sys.stdout.write("\nEXAMPLE 30: Report PowerMetrics Average Watts\n")

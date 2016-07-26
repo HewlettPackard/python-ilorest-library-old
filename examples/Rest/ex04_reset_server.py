@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex4_reset_server(restobj, bios_password=None):
     sys.stdout.write("\nExample 4: Reset a server\n")

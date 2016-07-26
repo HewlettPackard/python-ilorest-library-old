@@ -13,7 +13,7 @@
  # under the License.
 
 import sys
-from restobject import RestObject
+from _restobject import RestObject
 
 def ex23_dump_ilo_event_log(restobj):
     sys.stdout.write("\nEXAMPLE 23: Dump iLO Event Log\n")
