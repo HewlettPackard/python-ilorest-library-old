@@ -46,8 +46,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'iLO RESTful API'
-copyright = u'2016, Hewlett Packard Enterprise'
-author = u'Shamimur Rahman'
+copyright = u'Copyright 2016 Hewlett Packard Enterprise Development LP'
+author = u'Hewlett Packard Enterprise'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -225,7 +225,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'iLORESTfulAPI.tex', u'iLO RESTful API Documentation',
-     u'Shamimur Rahman', 'manual'),
+     u'Hewlett Packard Enterprise', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
