@@ -115,6 +115,8 @@ History
 ----------
 
   04/01/2016: Initial Commit
+  06/23/2016: Release of v1.1.0
+  07/25/2016: Release of v1.2.0
 
 Copyright and License
 ---------------------
