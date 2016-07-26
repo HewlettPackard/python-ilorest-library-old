@@ -1,0 +1,58 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+|
+
+.. toctree::
+   :maxdepth: 1
+   
+ 
+If not created already,  create an instance of Rest or Redfish Object using the  **RestObject** or **RedfishObject** class respectively. The class constructor takes iLO hostname/ ip address, iLO login username and password as arguments. The class also initializes a login session, gets systems resources and message registries.
+
+Rest Object creation:
+
+.. code-block:: python
+
+ REST_OBJ = RestObject(iLO_host, login_account, login_password)
+
+::
+
+Redfish Object creation:
+
+.. code-block:: python
+
+ REDFISH_OBJ = RedfishObject(iLO_host, login_account, login_password)
+
+::
+
+Example 47: Clear AHS data
+======================
+
+The method **ex47_clear_ahs_data** takes an instance of rest object ( or redfish object if using Redfish API ) as an argument.
+
+.. code-block:: python
+
+  def ex47_clear_ahs_data(restobj):
+
+::
+
+Search for Manager URI type.
+
+.. code-block:: python
+
+
+    instances = restobj.search_for_type("Manager.")
+::
+
+
+
+Set body to the ClearLog action, then set the response to the ActiveHealthSystem URI.
+
+.. code-block:: python
+
+    for instance in instances:
+        tmp = restobj.rest_get(instance["href"])
+        body = {"Action": "ClearLog"}
+        response = restobj.rest_get(tmp.dict["Oem"]["Hp"]["links"]\
+                                    ["ActiveHealthSystem"]["href"], body)
+::

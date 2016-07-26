@@ -74,5 +74,6 @@ The following examples can all be used as guidance for `managing iLO using iLO R
    Get-logical-drives
    Get-license-key
    Get-AHS-data
+   Clear-AHS-data
    
    
