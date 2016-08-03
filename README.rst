@@ -57,25 +57,30 @@ Inband communication
 Usage
 ----------
 
+Import ilorest
+~~~~~~~~~~~~~~~~~~~~~~~~~
+ First, import the ilorest module.
+
 .. code-block:: python
+
 	import ilorest
 
 Create a Rest Object
 ~~~~~~~~~~~~~~~~~~~~~~~~~
- In RestfulApiExamples.py module, a rest object instance is created by calling the **rest_client** method with four parameters: IP address, iLO user name, iLO password and the default prefix.
+ In RestfulApiExamples.py module, a rest object instance is created by calling the **rest_client** method with four parameters: base url, the server's iLO IP address, formatted as a string ("https://xx.xx.xx.xx"), iLO user name, iLO password and the default prefix.
  
 .. code-block:: python
 
-	REST_OBJ = ilorest.rest_client(base_url=host,username=login_account, \
+	REST_OBJ = ilorest.rest_client(base_url="https://xx.xx.xx.xx",username=login_account, \
                               password=login_password, default_prefix='/rest/v1') 
 
 Create a Redfish Object
 ~~~~~~~~~~~~~~~~~~~~~~~~~
- Just like Rest object, a Redfish object instance in RedfishAPiExamples.py is created by calling the **redfish_client** method with four parameters: IP address, iLO user name, iLO password and the default prefix.
+ Just like Rest object, a Redfish object instance in RedfishAPiExamples.py is created by calling the **redfish_client** method with four parameters: base url, the server's iLO IP address, formatted as a string ("https://xx.xx.xx.xx"), iLO user name, iLO password and the default prefix.
 
 .. code-block:: python
 
-	REST_OBJ = ilorest.redfish_client(base_url=host,username=login_account, \ 
+	REST_OBJ = ilorest.redfish_client(base_url="https://xx.xx.xx.xx",username=login_account, \ 
                                  password=login_password, default_prefix='/redfish/v1')   	
 
 Login to the server
@@ -117,6 +122,7 @@ History
   * 04/01/2016: Initial Commit
   * 06/23/2016: Release of v1.1.0
   * 07/25/2016: Release of v1.2.0
+  * 08/02/2016: Release of v1.3.0
 
 Copyright and License
 ---------------------

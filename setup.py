@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='python-ilorest-library',
-      version='1.2.0',
+      version='1.3.0',
       description='iLO Rest Python Library',
 	  author = 'Hewlett Packard Enterprise',
 	  author_email = 'jackgarcia77@gmail.com',
@@ -20,5 +20,8 @@ setup(name='python-ilorest-library',
           'jsonpath_rw',
           'jsonpointer',
           'validictory',
-          'urlparse2'
+          'urlparse2',
+		  'decorator',
+		  'six',
+		  'ply'
       ])
