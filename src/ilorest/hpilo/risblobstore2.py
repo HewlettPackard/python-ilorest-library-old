@@ -264,7 +264,7 @@ class BlobStore2(object):
         :param namespace: The blob namespace to write the key in.
         :type namespace: str.
         :param data: The blob data to be written.
-        :type key: str.
+        :type data: str.
 
         """
         lib = self.getHprestChifHandle()
@@ -305,7 +305,7 @@ class BlobStore2(object):
         :param offset: The data offset for the current fragmented write.
         :type key: int.
         :param count: The data count for the current fragmented write.
-        :type namespace: int.
+        :type count: int.
 
         """
         lib = self.getHprestChifHandle()

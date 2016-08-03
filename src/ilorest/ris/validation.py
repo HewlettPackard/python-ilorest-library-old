@@ -650,6 +650,7 @@ class Classes(RisObject):
 
         :param schname: string containing the schema name.
         :type schname: str.
+        :returns: returns iLO schema
 
         """
         result = None
@@ -679,6 +680,7 @@ class Classes(RisObject):
 
         :param regname: string containing the registry name.
         :type regname: str.
+        :returns: returns iLO registries
 
         """
         result = None
@@ -706,6 +708,7 @@ class Classes(RisObject):
 
         :param schname: string containing the schema name.
         :type schname: str.
+        :returns: returns the BIOS schemas
 
         """
         result = None
@@ -717,6 +720,14 @@ class Classes(RisObject):
                     regentry.set_root(self._root)
                     result = regentry
                     break
+        elif hasattr(self, 'Members') and isinstance(self.Members, list):
+            schname = schname.split('.')[-1]
+            for entry in self.Members:
+                schlink = entry[u'@odata.id'].split('/')
+                schlink = schlink[len(schlink)-2]
+                if schname.lower() == schlink.lower():
+                    result = entry
+                    break
 
         return result
 
@@ -725,6 +736,7 @@ class Classes(RisObject):
 
         :param regname: string containing the registry name.
         :type regname: str.
+        :returns: returns the BIOS registries
 
         """
         result = None
@@ -735,6 +747,13 @@ class Classes(RisObject):
                     regentry = RepoRegistryEntry.parse(entry)
                     regentry.set_root(self._root)
                     result = regentry
+                    break
+        elif hasattr(self, 'Members') and isinstance(self.Members, list):
+            for entry in self.Members:
+                reglink = entry[u'@odata.id'].split('/')
+                reglink = reglink[len(reglink)-2]
+                if regname.lower() == reglink.lower():
+                    result = entry
                     break
 
         return result
@@ -804,6 +823,7 @@ class RepoRegistryEntry(RepoBaseEntry):
         :type monolith: dict.
         :param newargs: list of multi level properties to be modified.
         :type newargs: list.
+        :returns: returns an error list.
 
         """
         if not errlist:
@@ -851,6 +871,7 @@ class RepoRegistryEntry(RepoBaseEntry):
         :type monolith: dict.
         :param newargs: list of multi level properties to be modified.
         :type newargs: list.
+        :returns: returns an error list
 
         """
         if not errlist:
@@ -895,6 +916,7 @@ class RepoRegistryEntry(RepoBaseEntry):
         :type tdict: list.
         :param errlist: list containing found errors.
         :type errlist: list.
+        :returns: returns an error list
 
         """
         if not errlist:
@@ -956,6 +978,7 @@ class RepoRegistryEntry(RepoBaseEntry):
         :type newargs: list.
         :param latestschema: flag to determine if we should use smart schema.
         :type latestschema: boolean.
+        :returns: returns registry model
 
         """
         if not errlist:
@@ -1010,14 +1033,20 @@ class RepoRegistryEntry(RepoBaseEntry):
                                 currtype = currdict[instance._typestring]
 
                             if latestschema:
-                                currtype = currdict[instance._typestring].\
-                                                                split('.')[:1]
-                                insttype = instance.resp.dict["title"].\
-                                                                split('.')[:1]
+                                if monolith.is_redfish and 'title' in instance.\
+                                        resp.dict and not instance.resp.dict\
+                                                    ["title"].startswith('#'):
+                                    currtype = currdict[instance._typestring].\
+                                                                split('#')[-1]
+                                    currtype = currtype.split('.')[0]
+                                else:
+                                    currtype = currdict[instance._typestring].\
+                                                                split('.')[0]
+                                insttype = instance.resp.dict["title"].split('.')[0]
 
                                 if currtype == insttype or currtype == \
                                                     instance.resp.dict[\
-                                                   "oldtitle"].split('.')[:1]:
+                                                   "oldtitle"].split('.')[0]:
                                     location_file = instance.resp.dict
                                     break
                             elif searchtype == "ob" and instance.resp.dict[\
@@ -1121,8 +1150,10 @@ class RepoRegistryEntry(RepoBaseEntry):
         :type monolith: dict.
         :param errlist: list containing found errors.
         :type errlist: list.
+        :returns: returns the registry model
 
         """
+        attregType = Typepathforval.typepath.defs.AttributeRegType
         if not errlist:
             errlist = list()
 
@@ -1157,7 +1188,7 @@ class RepoRegistryEntry(RepoBaseEntry):
         location_file = None
         if currdict and monolith:
             for itemtype in monolith.types:
-                if "HpBiosAttributeRegistrySchema." in itemtype and \
+                if attregType in itemtype and \
                                     u'Instances' in monolith.types[itemtype]:
                     for instance in monolith.types[itemtype][u'Instances']:
                         location_file = instance.resp.dict
@@ -1203,10 +1234,11 @@ class RepoSchemaEntry(RepoBaseEntry):
     def _read_location_file(self, currloc, errlist):
         """Return results from locations
 
-        :param currdict: current selection dictionary.
-        :type currdict: dict.
+        :param currloc: current URI
+        :type currloc: str
         :param errlist: list containing found errors.
         :type errlist: list.
+        :returns: returns results from archive at currloc parameter
 
         """
         if u'ArchiveUri' in currloc and u'ArchiveFile' in currloc:
@@ -1290,6 +1322,7 @@ class HpPropertiesRegistry(RisObject):
 
         :param tdict: the dictionary to test against.
         :type tdict: list.
+        :returns: returns a validated list
 
         """
         result = list()
@@ -1318,6 +1351,7 @@ class HpPropertiesRegistry(RisObject):
 
         :param tdict: the dictionary to test against.
         :type tdict: list.
+        :returns: returns a validated list
 
         """
         result = list()
@@ -1352,6 +1386,7 @@ class HpPropertiesRegistry(RisObject):
         :type newargs: list.
         :param oneof: special string for "oneof" options within validation.
         :type oneof: list.
+        :returns: returns attribute validator type
 
         """
         if oneof:
@@ -1398,10 +1433,16 @@ class HpPropertiesRegistry(RisObject):
 
         :param attrname: attribute name to be used for validation.
         :type attrname: str.
+        :returns: returns attribute validator type
 
         """
+
+
         for item in self.Attributes:
-            if item["Name"] == attrname:
+            name = Typepathforval.typepath.defs.AttributeNameType
+            if name not in item.keys():
+                return None
+            if item[name] == attrname:
                 validator = None
                 if EnumValidator.is_type(item):
                     validator = EnumValidator.parse(item)
@@ -1423,12 +1464,13 @@ class HpPropertiesRegistry(RisObject):
     def validate_attribute(self, attrentry, attrvallist, name):
         """Function to validate attribute against iLO schema
 
-        :param attrname: attribute name to be used for validation.
-        :type attrname: str.
+        :param attrentry: attribute entry to be used for validation.
+        :type attrentry: str.
         :param attrval: attribute value to be used for validation.
         :type attrval: str.
         :param name: clean name for outputting.
         :type name: str.
+        :returns: returns list with validated attribute
 
         """
         result = list()
@@ -1478,6 +1520,7 @@ class EnumValidator(BaseValidator):
 
         :param attrname: attribute name to be used for validation.
         :type attrname: str.
+        :returns: returns a boolean based on whether type is eneumeration
 
         """
         if u'type' in attrentry:
@@ -1510,6 +1553,7 @@ class EnumValidator(BaseValidator):
         :type newval: str.
         :param name: clean name for outputting.
         :type name: str.
+        :returns: returns an error if fails
 
         """
         result = list()
@@ -1614,6 +1658,7 @@ class BoolValidator(BaseValidator):
 
         :param attrentry: attribute entry containing data to be validated.
         :type attrentry: str.
+        :returns: returns boolean on whether type is boolean
 
         """
         if u'type' in attrentry:
@@ -1641,6 +1686,7 @@ class BoolValidator(BaseValidator):
         :type newval: str.
         :param name: clean name for outputting.
         :type name: str.
+        :returns: returns an error if no validation value
 
         """
         result = list()
@@ -1731,6 +1777,7 @@ class StringValidator(BaseValidator):
 
         :param attrentry: attribute entry containing data to be validated.
         :type attrentry: str.
+        :returns: returns boolean based on whether type to validate is string
 
         """
         if u'type' in attrentry:
@@ -1756,6 +1803,7 @@ class StringValidator(BaseValidator):
 
         :param newval: new value to be used for validation.
         :type newval: str.
+        :returns: returns an error if validation fails criteria
 
         """
         result = list()
@@ -1865,6 +1913,7 @@ class IntegerValidator(BaseValidator):
 
         :param attrname: attribute name to be used for validation.
         :type attrname: str.
+        :returns: returns boolean based on type being an integer
 
         """
         if u'type' in attrentry:
@@ -1996,6 +2045,7 @@ class ObjectValidator(BaseValidator):
 
         :param attrname: attribute name to be used for validation.
         :type attrname: str.
+        :returns: returns boolean based on whether type is an object
 
         """
         if u'type' in attrentry:
@@ -2107,6 +2157,7 @@ class PasswordValidator(BaseValidator):
 
         :param attrname: attribute name to be used for validation.
         :type attrname: str.
+        :returns: returns boolean whether type is password
 
         """
         if u'type' in attrentry:
@@ -2132,6 +2183,7 @@ class PasswordValidator(BaseValidator):
 
         :param newval: new value to be used for validation.
         :type newval: str.
+        :returns: returns an validation error if criteria not met
 
         """
         result = list()
@@ -2232,4 +2284,12 @@ class PasswordValidator(BaseValidator):
             out.write(u'\nREAD-ONLY\n')
             out.write('%s' % wrapper.fill('%(readonly)s' % self))
             out.write('\n')
+
+class Typepathforval(object):
+    """Way to store the typepath defines object."""
+    typepath = None
+    def __new__(cls, typepathobj):
+        if typepathobj:
+            Typepathforval.typepath = typepathobj
+        pass
 

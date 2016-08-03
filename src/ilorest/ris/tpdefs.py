@@ -19,6 +19,7 @@
 
 #---------Imports---------
 from ilorest import redfish_client, rest_client
+from ilorest.ris.rmc_helper import UnableToObtainIloVersionError
 #---------End of imports---------
 
 #TODO: need to add the real LOGGER included in other files
@@ -53,8 +54,8 @@ class typesandpathdefines(object):
                 response = restclient.get(path="/rest/v1")
             except Exception as excep:
                 if logger:
-                    logger.error(u"getGen rest error:"+str(excep)+u"\n")
-                    logger.error(u"getGen redfish error:"+str(excp)+u"\n")
+                    if not type(excep) == type(excp):
+                        logger.error(u"Gen get rest error:"+str(excep)+u"\n")
                 raise excp
 
         self.ilogen = None
@@ -67,8 +68,7 @@ class typesandpathdefines(object):
                                                                 ["ManagerType"]
 
         if self.ilogen is None:
-            #TODO: need to fix this raise to a more useful error
-            raise
+            raise UnableToObtainIloVersionError("Unable to find the iloversion")
 
         self.ilogen = self.ilogen.split(' ')[-1]
 
@@ -93,6 +93,7 @@ class definevalstenplus(definevals):
         self.OemHp = u"Hpe"
 
         self.oempath = u"/Oem/Hpe"
+        self.StartPath = u"/redfish/v1/"
         self.systempath = u"/redfish/v1/Systems/1/"
         self.ManagerPath = u"/redfish/v1/Managers/1/"
         self.BiosPath = u"/redfish/v1/systems/1/bios/"
@@ -100,7 +101,7 @@ class definevalstenplus(definevals):
         self.AccountsPath = u"/redfish/v1/AccountService/Accounts/"
         self.FederationPath = u"/redfish/v1/Managers/1/FederationGroups/"
 
-        self.BiosType = u"HpeBios."
+        self.BiosType = u"Bios."
         self.HpESKMType = u"HpeESKM."
         self.HpCommonType = u"HpeCommon"
         self.HpiLOSSOType = u"HpeiLOSSO."
@@ -108,7 +109,9 @@ class definevalstenplus(definevals):
         self.LogServiceType = u"#LogService."
         self.HpHttpsCertType = u"HpeHttpsCert."
         self.SnmpService = u"HpeiLOSnmpService."
+        self.AttributeNameType = u"AttributeName"
         self.HpiLODateTimeType = u"HpeiLODateTime."
+        self.AttributeRegType = u"#AttributeRegistry."
         self.HpiLOFirmwareUpdateType = u"HpeiLOFirmwareUpdate."
         self.ResourceDirectoryType = u"HpeiLOResourceDirectory."
         self.HpiLOFederationGroupType = u"HpeiLOFederationGroup."
@@ -132,13 +135,6 @@ class definevalstenplus(definevals):
         """Function to update redfish variables"""
         pass
 
-    def CorrectHpStr(self, typestr):
-        if typestr.startswith(u'Hpe'):
-            return typestr
-        elif typestr.startswith(u'Hp'):
-            return u"Hpe"+typestr[2:]
-        else:
-            return typestr
 
 class definevalsNine(definevals):
     """Platform dependent variables"""
@@ -146,6 +142,7 @@ class definevalsNine(definevals):
         self.OemHp = u"Hp"
 
         self.oempath = u"/Oem/Hp"
+        self.StartPath = u"/rest/v1"
         self.systempath = u"/rest/v1/Systems/1"
         self.ManagerPath = u"/rest/v1/Managers/1"
         self.BiosPath = u"/rest/v1/systems/1/bios"
@@ -158,6 +155,7 @@ class definevalsNine(definevals):
         self.HpCommonType = u"HpCommon"
         self.HpiLOSSOType = u"HpiLOSSO."
         self.SnmpService = u"SnmpService."
+        self.AttributeNameType = u"Name"
         self.LogServiceType = u"LogService."
         self.HpSecureBoot = u"HpSecureBoot."
         self.HpHttpsCertType = u"HpHttpsCert."
@@ -165,8 +163,9 @@ class definevalsNine(definevals):
         self.HpiLOFirmwareUpdateType = u"HpiLOFirmwareUpdate."
         self.ResourceDirectoryType = u"HpiLOResourceDirectory."
         self.HpiLOFederationGroupType = u"HpiLOFederationGroup."
-        self.ManagerNetworkServiceType = u"ManagerNetworkService."
+        self.AttributeRegType = u"HpBiosAttributeRegistrySchema."
         self.SchemaFileCollectionType = u"#SchemaFileCollection."
+        self.ManagerNetworkServiceType = u"ManagerNetworkService."
         self.HpiLOActiveHealthSystemType = u"HpiLOActiveHealthSystem."
         self.MessageRegistryType = u"MessageRegistry."
 
@@ -181,6 +180,7 @@ class definevalsNine(definevals):
 
     def redfishchange(self):
         """Function to update redfish variables"""
+        self.StartPath = u"/redfish/v1/"
         self.systempath = u"/redfish/v1/Systems/1/"
         self.ManagerPath = u"/redfish/v1/Managers/1/"
         self.BiosPath = u"/redfish/v1/systems/1/bios/"
@@ -197,11 +197,4 @@ class definevalsNine(definevals):
         self.ManagerNetworkServiceType = u"ManagerNetworkProtocol."
 
         self.flagforrest = False
-
-    def CorrectHpStr(self, typestr):
-        """Function to update HP to HPE types"""
-        if typestr.startswith(u'Hpe'):
-            return u"Hp"+typestr[3:]
-        else:
-            return typestr
 

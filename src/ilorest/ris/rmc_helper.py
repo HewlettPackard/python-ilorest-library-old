@@ -102,6 +102,10 @@ class InvalidPathError(Exception):
     """Raised when requested path is not found"""
     pass
 
+class UnableToObtainIloVersionError(Exception):
+    """Raised when iloversion is missing from deafult path"""
+    pass
+    
 class ValidationError(Exception):
     """Raised when there is a problem with user input"""
     def __init__(self, errlist):
@@ -116,6 +120,28 @@ class RmcClient(object):
     """RMC client base class"""
     def __init__(self, url=None, username=None, password=None, typepath=None, \
                         biospassword=None, sessionkey=None, is_redfish=False):
+        """Initialized RmcClient
+        :param username: user name required to login to server.
+        :type: str.
+        :param password: password credentials required to login.
+        :type password: str.
+        :param base_url: rest host name or ip address.
+        :type base_url: str.
+        :param verbose: flag to determine additional output.
+        :type verbose: boolean.
+        :param path: path to initiate login to.
+        :type path: str.
+        :param biospassword: BIOS password for the server if set.
+        :type biospassword: str.
+        :param skipbuild: flag to determine whether to start monolith download.
+        :type skipbuild: boolean.
+        :param includelogs: flag to determine id logs should be downloaded.
+        :type includelogs: boolean.
+        :param is_redfish: If True, a Redfish specific header (OData) will be
+            added to every request.
+        :type is_redfish: boolean.
+    
+        """
         if is_redfish:
             self._rest_client = ilorest.rest.v1.redfish_client(base_url=url, \
                            username=username, password=password, \
@@ -139,7 +165,12 @@ class RmcClient(object):
         return self._rest_client.get_username()
 
     def set_username(self, username):
-        """Sets the rest client's user name"""
+        """Sets the rest client's user name
+
+        :param username: username to set for login
+        :type username: str
+
+        """
         self._rest_client.set_username(username)
 
     def get_password(self):
@@ -147,7 +178,12 @@ class RmcClient(object):
         return self._rest_client.get_password()
 
     def set_password(self, password):
-        """Sets the rest clients's password"""
+        """Sets the rest clients's password
+        
+        :param password: password to set for login
+        :type password: str
+
+        """
         self._rest_client.set_password(password)
 
     def get_bios_password(self):
@@ -155,7 +191,12 @@ class RmcClient(object):
         return self._rest_client.get_biospassword()
 
     def set_bios_password(self, biospasswordword):
-        """Sets the rest client's second level password"""
+        """Sets the rest client's second level password
+        
+        :param biospassword: password to set for bios
+        :type biospassword: str
+
+        """
         self._rest_client.set_biospassword(biospasswordword)
     bios_password = property(get_bios_password, set_bios_password)
 
@@ -192,7 +233,12 @@ class RmcClient(object):
         return self._selector
 
     def _set_selector(self, selectorval):
-        """Sets the rest client's selector"""
+        """Sets the rest client's selector
+        
+        :param selectorval: the type selection for the set operation.
+        :type selectorval: str
+
+        """
         self._selector = selectorval
     selector = property(_get_selector, _set_selector)
 
@@ -201,7 +247,12 @@ class RmcClient(object):
         return self._filter_attr
 
     def _set_filter_attr(self, filterattr):
-        """Sets the rest client's filter"""
+        """Sets the rest client's filter
+        
+        :param filterattr: the type selection for the select operation.
+        :type filterattr: str.
+        
+        """
         self._filter_attr = filterattr
     filter_attr = property(_get_filter_attr, _set_filter_attr)
 
@@ -210,7 +261,12 @@ class RmcClient(object):
         return self._filter_value
 
     def _set_filter_value(self, filterval):
-        """Sets the rest client's filter value"""
+        """Sets the rest client's filter value
+        
+        :param filterval: value for the property to be modified.
+        :type filterval: str.
+        
+        """
         self._filter_value = filterval
     filter_value = property(_get_filter_value, _set_filter_value)
 
@@ -352,6 +408,12 @@ class RmcClient(object):
 class RmcConfig(AutoConfigParser):
     """RMC config object"""
     def __init__(self, filename=None):
+        """Initialize RmcConfig
+        
+        :param filename: file name to be used for Rmcconfig loading.
+        :type filename: str
+        
+        """
         AutoConfigParser.__init__(self, filename=filename)
         self._sectionname = 'hprest'
         self._configfile = filename
@@ -374,7 +436,11 @@ class RmcConfig(AutoConfigParser):
         return self._configfile
 
     def set_configfile(self, config_file):
-        """Set the current configuration file"""
+        """Set the current configuration file        
+        :param config_file: file name to be used for Rmcconfig loading.
+        :type config_file: str
+        
+        """
         self._configfile = config_file
 
     def get_logdir(self):
@@ -382,7 +448,12 @@ class RmcConfig(AutoConfigParser):
         return self._get('logdir')
 
     def set_logdir(self, value):
-        """Set the current log directory"""
+        """Set the current log directory
+        
+        :param value: current working directory for logging
+        :type value: str
+        
+        """
         return self._set('logdir', value)
 
     def get_cache(self):
@@ -393,7 +464,12 @@ class RmcConfig(AutoConfigParser):
             return self._get('cache').lower() in ("yes", "true", "t", "1")
 
     def set_cache(self, value):
-        """Get the config file cache status"""
+        """Get the config file cache status
+        
+        :param value: status of config file cache
+        :type value: bool
+        
+        """
         return self._set('cache', value)
 
     def get_url(self):
@@ -401,7 +477,12 @@ class RmcConfig(AutoConfigParser):
         return self._get('url')
 
     def set_url(self, value):
-        """Set the config file url"""
+        """Set the config file url
+        
+        :param value: url path for the config file
+        :type value: str
+        
+        """
         return self._set('url', value)
 
     def get_username(self):
@@ -409,7 +490,12 @@ class RmcConfig(AutoConfigParser):
         return self._get('username')
 
     def set_username(self, value):
-        """Set the config file user name"""
+        """Set the config file user name
+        
+        :param value: username for config file
+        :type value: str
+        
+        """
         return self._set('username', value)
 
     def get_password(self):
@@ -417,7 +503,12 @@ class RmcConfig(AutoConfigParser):
         return self._get('password')
 
     def set_password(self, value):
-        """Set the config file password"""
+        """Set the config file password
+        
+        :param value: password for config file
+        :type value: str
+        
+        """
         return self._set('password', value)
 
     def get_commit(self):
@@ -425,7 +516,12 @@ class RmcConfig(AutoConfigParser):
         return self._get('commit')
 
     def set_commit(self, value):
-        """Set the config file commit status"""
+        """Set the config file commit status
+        
+        :param value: commit status
+        :type value: str
+        
+        """
         return self._set('commit', value)
 
     def get_format(self):
@@ -433,7 +529,12 @@ class RmcConfig(AutoConfigParser):
         return self._get('format')
 
     def set_format(self, value):
-        """Set the config file default format"""
+        """Set the config file default format
+        
+        :param value: set the config file format
+        :type value: str
+        
+        """
         return self._set('format', value)
 
     def get_schemadir(self):
@@ -441,7 +542,12 @@ class RmcConfig(AutoConfigParser):
         return self._get('iloschemadir')
 
     def set_schemadir(self, value):
-        """Set the config file schema directory"""
+        """Set the config file schema directory
+        
+        :param value: config file schema directory
+        :type value: str
+        
+        """
         return self._set('iloschemadir', value)
 
     def get_biosschemadir(self):
@@ -449,7 +555,12 @@ class RmcConfig(AutoConfigParser):
         return self._get('biosschemadir')
 
     def set_biosschemadir(self, value):
-        """Set the config file BIOS schema directory"""
+        """Set the config file BIOS schema directory   
+             
+        :param value: config file BIOS schema directory
+        :type value: str
+        
+        """
         return self._set('biosschemadir', value)
 
     def get_cachedir(self):
@@ -457,7 +568,12 @@ class RmcConfig(AutoConfigParser):
         return self._get('cachedir')
 
     def set_cachedir(self, value):
-        """Set the config file cache directory"""
+        """Set the config file cache directory
+               
+        :param value: config file cache directory
+        :type value: str
+        
+        """
         return self._set('cachedir', value)
 
     def get_defaultsavefilename(self):
@@ -465,7 +581,12 @@ class RmcConfig(AutoConfigParser):
         return self._get('savefile')
 
     def set_defaultsavefilename(self, value):
-        """Set the config file default save name"""
+        """Set the config file default save name
+             
+        :param value: config file save name
+        :type value: str
+        
+        """
         return self._set('savefile', value)
 
     def get_defaultloadfilename(self):
@@ -473,7 +594,12 @@ class RmcConfig(AutoConfigParser):
         return self._get('loadfile')
 
     def set_defaultloadfilename(self, value):
-        """Set the config file default load name"""
+        """Set the config file default load name
+           
+        :param value: name of config file to load by default
+        :type value: str
+        
+        """
         return self._set('loadfile', value)
 
     def get_bios_password(self):
@@ -481,12 +607,23 @@ class RmcConfig(AutoConfigParser):
         return self._get('biospasswordword')
 
     def set_bios_password(self, value):
-        """Set the config file BIOS password"""
+        """Set the config file BIOS password
+          
+        :param value: BIOS password for config file
+        :type value: str
+        
+        """
         return self._set('biospasswordword', value)
 
 class RmcCacheManager(object):
     """Manages caching/uncaching of data for RmcApp"""
     def __init__(self, rmc):
+        """Initialize RmcCacheManager
+        
+        :param rmc: RmcApp to be managed
+        :type rmc: RmcApp object
+        
+        """
         self._rmc = rmc
 
 class RmcFileCacheManager(RmcCacheManager):

@@ -40,6 +40,12 @@ class AutoConfigParser(object):
     _config_pattern = re.compile(r'_ac__(?P<confkey>.*)')
 
     def __init__(self, filename=None):
+        """Initialize AutoConfigParser
+
+        :param filename: file name to be used for config loading.
+        :type filename: str.
+
+        """
         self._sectionname = 'globals'
         self._configfile = filename
 

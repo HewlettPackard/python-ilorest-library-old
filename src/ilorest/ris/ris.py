@@ -45,6 +45,10 @@ class BiosUnregisteredError(Exception):
     """Raised when BIOS has not been registered correctly in iLO"""
     pass
 
+class SessionExpiredRis(Exception):
+    """Raised when BIOS has not been registered correctly in iLO"""
+    pass
+
 class RisMonolithMemberBase(Dictable):
     """RIS monolith member base class"""
     pass
@@ -114,6 +118,12 @@ class RisMonolithMember_v1_0_0(RisMonolithMemberBase):
 
     def load_from_dict(self, src):
         """Load variables from dict monolith"""
+        """
+        
+        :param src: source to load from
+        :type src: dict
+        
+        """
         if u'Type' in src:
             self._type = src[u'Type']
             restreq = ilorest.rest.v1_helper.RestRequest(method='GET', \
@@ -131,6 +141,7 @@ class RisMonolithMember_v1_0_0(RisMonolithMemberBase):
         :type breadcrumbs: dict.
         :param outdict: expected output format.
         :type outdict: dictionary type.
+        :returns: returns outdict
 
         """
         if breadcrumbs is None:
@@ -168,6 +179,7 @@ class RisMonolithMember_v1_0_0(RisMonolithMemberBase):
         :type breadcrumbs: dict.
         :param outdict: expected output format.
         :type outdict: dictionary type.
+        :returns: returns outdict
 
         """
         if breadcrumbs is None:
@@ -217,6 +229,12 @@ class RisMonolithMember_v1_0_0(RisMonolithMemberBase):
 class RisMonolith_v1_0_0(Dictable):
     """Monolithic cache of RIS data"""
     def __init__(self, client):
+        """Initialize RisMonolith
+
+        :param client: client to utilize
+        :type client: RmcClient object       
+
+        """
         self._client = client
         self.name = u"Monolithic output of RIS Service"
         self.types = OrderedDict()
@@ -262,7 +280,7 @@ class RisMonolith_v1_0_0(Dictable):
         :param skipcrawl: flag to determine if load should traverse found links.
         :type skipcrawl: boolean.
         :param loadtype: flag to determine if load is meant for only href items.
-        :type loadtype: boolean.
+        :type loadtype: str.
 
         """
         if not skipinit:
@@ -307,7 +325,7 @@ class RisMonolith_v1_0_0(Dictable):
         :param skipinit: flag to determine if first run of load.
         :type skipinit: boolean.
         :param loadtype: flag to determine if load is meant for only href items.
-        :type loadtype: boolean.
+        :type loadtype: str.
 
         """
         if path.endswith("?page=1"):
@@ -329,7 +347,10 @@ class RisMonolith_v1_0_0(Dictable):
         elif resp.status != 200:
             path = path + '/'
             resp = self._client.get(path)
-            if resp.status != 200:
+            if resp.status == 401:
+                raise SessionExpiredRis("Invalid session. Please logout and "\
+                                                                "log back in.")
+            elif resp.status != 200:
                 return
 
         if loadtype == "ref":
@@ -696,11 +717,23 @@ class RisMonolith_v1_0_0(Dictable):
 class RisMonolith(RisMonolith_v1_0_0):
     """Latest implementation of RisMonolith"""
     def __init__(self, client):
+        """Initialize Latest RisMonolith
+
+        :param client: client to utilize
+        :type client: RmcClient object       
+
+        """
         super(RisMonolith, self).__init__(client)
 
 class SuperDuperWorker(threading.Thread):
     """Recursive worker implementation"""
     def __init__(self, queue):
+        """Initialize SuperDuperWorker
+
+        :param queue: queue for worker
+        :type queue: Queue object       
+
+        """
         threading.Thread.__init__(self)
         self.queue = queue
 

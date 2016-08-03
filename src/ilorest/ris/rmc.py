@@ -23,6 +23,7 @@ import re
 import sys
 import time
 import copy
+import shutil
 import logging
 from collections import OrderedDict, Mapping
 
@@ -32,7 +33,9 @@ import jsonpointer
 import ilorest.ris.tpdefs
 import ilorest.ris.validation
 
-from ilorest.ris.validation import ValidationManager, RepoRegistryEntry
+from ilorest.ris.ris import SessionExpiredRis
+from ilorest.ris.validation import ValidationManager, RepoRegistryEntry,\
+                                                        Typepathforval                            
 from ilorest.ris.rmc_helper import (UndefinedClientError, InstanceNotFoundError, \
                               CurrentlyLoggedInError, NothingSelectedError, \
                               InvalidSelectionError, IdTokenError, \
@@ -53,6 +56,12 @@ LOGGER = logging.getLogger(__name__)
 class RmcApp(object):
     """Application level implementation of RMC"""
     def __init__(self, Args=None):
+        """Initialize RmcApp
+        
+        :param Args: arguments to be passed to RmcApp
+        :type Args: str
+        
+        """
         self._rmc_clients = []
         configfile = None
 
@@ -94,6 +103,7 @@ class RmcApp(object):
                 self.logger.handlers.remove(self.logger.handlers[0])
 
         self.typepath = ilorest.ris.tpdefs.typesandpathdefines()
+        Typepathforval(typepathobj=self.typepath)
 
     def restore(self):
         """Restore monolith from cache"""
@@ -358,8 +368,7 @@ class RmcApp(object):
         cachedir = self.config.get_cachedir()
         if cachedir:
             try:
-                os.remove(os.path.join(cachedir, 'index'))
-                os.rmdir(cachedir)
+                shutil.rmtree(cachedir)
             except Exception:
                 pass
 
@@ -368,6 +377,7 @@ class RmcApp(object):
 
         :param selector: the type selection for the get operation.
         :type selector: str.
+        :returns: returns a list from get operation
 
         """
         results = list()
@@ -410,6 +420,7 @@ class RmcApp(object):
         :type pluspath: boolean.
         :param onlypath: flag to enable only that path selection.
         :type onlypath: boolean.
+        :returns: returns a list from the get command
 
         """
         results = list()
@@ -467,6 +478,7 @@ class RmcApp(object):
         :type path: str.
         :param instances: current retrieved instances.
         :type instances: dict.
+        :returns: returns skip boolean
 
         """
         skip = False
@@ -475,7 +487,9 @@ class RmcApp(object):
             if (path + "/settings").lower() == (item.resp.request.path).lower():
                 skip = True
                 break
-
+            elif (path + "settings/").lower() == (item.resp.request.path).lower():
+                skip = True
+                break
         return skip
 
     def set(self, selector=None, val=None, latestschema=False, \
@@ -490,6 +504,7 @@ class RmcApp(object):
         :type latestschema: boolean.
         :param uniqueoverride: flag to determine override for unique properties.
         :type uniqueoverride: str.
+        :returns: returns a status or list of changes set
 
         """
         results = list()
@@ -498,7 +513,9 @@ class RmcApp(object):
         patchremoved = False
 
         iloversion = self.getiloversion()
+        isredfish = self.current_client.monolith.is_redfish
         type_str = self.current_client.monolith._typestring
+        href_str = self.current_client.monolith._hrefstring
         validation_manager = self.get_validation_manager(iloversion)
         (instances, _) = self.get_selection(setenable=True)
 
@@ -541,29 +558,8 @@ class RmcApp(object):
 
                 currdict = instance.resp.dict
                 if latestschema:
-                    schematype = currdict[type_str].split('.')[0]
-                    reglist = validation_manager._classes_registry[0][u'Items']
-
-                    for item in validation_manager._classes[0][u'Items']:
-                        if item[u'Id'].startswith(schematype):
-                            schematype = item[u'Schema']
-                            break
-
-                    regs = [x[u'Schema'] for x in reglist if x[u'Schema']\
-                            .lower().startswith('hpbiosattributeregistry')]
-                    i = [reglist.index(x) for x in reglist if x[u'Schema']\
-                         .lower().startswith('hpbiosattributeregistry')]
-                    regs = zip(regs, i)
-
-                    for item in sorted(regs, reverse=True):
-                        locationdict = self.geturidict\
-                                            (reglist[item[1]][u'Location'][0])
-                        extref = self.get_handler(locationdict, verbose=False, \
-                                    service=True, silent=True)
-
-                        if extref:
-                            regtype = item[0]
-                            break
+                    schematype, regtype = self.latestschemahelper(currdict, \
+                                                          validation_manager)
                 else:
                     schematype = currdict[type_str]
                     try:
@@ -723,6 +719,7 @@ class RmcApp(object):
         :type latestschema: boolean.
         :param uniqueoverride: flag to determine override for unique properties.
         :type uniqueoverride: str.
+        :returns: returns a status or a list of set properties
 
         """
         results = list()
@@ -1029,6 +1026,7 @@ class RmcApp(object):
         :type instance: str.
         :param newargs: list of multi level properties to be modified.
         :type newargs: list.
+        :returns: returns value for property to be modified
 
         """
         biosmode = False
@@ -1081,6 +1079,7 @@ class RmcApp(object):
         :type newargs: list.
         :param latestschema: flag to determine if we should use smart schema.
         :type latestschema: boolean.
+        :returns: returns a status or a list of set multi level properties
 
         """
         results = list()
@@ -1089,6 +1088,9 @@ class RmcApp(object):
         nochangesmade = False
         patchremoved = False
         iloversion = self.getiloversion()
+        isredfish = self.current_client.monolith.is_redfish
+        type_str = self.current_client.monolith._typestring
+        href_str = self.current_client.monolith._hrefstring
         validation_manager = self.get_validation_manager(iloversion)
         type_string = self.current_client.monolith._typestring
         (name, _) = newargs[-1].split('=', 1)
@@ -1155,29 +1157,8 @@ class RmcApp(object):
                     nochangesmade = True
 
                 if latestschema:
-                    schematype = currdict[type_string].split('.')[0]
-                    reglist = validation_manager._classes_registry[0][u'Items']
-
-                    for item in validation_manager._classes[0][u'Items']:
-                        if item[u'Id'].startswith(schematype):
-                            schematype = item[u'Schema']
-                            break
-
-                    regs = [x[u'Schema'] for x in reglist if x[u'Schema']\
-                            .lower().startswith('hpbiosattributeregistry')]
-                    i = [reglist.index(x) for x in reglist if x[u'Schema']\
-                         .lower().startswith('hpbiosattributeregistry')]
-                    regs = zip(regs, i)
-
-                    for item in sorted(regs, reverse=True):
-                        locationdict = self.geturidict\
-                                            (reglist[item[1]][u'Location'][0])
-                        extref = self.get_handler(locationdict, verbose=False, \
-                                                    service=True, silent=True)
-
-                        if extref:
-                            regtype = item[0]
-                            break
+                    schematype, regtype = self.latestschemahelper(currdict, \
+                                                          validation_manager)
                 else:
                     schematype = currdict[type_string]
 
@@ -1313,6 +1294,7 @@ class RmcApp(object):
         :type currdict: dict.
         :param current: current location holder.
         :type current: list.
+        :returns: returns boolean on whether properties are found
 
         """
         found = False
@@ -1361,6 +1343,7 @@ class RmcApp(object):
         :type newargs: list.
         :param latestschema: flag to determine if we should use smart schema.
         :type latestschema: boolean.
+        :returns: returns a list of keys from current dict that are not ignored
 
         """
         results = list()
@@ -1465,6 +1448,11 @@ class RmcApp(object):
 
                 results.append("Success")
             else:
+                if currdict[self.typepath.defs.typestring].startswith("#Bios."):
+                    try:
+                        currdict = currdict['Attributes']
+                    except:
+                        pass
                 for key in currdict:
                     if key not in ignorelist:
                         results.append(key)
@@ -1501,6 +1489,7 @@ class RmcApp(object):
 
         :param skipschemas: flag to determine whether to skip schema download.
         :type skipschemas: boolean.
+        :returns: returns current iLO version
 
         """
         iloversion = None
@@ -1604,6 +1593,7 @@ class RmcApp(object):
 
         :param patch: dictionary containing all patches to be applied.
         :type patch: dict.
+        :returns: returns a dictionary of patches applied
 
         """
         try:
@@ -1653,6 +1643,7 @@ class RmcApp(object):
         :type out: output type.
         :param verbose: flag to determine additional output.
         :type verbose: boolean.
+        :returns: returns boolean of whether changes were made
 
         """
         changesmade = False
@@ -1927,6 +1918,7 @@ class RmcApp(object):
         :type headers: str.
         :param iloresponse: flag to return the iLO response.
         :type iloresponse: str.
+        :returns: returns RestResponse object containing response data
 
         """
         ilo_messages = None
@@ -1956,6 +1948,8 @@ class RmcApp(object):
 
         if iloresponse:
             return results
+        elif results.status == 401:
+            raise SessionExpired()
 
     def get_handler(self, put_path, silent=False, verbose=False, \
                                 service=False, url=None, sessionid=None, \
@@ -1980,6 +1974,7 @@ class RmcApp(object):
         :type headers: str.
         :param iloresponse: flag to return the iLO response.
         :type iloresponse: str.
+        :returns: returns a RestResponse object from client's get command
 
         """
         ilo_messages = None
@@ -2004,6 +1999,8 @@ class RmcApp(object):
 
         if results.status == 200 or iloresponse:
             return results
+        elif results.status == 401:
+            raise SessionExpired()
         else:
             return None
 
@@ -2030,6 +2027,7 @@ class RmcApp(object):
         :type headers: str.
         :param iloresponse: flag to return the iLO response.
         :type iloresponse: str.
+        :returns: returns a RestResponse from client's Post command
 
         """
         ilo_messages = None
@@ -2058,6 +2056,8 @@ class RmcApp(object):
 
         if iloresponse:
             return results
+        elif results.status == 401:
+            raise SessionExpired()
 
     def put_handler(self, put_path, body, optionalpassword=None, \
                             verbose=False, providerheader=None, service=False, \
@@ -2085,6 +2085,7 @@ class RmcApp(object):
         :type headers: str.
         :param iloresponse: flag to return the iLO response.
         :type iloresponse: str.
+        :returns: returns a RestResponse object from client's Put command
 
         """
         ilo_messages = None
@@ -2113,6 +2114,8 @@ class RmcApp(object):
                                             hpcommon_messages, verbose=verbose)
         if iloresponse:
             return results
+        elif results.status == 401:
+            raise SessionExpired()
 
     def delete_handler(self, put_path, verbose=False, providerheader=None, \
             service=False, url=None, sessionid=None, headers=None, silent=True):
@@ -2132,6 +2135,7 @@ class RmcApp(object):
         :type sessionid: str.
         :param headers: additional headers to be added to the request.
         :type headers: str.
+        :returns: returns a RestResponse object from client's Delete command
 
         """
         ilo_messages = None
@@ -2152,6 +2156,8 @@ class RmcApp(object):
         if not silent:
             self.invalid_return_handler(results, ilo_messages, base_messages, \
                         iloevent_messages, hpcommon_messages, verbose=verbose)
+        elif results.status == 401:
+            raise SessionExpired()
 
         return results
 
@@ -2169,6 +2175,7 @@ class RmcApp(object):
         :type url: str.
         :param sessionid: session id to be used instead of iLO credentials.
         :type sessionid: str.
+        :returns: returns a RestResponse object from client's Head command
 
         """
         ilo_messages = None
@@ -2191,6 +2198,8 @@ class RmcApp(object):
 
         if results.status == 200:
             return results
+        elif results.status == 401:
+            raise SessionExpired()
         else:
             return None
 
@@ -2201,6 +2210,7 @@ class RmcApp(object):
 
         :param querystr: query string.
         :type querystr: str.
+        :returns: returns a dict of parsed query
 
         """
         qmatch = RmcApp._QUERY_PATTERN.search(querystr)
@@ -2330,6 +2340,7 @@ class RmcApp(object):
         :type sel: str.
         :param val: value for the property to be modified.
         :type val: str.
+        :returns: returns a list of selected items
 
         """
         if query:
@@ -2377,6 +2388,7 @@ class RmcApp(object):
         :type sel: str.
         :param val: value for the property to be modified.
         :type val: str.
+        :returns: returns a list of selected items
 
         """
         if query:
@@ -2406,6 +2418,7 @@ class RmcApp(object):
         :type sel: str.
         :param val: value for the property be filtered by.
         :type val: str.
+        :returns: returns an filtered list from output parameter
 
         """
         newOutput = []
@@ -2435,6 +2448,7 @@ class RmcApp(object):
 
         :param fulltypes: flag to determine if types return full name.
         :type fulltypes: boolean.
+        :returns: returns a list of type strings
 
         """
         instances = list()
@@ -2484,6 +2498,7 @@ class RmcApp(object):
 
         :param path: path to initiate reload monolith from.
         :type path: str.
+        :returns: returns True/False depending on if reload occurred
 
         """
         if path:
@@ -2550,6 +2565,7 @@ class RmcApp(object):
 
         :param monolith: full data model retrieved from server.
         :type monolith: dict.
+        :returns: returns boolean based on if resource directory type is in monolith types
 
         """
         for ristype in monolith.types:
@@ -2591,6 +2607,8 @@ class RmcApp(object):
             try:
                 monolith.load(path=foundhref, skipinit=True, \
                       skipcrawl=skipcrawl, includelogs=True, loadtype=loadtype)
+            except SessionExpiredRis:
+                raise SessionExpired()
             except Exception, excp:
                 if excp.errno == 10053:
                     raise SessionExpired()
@@ -2634,6 +2652,7 @@ class RmcApp(object):
         :type sel: str.
         :param val: value for the property to be modified.
         :type val: str.
+        :returns: returns a list of selected items
 
         """
         if not sel and not val:
@@ -2745,6 +2764,7 @@ class RmcApp(object):
         :type newargs: list.
         :param loopcount: loop count tracker.
         :type loopcount: int.
+        :returns: returns boolean based on val parameter being found in newargs
 
         """
         if workdict and sel and val and newargs:
@@ -2796,6 +2816,7 @@ class RmcApp(object):
 
         :param selector: the type selection for the get save operation.
         :type selector: str.
+        :returns: returns an header ordered dictionary
 
         """
         monolith = self.current_client.monolith
@@ -2884,6 +2905,7 @@ class RmcApp(object):
 
         :param iloversion: current systems iLO versions.
         :type iloversion: str.
+        :returns: returns a ValidationManager
 
         """
         monolith = None
@@ -2906,6 +2928,7 @@ class RmcApp(object):
 
         :param body: the body to the sent.
         :type body: str.
+        :returns: returns dictionary with readonly items removed
 
         """
         biosmode = False
@@ -2975,6 +2998,7 @@ class RmcApp(object):
         :type body: str.
         :param model: model for the current type.
         :type model: str.
+        :returns: returns body with read only items removed
 
         """
         bodykeys = body.keys()
@@ -3005,6 +3029,7 @@ class RmcApp(object):
         :type body: str.
         :param model: model for the current type.
         :type model: str.
+        :returns: returns body with readonly removed
 
         """
         templist = []
@@ -3070,6 +3095,7 @@ class RmcApp(object):
         :type newargs: list.
         :param autotest: flag to determine if this part of automatic testing.
         :type autotest: boolean.
+        :returns: returns model model, biosmode, bios model
 
         """
         biosschemafound = None
@@ -3077,44 +3103,12 @@ class RmcApp(object):
         biosmode = False
         type_str = self.current_client.monolith._typestring
         isredfish = self.current_client.monolith.is_redfish
-        href_str = self.current_client.monolith._hrefstring
 
         if latestschema:
-            schematype = currdict[type_str].split('.')[0] + '.'
+            schematype, regtype = self.latestschemahelper(currdict, \
+                                                          validation_manager)
 
-            if isredfish:
-                schematype = schematype[1:-1]
-
-                reglist = validation_manager._classes_registry[0][u'Members']
-                regs = [x[href_str] for x in reglist if\
-                        'hpbiosattributeregistry' in x[href_str].lower()]
-                i = [reglist.index(x) for x in reglist if x[href_str]\
-                     .lower().startswith('hpbiosattributeregistry')]
-                regs = zip(regs, i)
-            else:
-                reglist = validation_manager._classes_registry[0][u'Items']
-
-                for item in validation_manager._classes[0][u'Items']:
-                    if item and item[u'Schema'].startswith(schematype):
-                        schematype = item[u'Schema']
-                        break
-
-                regs = [x[u'Schema'] for x in reglist if x[u'Schema']\
-                        .lower().startswith('hpbiosattributeregistry')]
-                i = [reglist.index(x) for x in reglist if x[u'Schema']\
-                     .lower().startswith('hpbiosattributeregistry')]
-                regs = zip(regs, i)
-
-            for item in sorted(regs, reverse=True):
-                locationdict = self.geturidict(reglist[item[1]][u'Location'][0])
-                extref = self.get_handler(locationdict, verbose=False, \
-                                                    service=True, silent=True)
-
-                if extref:
-                    regtype = item[0]
-                    break
-
-            if autotest:
+            if autotest and not isredfish:
                 try:
                     if not regtype == attributeregistry[instance.type]:
                         self.warning_handler("Using latest registry.\nFound: " \
@@ -3208,7 +3202,13 @@ class RmcApp(object):
 
     def updateDefinesFlag(self, redfishFlag=None):
         """Updates the redfish and rest flag depending on system and
-        user input"""
+        user input
+        
+        :param redfishFlag: flags if redfish is used
+        :type redfishFlag: bool
+        :returns: boolean; is_redfish or redfishFlag
+        
+        """
         if self.typepath.defs:
             is_redfish = redfishFlag or self.typepath.defs.IsGen10
             self.typepath.defs.flagforrest = not is_redfish
@@ -3223,7 +3223,31 @@ class RmcApp(object):
     def checkpostpatch(self, body=None, path=None, verbose=False, \
                         service=False, url=None, sessionid=None, headers=None, \
                         iloresponse=False, silent=False, patch=False):
-        """Make the post file compatible with the system generation"""
+        """Make the post file compatible with the system generation
+        
+        :param body: contents to be checked
+        :type body: str.
+        :param path: The URL location to check
+        :type path: str.
+        :param verbose: flag to determine additional output.
+        :type verbose: boolean.
+        :param service: flag to determine if minimum calls should be done.
+        :type service: boolean.
+        :param url: originating url.
+        :type url: str.
+        :param sessionid: session id to be used instead of iLO credentials.
+        :type sessionid: str.
+        :param headers: additional headers to be added to the request.
+        :type headers: str.
+        :param iloresponse: flag to return the iLO response.
+        :type iloresponse: str.
+        :param silent: flag to determine if no output should be done.
+        :type silent: boolean.
+        :param patch: flag to determine if a patch is being made
+        :type patch: boolean.
+        :returns: modified body and path parameter for target and action respectively
+        
+        """
         try:
             if self.typepath.defs.flagforrest == True:
                 if u"Target" not in body and not patch:
@@ -3272,7 +3296,13 @@ class RmcApp(object):
             raise excp
 
     def checkSelectForGen(self, query):
-        """Changes the query to match the Generation's HP string."""
+        """Changes the query to match the Generation's HP string.
+        
+        :param query: query to be changed to match Generation's HP string
+        :type query: str
+        :returns: returns a modified query matching the Generation's HP string.
+        
+        """
         query = query.lower()
         returnval = query
 
@@ -3280,13 +3310,75 @@ class RmcApp(object):
             if query.startswith((u"hpeeskm", u"#hpeeskm")) or \
                                     query.startswith((u"hpeskm", u"#hpeskm")):
                 returnval = self.typepath.defs.HpESKMType
+            elif u'bios.' in query[:9].lower():
+                returnval = self.typepath.defs.BiosType
             elif query.startswith((u"hpe", u"#hpe")):
                 returnval = query[:4].replace(u"hpe", u"hp")+query[4:]
         else:
             if query.startswith((u"hpeskm", u"#hpeskm")) or \
                                     query.startswith((u"hpeeskm", u"#hpeeskm")):
                 returnval = self.typepath.defs.HpESKMType
+            elif u'bios.' in query[:9].lower():
+                returnval = self.typepath.defs.BiosType
             elif not query.startswith((u"hpe", u"#hpe")):
                 returnval = query[:3].replace(u"hp", u"hpe")+query[3:]
 
         return returnval
+
+    def latestschemahelper(self, currdict, validation_manager):
+        """Finds the latestschema for a dictionary.
+        
+        :param currdict: dictionary of type to check for schema
+        :type currdict: dict
+        :param validation_manager: validation manager object.
+        :type validation_manager: validation object.
+        :returns: returns the schematype and regtype found for the dict.
+        
+        """
+        type_str = self.current_client.monolith._typestring
+        isredfish = self.current_client.monolith.is_redfish
+        href_str = self.current_client.monolith._hrefstring
+
+        schematype = currdict[type_str].split('.')[0] + '.'
+
+        if isredfish:
+            schematype = schematype[1:-1]
+
+            reglist = validation_manager._classes_registry[0][u'Members']
+            regs = [x[href_str] for x in reglist if\
+                    'biosattributeregistry' in x[href_str].lower()]
+            i = [reglist.index(x) for x in reglist if \
+                            'biosattributeregistry' in x[href_str].lower()]
+            regs = zip(regs, i)
+        else:
+            reglist = validation_manager._classes_registry[0][u'Items']
+
+            for item in validation_manager._classes[0][u'Items']:
+                if item and item[u'Schema'].startswith(schematype):
+                    schematype = item[u'Schema']
+                    break
+
+            regs = [x[u'Schema'] for x in reglist if x[u'Schema']\
+                    .lower().startswith('hpbiosattributeregistry')]
+            i = [reglist.index(x) for x in reglist if x[u'Schema']\
+                 .lower().startswith('hpbiosattributeregistry')]
+            regs = zip(regs, i)
+
+        for item in sorted(regs, reverse=True):
+            if isredfish:
+                reg = self.get_handler(reglist[item[1]][href_str], \
+                            verbose=False, service=True, silent=True).dict
+            else:
+                reg = reglist[item[1]]
+            locationdict = self.geturidict(reg[u'Location'][0])
+            extref = self.get_handler(locationdict, verbose=False, \
+                                                service=True, silent=True)
+
+            if extref:
+                if isredfish:
+                    regtype = item[0].split('/')
+                    regtype = regtype[len(regtype)-2]
+                else:
+                    regtype = item[0]
+                break
+        return schematype, regtype

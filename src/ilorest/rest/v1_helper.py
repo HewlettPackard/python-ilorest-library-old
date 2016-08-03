@@ -74,13 +74,27 @@ class RisObject(dict):
     __getattr__ = dict.__getitem__
 
     def __init__(self, d):
+        """Initialize RisObject
+        
+        :param d: dictionary to be parsed
+        :type d: dict
+        
+        """
         super(RisObject, self).__init__()
         self.update(**dict((k, self.parse(value))
                            for k, value in d.iteritems()))
 
     @classmethod
     def parse(cls, value):
-        """Parse for ris value"""
+        """Parse for ris value
+        
+        :param cls: class referenced from class method
+        :type cls: RisObject
+        :param value: value to be parsed
+        :type value: data type
+        :returns: returns parsed value
+        
+        """
         if isinstance(value, dict):
             return cls(value)
         elif isinstance(value, list):
@@ -91,6 +105,16 @@ class RisObject(dict):
 class RestRequest(object):
     """Holder for Request information"""
     def __init__(self, path, method='GET', body=''):
+        """Initialize RestRequest
+        
+        :param path: path within tree
+        :type path: str
+        :param method: method to be implemented
+        :type method: str
+        :param body: body payload for the rest call
+        :type body: dict
+        
+        """
         self._path = path
         self._body = body
         self._method = method
@@ -131,6 +155,14 @@ class RestRequest(object):
 class RestResponse(object):
     """Returned by Rest requests"""
     def __init__(self, rest_request, http_response):
+        """Initialize RestResponse
+        
+        :params rest_request: Holder for request information
+        :type rest_request: RestRequest object
+        :params http_response: Response from HTTP
+        :type http_response: HTTPResponse
+        
+        """
         self._read = None
         self._status = None
         self._session_key = None
@@ -169,6 +201,7 @@ class RestResponse(object):
 
         :param name: The header name to retrieve.
         :type name: str.
+        :returns: returns a header from http response
 
         """
         return self._http_response.getheader(name, None)
@@ -251,7 +284,13 @@ class RestResponse(object):
 class JSONEncoder(json.JSONEncoder):
     """JSON Encoder class"""
     def default(self, obj):
-        """Set defaults in json encoder class"""
+        """Set defaults in json encoder class
+
+        :param obj: object to be encoded into JSON.
+        :type obj: RestResponse object.
+        :returns: returns a JSON ordered dict
+
+        """
         if isinstance(obj, RestResponse):
             jsondict = OrderedDict()
             jsondict['Status'] = obj.status
@@ -276,6 +315,7 @@ class JSONDecoder(json.JSONDecoder):
 
         :param json_string: The json string to be decoded into usable data.
         :type json_string: str.
+        :returns: returns a parsed dict
 
         """
         parsed_dict = super(JSONDecoder, self).decode(json_string)
@@ -293,6 +333,14 @@ class _FakeSocket(StringIO):
 class RisRestResponse(RestResponse):
     """Returned by Rest requests from RIS"""
     def __init__(self, rest_request, resp_txt):
+        """Initialization of RisRestResponse
+        
+        :param rest_request: Holder for request information
+        :type rest_request: RestRequest object
+        :param resp_text: text from response to be buffered and read
+        :type resp_text: str
+        
+        """
         self._respfh = StringIO(resp_txt)
         self._socket = _FakeSocket(self._respfh.read())
         response = httplib.HTTPResponse(self._socket)
@@ -536,6 +584,7 @@ class RestClientBase(object):
         :param path: str.
         :params args: the arguments to get.
         :params args: dict.
+        :returns: returns a rest request with method 'Get'
 
         """
         return self._rest_request(path, method='GET', args=args, \
@@ -548,6 +597,7 @@ class RestClientBase(object):
         :param path: str.
         :params args: the arguments to get.
         :params args: dict.
+        :returns: returns a rest request with method 'Head'
 
         """
         return self._rest_request(path, method='HEAD', args=args, \
@@ -565,6 +615,7 @@ class RestClientBase(object):
         :type body: str.
         :param provideheader: provider id for the header.
         :type providerheader: str.
+        :returns: returns a rest request with method 'Post'
 
         """
         return self._rest_request(path, method='POST', args=args, body=body, \
@@ -584,6 +635,7 @@ class RestClientBase(object):
         :type optionalpassword: str.
         :param provideheader: provider id for the header.
         :type providerheader: str.
+        :returns: returns a rest request with method 'Put'
 
         """
         return self._rest_request(path, method='PUT', args=args, body=body, \
@@ -604,6 +656,7 @@ class RestClientBase(object):
         :type optionalpassword: str.
         :param provideheader: provider id for the header.
         :type providerheader: str.
+        :returns: returns a rest request with method 'Patch'
 
         """
         return self._rest_request(path, method='PATCH', args=args, body=body, \
@@ -623,6 +676,7 @@ class RestClientBase(object):
         :type optionalpassword: str.
         :param provideheader: provider id for the header.
         :type providerheader: str.
+        :returns: returns a rest request with method 'Delete'
 
         """
         return self._rest_request(path, method='DELETE', args=args, \
@@ -639,6 +693,7 @@ class RestClientBase(object):
         :type providerheader: str.
         :param optionalpassword: provide password for authentication.
         :type optionalpassword: str.
+        :returns: returns headers
 
         """
         headers = headers if isinstance(headers, dict) else dict()
@@ -683,6 +738,7 @@ class RestClientBase(object):
         :type optionalpassword: str
         :param provideheader: provider id for the header
         :type providerheader: str
+        :returns: returns a RestResponse object
 
         """
         headers = self._get_req_headers(headers, providerheader, \
@@ -868,6 +924,24 @@ class HttpClient(RestClientBase):
     def __init__(self, base_url, username=None, password=None, \
                                  default_prefix='/rest/v1', biospassword=None, \
                                  sessionkey=None, is_redfish=False):
+        """Initialize HttpClient
+        
+        :param base_url: The url of the remote system
+        :type base_url: str
+        :param username: The username used for authentication
+        :type username: str
+        :param password: The password used for authentication
+        :type password: str
+        :param default_prefix: The default root point
+        :type default_prefix: str
+        :param biospassword: biospassword for base_url if needed
+        :type biospassword: str
+        :param sessionkey: sessionkey for the current login of base_url
+        :type sessionkey: str
+        :param is_redfish: flag for checking redfish
+        :type is_redfish: bool
+        
+        """
         self.is_redfish = is_redfish
         super(HttpClient, self).__init__(base_url, username=username, \
                              password=password, default_prefix=default_prefix, \
@@ -896,6 +970,7 @@ class HttpClient(RestClientBase):
         :type optionalpassword: str
         :param provideheader: provider id for the header
         :type providerheader: str
+        :returns: returns a rest request
 
         """
         if not self.is_redfish and self.default_prefix in path and \
@@ -922,6 +997,7 @@ class HttpClient(RestClientBase):
         :type providerheader: str
         :param optionalpassword: provide password for authentication
         :type optionalpassword: str
+        :returns: returns request headers
 
         """
         headers = super(HttpClient, self)._get_req_headers(headers, \
@@ -937,6 +1013,25 @@ class Blobstore2RestClient(RestClientBase):
 
     def __init__(self, base_url, default_prefix='/rest/v1', username=None, \
                             password=None, sessionkey=None, is_redfish=False):
+        
+        """Initialize Blobstore2RestClient
+        
+        :param base_url: The url of the remote system
+        :type base_url: str
+        :param username: The username used for authentication
+        :type username: str
+        :param password: The password used for authentication
+        :type password: str
+        :param default_prefix: The default root point
+        :type default_prefix: str
+        :param biospassword: biospassword for base_url if needed
+        :type biospassword: str
+        :param sessionkey: sessionkey for the current login of base_url
+        :type sessionkey: str
+        :param is_redfish: flag for checking redfish
+        :type is_redfish: bool
+        
+        """
         self.is_redfish = is_redfish
         super(Blobstore2RestClient, self).__init__(base_url, \
                         username=username, password=password, \
@@ -965,6 +1060,7 @@ class Blobstore2RestClient(RestClientBase):
         :type optionalpassword: str
         :param provideheader: provider id for the header
         :type providerheader: str
+        :return: returns a RestResponse object
 
         """
         headers = self._get_req_headers(headers, providerheader, \
@@ -1081,6 +1177,7 @@ class Blobstore2RestClient(RestClientBase):
         :type providerheader: str
         :param optionalpassword: provide password for authentication
         :type optionalpassword: str
+        :returns: returns request headers
 
         """
         headers = super(Blobstore2RestClient,
