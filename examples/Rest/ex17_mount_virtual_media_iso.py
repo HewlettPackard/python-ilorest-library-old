@@ -40,17 +40,17 @@ def ex17_mount_virtual_media_iso(restobj, iso_url, boot_on_next_server_reset):
                 restobj.error_handler(response)
 if __name__ == "__main__":
     # When running on the server locally use the following commented values
-    # iLO_host = "blobstore://."
+    # iLO_https_host = "blobstore://."
     # iLO_account = "None"
     # iLO_password = "None"
 
     # When running remotely connect using the iLO address, iLO account name, 
     # and password to send https requests
-    iLO_host = "https://10.0.0.100"
+    iLO_https_host = "https://10.0.0.100"
     iLO_account = "admin"
     iLO_password = "password"
     
     #Create a REST object
-    REST_OBJ = RestObject(iLO_host, iLO_account, iLO_password)
+    REST_OBJ = RestObject(iLO_https_host, iLO_account, iLO_password)
     ex17_mount_virtual_media_iso(REST_OBJ, "http://10.0.0.100/test.iso", True)
     

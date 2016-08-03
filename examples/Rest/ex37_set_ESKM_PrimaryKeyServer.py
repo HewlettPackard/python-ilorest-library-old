@@ -30,14 +30,20 @@ def ex37_set_ESKM_PrimaryKeyServer(restobj, PrimaryKeyServerAddress,\
         restobj.error_handler(response)
 
 if __name__ == "__main__":
- 
-    iLO_host = "https://10.0.0.100"
+    # When running on the server locally use the following commented values
+    # iLO_https_host = "blobstore://."
+    # iLO_account = "None"
+    # iLO_password = "None"
+
+    # When running remotely connect using the iLO address, iLO account name, 
+    # and password to send https requests
+    iLO_https_host = "https://10.0.0.100"
     iLO_account =  "admin"
     iLO_password =  "password"
     PrimaryKeyServerAddress =  "10.0.0.100"
     PrimaryKeyServerPort =  "9000"
     
     # Create a REST object
-    REST_OBJ = RestObject(iLO_host, iLO_account, iLO_password)
+    REST_OBJ = RestObject(iLO_https_host, iLO_account, iLO_password)
     ex37_set_ESKM_PrimaryKeyServer(REST_OBJ, PrimaryKeyServerAddress,\
                                PrimaryKeyServerPort)

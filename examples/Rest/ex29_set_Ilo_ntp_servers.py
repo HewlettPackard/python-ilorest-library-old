@@ -33,16 +33,16 @@ def ex29_set_ilo_ntp_servers(restobj, ntp_servers):
         restobj.error_handler(response)
 if __name__ == "__main__":
     # When running on the server locally use the following commented values
-    # iLO_host = "blobstore://."
+    # iLO_https_host = "blobstore://."
     # iLO_account = "None"
     # iLO_password = "None"
 
     # When running remotely connect using the iLO address, iLO account name, 
     # and password to send https requests
-    iLO_host = "https://10.0.0.100"
+    iLO_https_host = "https://10.0.0.100"
     iLO_account = "admin"
     iLO_password = "password"
     
     #Create a REST object
-    REST_OBJ = RestObject(iLO_host, iLO_account, iLO_password)
+    REST_OBJ = RestObject(iLO_https_host, iLO_account, iLO_password)
     ex29_set_ilo_ntp_servers(REST_OBJ, ["192.168.0.1", "192.168.0.2"])

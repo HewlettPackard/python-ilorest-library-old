@@ -34,13 +34,13 @@ def ex38_set_ESKM_username_password(redfishobj, username, password, accountgroup
 
 if __name__ == "__main__":
     # When running on the server locally use the following commented values
-    # iLO_host = "blobstore://."
+    # iLO_https_host = "blobstore://."
     # iLO_account = "None"
     # iLO_password = "None"
 
     # When running remotely connect using the iLO address, iLO account name, 
     # and password to send https requests
-    iLO_host = "https://10.0.0.100"
+    iLO_https_host = "https://10.0.0.100"
     iLO_account = "admin"
     iLO_password = "password"
     eskm_username = "admin"
@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
     # Create a REDFISH object
     try:
-        REDFISH_OBJ = RedfishObject(iLO_host, iLO_account, iLO_password)
+        REDFISH_OBJ = RedfishObject(iLO_https_host, iLO_account, iLO_password)
     except ServerDownOrUnreachableError, excp:
         sys.stderr.write("ERROR: server not reachable or doesn't support " \
                                                                 "RedFish.\n")

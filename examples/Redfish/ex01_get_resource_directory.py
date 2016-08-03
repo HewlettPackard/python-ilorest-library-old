@@ -17,35 +17,41 @@ from _redfishobject import RedfishObject
 from ilorest.rest.v1_helper import ServerDownOrUnreachableError
 
 def ex1_get_resource_directory(redfishobj):
-    sys.stdout.write("\nEXAMPLE 1: Find and store the resource directory " + \
+    sys.stdout.write("\nEXAMPLE 1: Find the resource directory " + \
                                                                         "\n")
     response = redfishobj.redfish_get("/redfish/v1/resourcedirectory/")
     resources = {}
 
     if response.status == 200:
         sys.stdout.write("\tFound resource directory at /redfish/v1/resource" \
-                                                            "directory" + "\n")
+                                                        "directory" + "\n\n")
+        for resource in response.dict["Instances"]:
+            try:
+                sys.stdout.write("\t" + str(resource["@odata.type"]) + \
+                                 "\n\t\t" + str(resource["@odata.id"]) + "\n")
+            except KeyError:
+                pass
         resources["resources"] = response.dict["Instances"]
         return resources
     else:
         sys.stderr.write("\tResource directory missing at /redfish/v1/resource"\
                                                             "directory" + "\n")
-        
+
 if __name__ == "__main__":
     # When running on the server locally use the following commented values
-    # iLO_host = "blobstore://."
+    # iLO_https_host = "blobstore://."
     # iLO_account = "None"
     # iLO_password = "None"
 
     # When running remotely connect using the iLO address, iLO account name, 
     # and password to send https requests
-    iLO_host = "https://10.0.0.100"
+    iLO_https_host = "https://10.0.0.100"
     iLO_account = "admin"
     iLO_password = "password"
 
     # Create a REDFISH object
     try:
-        REDFISH_OBJ = RedfishObject(iLO_host, iLO_account, iLO_password)
+        REDFISH_OBJ = RedfishObject(iLO_https_host, iLO_account, iLO_password)
     except ServerDownOrUnreachableError, excp:
         sys.stderr.write("ERROR: server not reachable or doesn't support " \
                                                                 "RedFish.\n")

@@ -16,31 +16,37 @@ import sys
 from _restobject import RestObject
 
 def ex1_get_resource_directory(restobj):
-    sys.stdout.write("\nEXAMPLE 1: Find and store the resource directory " + "\n")
+    sys.stdout.write("\nEXAMPLE 1: Find the resource directory " + "\n")
     response = restobj.rest_get("/rest/v1/resourcedirectory")
     resources = {}
 
     if response.status == 200:
         sys.stdout.write("\tFound resource directory at /rest/v1/resource" \
-                                                            "directory" + "\n")
+                                                        "directory" + "\n\n")
+        for resource in response.dict["Instances"]:
+            try:
+                sys.stdout.write("\t" + str(resource["Type"]) + "\n\t\t" + \
+                             str(resource["href"]) + "\n")
+            except KeyError:
+                pass
         resources["resources"] = response.dict["Instances"]
         return resources
     else:
         sys.stderr.write("\tResource directory missing at /rest/v1/resource" \
                                                             "directory" + "\n")
-    
+
 if __name__ == "__main__":
     # When running on the server locally use the following commented values
-    # iLO_host = "blobstore://."
+    # iLO_https_host = "blobstore://."
     # iLO_account = "None"
     # iLO_password = "None"
 
     # When running remotely connect using the iLO address, iLO account name, 
     # and password to send https requests
-    iLO_host = "https://10.0.0.100"
+    iLO_https_host = "https://10.0.0.100"
     iLO_account = "admin"
     iLO_password = "password"
     
     #Create a REST object
-    REST_OBJ = RestObject(iLO_host, iLO_account, iLO_password)
+    REST_OBJ = RestObject(iLO_https_host, iLO_account, iLO_password)
     ex1_get_resource_directory(REST_OBJ)

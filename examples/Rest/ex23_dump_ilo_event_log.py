@@ -28,9 +28,10 @@ def ex23_dump_ilo_event_log(restobj):
                 print_log_entries(response.dict["Items"])
 
                 while 'NextPage' in response.dict["links"]:
-                    response = restobj.rest_get(entry["href"] + '?page=' + str(response.dict["links"]['NextPage']['page']))
+                    response = restobj.rest_get(entry["href"] + '?page=' + \
+                                str(response.dict["links"]['NextPage']['page']))
                     print_log_entries(response.dict["Items"])
-
+        restobj.error_handler(response)
 
 def print_log_entries(log_entries):
     for log_entry in log_entries:
@@ -38,16 +39,16 @@ def print_log_entries(log_entries):
 
 if __name__ == "__main__":
     # When running on the server locally use the following commented values
-    # iLO_host = "blobstore://."
+    # iLO_https_host = "blobstore://."
     # iLO_account = "None"
     # iLO_password = "None"
 
     # When running remotely connect using the iLO address, iLO account name, 
     # and password to send https requests
-    iLO_host = "https://10.0.0.100"
+    iLO_https_host = "https://10.0.0.100"
     iLO_account = "admin"
     iLO_password = "password"
     
     #Create a REST object
-    REST_OBJ = RestObject(iLO_host, iLO_account, iLO_password)
+    REST_OBJ = RestObject(iLO_https_host, iLO_account, iLO_password)
     ex23_dump_ilo_event_log(REST_OBJ)
