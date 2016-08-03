@@ -53,7 +53,7 @@ For a successful response status, resource directory is retrieved from the respo
 
  if response.status == 200:
         sys.stdout.write("\tFound resource directory at /rest/v1/resource" \
-                                                            "directory" + "\n")
+                                                            "directory" + "\n\n")
         SYSTEMS_RESOURCES["resources"] = response.dict["Instances"]
         
  else:
@@ -62,50 +62,14 @@ For a successful response status, resource directory is retrieved from the respo
 
 ::
 
-        if bios_property not in bios_settings:
-            print ('\tBIOS Property "' + bios_property + '" is not supported ' 
-                  'on this system')
-            return
+Nested within the if, else statement, resources are listed by type and URI. A try and except is used to skip those without types.
 
+.. code-block:: python
+
+ for resource in response.dict["Instances"]:
+    try:
+    sys.stdout.write("\t" + str(resource["@odata.type"]) + \
+                           "\n\t\t" + str(resource["@odata.id"]) + "\n")
+    except KeyError:
+        pass
 ::
-
-If this BIOS resource doesn't support PATCH (response header doesn't have PATCH),  get BIOS Settings.
-        
-::
-
-        if not operation_allowed(headers, 'PATCH'):   
-            bios_uri = bios_settings['links']['Settings']['href']
-            status, headers, bios_settings = rest_get(restobj, bios_uri, None)
-         
-::
-
-Only the BIOS property we want to change needs to be sent for PATCH request.
-
-::
-
-        new_bios_settings = dict()
-        new_bios_settings[bios_property] = value
-        request_headers = dict()
-        if bios_password:
-            bios_password_hash = hashlib.sha256(bios_password.encode()).hexdigest().upper()
-            request_headers['X-HPRESTFULAPI-AuthToken'] = bios_password_hash
-
-::
-
-BIOS property and it's new value are passed as a PATCH request to the BIOS settings uri.
-
-::
-
-        print 'PATCH ' + json.dumps(new_bios_settings) + ' to ' + bios_uri
-        status, headers, response = rest_patch(restobj, bios_uri,
-                                               new_bios_settings)
-        print 'PATCH response = ' + str(status)
-        print_extended_error(response)
-        assert status < 300
-
-::
-
-
-
-
-A successful PATCH response will set the BIOS property value to the new value provided in BIOS settings, however the BIOS setting changes will get affected only after a system reset or reboot.

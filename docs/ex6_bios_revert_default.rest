@@ -72,3 +72,5 @@ PUT request is performed next and response error is handled if any.
 
 
 A successful PUT response implies that BIOS is set to default settings, however the changes will get affected only after a system reset or reboot.
+
+**Note:** The Bios. type is not supported in Gen9 servers for Redfish but the example includes Redfish implementation for Redfish Bios. type support in Gen10. Rest works as intended.

@@ -64,3 +64,5 @@ For the BIOS settings URI/s prepare the request body with only the BIOS property
 
 
 A successful PATCH response will set the BIOS property value to the new value provided in BIOS settings, however the BIOS setting changes will get affected only after a system reset or reboot.
+
+**Note:** The Bios. type is not supported in Gen9 servers for Redfish but the example includes Redfish implementation for Redfish Bios. type support in Gen10. Rest works as intended.

@@ -22,14 +22,14 @@ Redfish Object creation:
 
 ::
 
-Example 32: Set BIOS DHCP
+Example 36: Set BIOS URL boot file
 =============================
 
-The method **ex32_set_bios_dhcp** takes an instance of rest object ( or redfish object if using Redfish API ) and DHCP properties as arguments.
+The method **ex36_set_bios_url_boot_file** takes an instance of rest object ( or redfish object if using Redfish API ) and a filepath as arguments.
 
 .. code-block:: python
 
-  def ex32_set_bios_dhcp(restobj, bios_properties, bios_password=None):
+  def ex36_set_bios_url_boot_file(restobj, path='', bios_password=None):
 
 ::
 
@@ -42,14 +42,17 @@ Find and get the BIOS settings URI from the systems resources collection.
 
 ::
 
-For the DHCP settings prepare the request body with only the DHCP settings we want to change and perform the PATCH request.
+For the filepath, prepare the request body with only the UrlBootFile we want to change and perform the PATCH request.
 
 .. code-block:: python
 
     for instance in instances:
-        response = restobj.rest_patch(instance["href"], bios_properties, \
-                                      bios_password)
+        print instance
+        body = {"UrlBootFile": path}
+        response = restobj.rest_patch(instance["href"], body, bios_password)
         restobj.error_handler(response)
 ::
 
-A successful PATCH response will set the DHCP values to the new values provided in DHCP settings, however the changes will go into effect only after a system reset or reboot.
+A successful PATCH response will set the Boot file to the new values provided, however the changes will go into effect only after a system reset or reboot.
+
+**Note:** The Bios. type is not supported in Gen9 servers for Redfish but the example includes Redfish implementation for Redfish Bios. type support in Gen10. Rest works as intended.

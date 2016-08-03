@@ -22,27 +22,27 @@ Redfish Object creation:
 
 ::
 
-Example 35: Set BIOS ISCSI
+Example 32: Set BIOS DHCP
 =============================
 
-The method **ex35_set_bios_iscsi** takes an instance of rest object ( or redfish object if using Redfish API ) and iSCSI settings as arguments.
+The method **ex32_set_bios_dhcp** takes an instance of rest object ( or redfish object if using Redfish API ) and DHCP properties as arguments.
 
 .. code-block:: python
 
-  def ex35_set_bios_iscsi(restobj, bios_properties, bios_password=None):
+  def ex32_set_bios_dhcp(restobj, bios_properties, bios_password=None):
 
 ::
 
-Find and get the iSCSI settings URI from the systems resources collection.
+Find and get the BIOS settings URI from the systems resources collection.
 
 .. code-block:: python
 
 
-     instances = restobj.search_for_type("HpiSCSISoftwareInitiator.")
+     instances = restobj.search_for_type("Bios.")
 
 ::
 
-For the iSCSI settings, prepare the request body with only the iSCSI settings we want to change and perform the PATCH request.
+For the DHCP settings prepare the request body with only the DHCP settings we want to change and perform the PATCH request.
 
 .. code-block:: python
 
@@ -52,4 +52,6 @@ For the iSCSI settings, prepare the request body with only the iSCSI settings we
         restobj.error_handler(response)
 ::
 
-A successful PATCH response will set the iSCSI settings to the new values provided, however the changes will go into effect only after a system reset or reboot.
+A successful PATCH response will set the DHCP values to the new values provided in DHCP settings, however the changes will go into effect only after a system reset or reboot.
+
+**Note:** The Bios. type is not supported in Gen9 servers for Redfish but the example includes Redfish implementation for Redfish Bios. type support in Gen10. Rest works as intended.

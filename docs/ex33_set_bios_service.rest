@@ -53,3 +53,5 @@ For the BIOS service settings, prepare the request body with only the BIOS servi
 ::
 
 A successful PATCH response will set the BIOS service settings to the new values provided in BIOS settings, however the changes will go into effect only after a system reset or reboot.
+
+**Note:** The Bios. type is not supported in Gen9 servers for Redfish but the example includes Redfish implementation for Redfish Bios. type support in Gen10. Rest works as intended.

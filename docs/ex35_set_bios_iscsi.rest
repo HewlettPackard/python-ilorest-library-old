@@ -1,0 +1,57 @@
+.. image:: /images/hpe_logo2.png
+   :width: 150pt
+   
+|
+
+
+If not created already,  create an instance of Rest or Redfish Object using the  **RestObject** or **RedfishObject** class respectively. The class constructor takes iLO hostname/ ip address, iLO login username and password as arguments. The class also initializes a login session, gets systems resources and message registries.
+
+Rest Object creation:
+
+.. code-block:: python
+
+ REST_OBJ = RestObject(iLO_host, login_account, login_password)
+
+::
+
+Redfish Object creation:
+
+.. code-block:: python
+
+ REDFISH_OBJ = RedfishObject(iLO_host, login_account, login_password)
+
+::
+
+Example 35: Set BIOS ISCSI
+=============================
+
+The method **ex35_set_bios_iscsi** takes an instance of rest object ( or redfish object if using Redfish API ) and iSCSI settings as arguments.
+
+.. code-block:: python
+
+  def ex35_set_bios_iscsi(restobj, bios_properties, bios_password=None):
+
+::
+
+Find and get the iSCSI settings URI from the systems resources collection.
+
+.. code-block:: python
+
+
+     instances = restobj.search_for_type("HpiSCSISoftwareInitiator.")
+
+::
+
+For the iSCSI settings, prepare the request body with only the iSCSI settings we want to change and perform the PATCH request.
+
+.. code-block:: python
+
+    for instance in instances:
+        response = restobj.rest_patch(instance["href"], bios_properties, \
+                                      bios_password)
+        restobj.error_handler(response)
+::
+
+A successful PATCH response will set the iSCSI settings to the new values provided, however the changes will go into effect only after a system reset or reboot.
+
+**Note:** The Bios. type is not supported in Gen9 servers for Redfish but the example includes Redfish implementation for Redfish Bios. type support in Gen10. Rest works as intended.
