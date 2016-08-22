@@ -80,7 +80,7 @@ Assuming that SVN is already installed in your system and it is already in Syste
 
 ::
 
-  svn checkout https://github.com/HewlettPackard/python-ilorestful-library.git
+  svn checkout https://github.com/HewlettPackard/python-ilorest-library.git
   
 ::
 

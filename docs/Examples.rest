@@ -22,7 +22,7 @@ Redfish changes the linking between resources, for example  “**href**” is re
 
 
 
-The following examples can all be used as guidance for `managing iLO using iLO RESTful API <https://github.com/HewlettPackard/python-ilorestful-library/blob/master/docs/Managing_HPE_Servers_Using_RESTful_API.md>`_.
+The following examples can all be used as guidance for `managing iLO using iLO RESTful API <https://github.com/HewlettPackard/python-ilorest-library/blob/master/docs/Managing_HPE_Servers_Using_RESTful_API.md>`_.
 
 
 .. toctree::
