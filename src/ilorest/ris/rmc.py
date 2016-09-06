@@ -102,7 +102,7 @@ class RmcApp(object):
             if self.logger.handlers and self.logger.handlers[0].name == 'lerr':
                 self.logger.handlers.remove(self.logger.handlers[0])
 
-        self.typepath = ilorest.ris.tpdefs.typesandpathdefines()
+        self.typepath = ilorest.ris.tpdefs.Typesandpathdefines()
         Typepathforval(typepathobj=self.typepath)
 
     def restore(self):
@@ -356,6 +356,10 @@ class RmcApp(object):
         :type url: str.
 
         """
+        try:
+            self.current_client.monolith.killthreads()
+        except:
+            pass
         try:
             self.current_client.logout()
         except Exception:
@@ -1475,9 +1479,13 @@ class RmcApp(object):
                 for instance in monolith.types[ristype][u'Instances']:
                     if "computersystem." in instance.type.lower():
                         try:
-                            if instance.resp.obj["Bios"]["Current"]:
-                                oemjson = instance.resp.obj["Bios"]["Current"]
-                                parts = oemjson["VersionString"].split(" ")
+                            if "Current" in instance.resp.obj["Bios"]:
+                                    oemjson = instance.resp.obj["Bios"]["Current"]
+                                    parts = oemjson["VersionString"].split(" ")
+                                    return (parts[0], parts[1][1:])
+                            else:
+                                parts = instance.resp.obj["BiosVersion"]\
+                                                                .split(" ")
                                 return (parts[0], parts[1][1:])
                         except Exception:
                             pass
@@ -1498,9 +1506,9 @@ class RmcApp(object):
                                    default_prefix, silent=True, service=True)
 
         try:
-            if results.dict["Oem"][self.typepath.defs.OemHp]["Manager"]:
+            if results.dict["Oem"][self.typepath.defs.oemhp]["Manager"]:
                 oemjson = results.dict["Oem"][self.typepath.defs.\
-                                                            OemHp]["Manager"]
+                                                            oemhp]["Manager"]
                 ilogen = oemjson[0]["ManagerType"]
                 ilover = oemjson[0]["ManagerFirmwareVersion"]
                 iloversion = ilogen.split(' ')[-1] + '.' + \
@@ -1760,10 +1768,8 @@ class RmcApp(object):
                 results = self.current_client.set(put_path, body=currdict, \
                           optionalpassword=self.current_client.bios_password)
 
-                (base_messages, ilo_messages, hpcommon_messages, \
-                                iloevent_messages) = self.get_error_messages()
-                self.invalid_return_handler(results, ilo_messages, \
-                            base_messages, iloevent_messages, hpcommon_messages)
+                errmessages = self.get_error_messages()
+                self.invalid_return_handler(results, errmessages)
 
                 if not results.status == 200:
                     raise FailureDuringCommitError("Failed to commit with " \
@@ -1791,107 +1797,49 @@ class RmcApp(object):
 
     def get_error_messages(self):
         """Handler of error messages from iLO"""
+        errmessages = {}
+        reglist = []
         iloversion = self.getiloversion()
         typestr = self.current_client.monolith._typestring
+        colstr = self.typepath.defs.collectionstring
         validation_manager = self.get_validation_manager(iloversion)
-        regfound = validation_manager.find_registry("Base")
-
-        if self.current_client.monolith.is_redfish and regfound:
-            regfound = self.get_handler(regfound[u'@odata.id'], \
-                            verbose=False, service=True, silent=True).obj
-            regfound = RepoRegistryEntry(regfound)
-
-        if not regfound:
-            LOGGER.warn(u"Unable to locate registry for '%s'", "Base")
-        elif float(iloversion) >= 4.210:
+        if not validation_manager._classes_registry:
+            return None
+        for reg in validation_manager._classes_registry[0][colstr]:
             try:
-                locationdict = self.geturidict(regfound.Location[0])
-                self.check_type_and_download(self.current_client.monolith, \
-                                 locationdict, skipcrawl=True, loadtype='ref')
-            except Exception:
-                pass
-        if regfound:
-            validation_manager._base_messages = regfound.get_registry_model(\
-                            skipcommit=True, currdict={typestr: "Base"}, \
-                            monolith=self.current_client.monolith, \
-                            searchtype=self.typepath.defs.MessageRegistryType)
+                if not 'biosattributeregistry' in reg['Id'].lower():
+                    reglist.append(reg['Id'])
+            except:
+                reg = reg[u'@odata.id'].split('/')
+                reg = reg[len(reg)-2]
+                if not 'biosattributeregistry' in reg.lower():
+                    reglist.append(reg)
 
-        regfound = validation_manager.find_registry("iLO")
+        for reg in reglist:
+            regfound = validation_manager.find_registry(reg)
 
-        if self.current_client.monolith.is_redfish and regfound:
-            regfound = self.get_handler(regfound[u'@odata.id'], verbose=False, \
-                                                service=True, silent=True).obj
-            regfound = RepoRegistryEntry(regfound)
+            if self.current_client.monolith.is_redfish\
+                                 and not isinstance(regfound, RepoRegistryEntry):
+                regfound = self.get_handler(regfound[u'@odata.id'], \
+                                verbose=False, service=True, silent=True).obj
+                regfound = RepoRegistryEntry(regfound)
+            if not regfound:
+                LOGGER.warn(u"Unable to locate registry for '%s'", reg)
+            elif float(iloversion) >= 4.210:
+                try:
+                    locationdict = self.geturidict(regfound.Location[0])
+                    self.check_type_and_download(self.current_client.monolith, \
+                                     locationdict, skipcrawl=True, loadtype='ref')
+                except Exception:
+                    pass
+            if regfound:
+                errmessages[reg] = regfound.get_registry_model(\
+                                skipcommit=True, currdict={typestr: reg}, \
+                                monolith=self.current_client.monolith, \
+                                searchtype=self.typepath.defs.messageregistrytype)
 
-        if not regfound:
-            LOGGER.warn(u"Unable to locate registry for '%s'", "iLO")
-        elif float(iloversion) >= 4.210:
-            try:
-                locationdict = self.geturidict(regfound.Location[0])
-                self.check_type_and_download(self.current_client.monolith, \
-                                locationdict, skipcrawl=True, loadtype='ref')
-            except Exception:
-                pass
+        return errmessages
 
-        if regfound:
-            validation_manager._ilo_messages = regfound.get_registry_model(\
-                            skipcommit=True, currdict={typestr: "iLO"}, \
-                            monolith=self.current_client.monolith, \
-                            searchtype=self.typepath.defs.MessageRegistryType)
-
-        regfound = validation_manager.find_registry(\
-                                                self.typepath.defs.HpCommonType)
-
-        if self.current_client.monolith.is_redfish and regfound:
-            regfound = self.get_handler(regfound[u'@odata.id'], verbose=False, \
-                                                service=True, silent=True).obj
-            regfound = RepoRegistryEntry(regfound)
-
-        if not regfound:
-            LOGGER.warn(u"Unable to locate registry for '%s'", \
-                                                self.typepath.defs.HpCommonType)
-        elif float(iloversion) >= 4.210:
-            try:
-                locationdict = self.geturidict(regfound.Location[0])
-                self.check_type_and_download(self.current_client.monolith, \
-                                 locationdict, skipcrawl=True, loadtype='ref')
-            except Exception:
-                pass
-        if regfound:
-            validation_manager._hpcommon_messages = \
-                        regfound.get_registry_model(skipcommit=True, \
-                        currdict={typestr: self.typepath.defs.HpCommonType}, \
-                        monolith=self.current_client.monolith, \
-                        searchtype=self.typepath.defs.MessageRegistryType)
-
-        regfound = validation_manager.find_registry("iLOEvents")
-
-        if self.current_client.monolith.is_redfish and regfound:
-            regfound = self.get_handler(regfound[u'@odata.id'], verbose=False, \
-                                                service=True, silent=True).obj
-            regfound = RepoRegistryEntry(regfound)
-
-        if not regfound:
-            LOGGER.warn(u"Unable to locate registry for '%s'", "iLOEvents")
-        elif float(iloversion) >= 4.210:
-            try:
-                locationdict = self.geturidict(regfound.Location[0])
-                self.check_type_and_download(self.current_client.monolith, \
-                                locationdict, skipcrawl=True, loadtype='ref')
-            except Exception:
-                pass
-
-        if regfound:
-            validation_manager._iloevents_messages = \
-                            regfound.get_registry_model(skipcommit=True, \
-                            currdict={typestr: "iLOEvents"}, \
-                            monolith=self.current_client.monolith, \
-                            searchtype=self.typepath.defs.MessageRegistryType)
-
-        return (validation_manager._base_messages, \
-                                        validation_manager._ilo_messages, \
-                                        validation_manager._hpcommon_messages, \
-                                        validation_manager._iloevents_messages)
 
     def patch_handler(self, put_path, body, optionalpassword=None, \
               verbose=False, providerheader=None, service=False, url=None, \
@@ -1921,10 +1869,7 @@ class RmcApp(object):
         :returns: returns RestResponse object containing response data
 
         """
-        ilo_messages = None
-        base_messages = None
-        iloevent_messages = None
-        hpcommon_messages = None
+        errmessages = None
 
         (put_path, body) = self.checkpostpatch(body=body, path=put_path, \
                     verbose=verbose, service=False, url=None, sessionid=None, \
@@ -1940,11 +1885,10 @@ class RmcApp(object):
                               providerheader=providerheader, headers=headers)
 
         if not silent and not service:
-            (base_messages, ilo_messages, hpcommon_messages, \
-                                iloevent_messages) = self.get_error_messages()
+            errmessages = self.get_error_messages()
+
         if not silent:
-            self.invalid_return_handler(results, ilo_messages, base_messages, \
-                        iloevent_messages, hpcommon_messages, verbose=verbose)
+            self.invalid_return_handler(results, errmessages, verbose=verbose)
 
         if iloresponse:
             return results
@@ -1977,10 +1921,7 @@ class RmcApp(object):
         :returns: returns a RestResponse object from client's get command
 
         """
-        ilo_messages = None
-        base_messages = None
-        iloevent_messages = None
-        hpcommon_messages = None
+        errmessages = None
 
         if sessionid:
             results = RmcClient(url=url, sessionkey=sessionid).get(put_path, \
@@ -1990,12 +1931,10 @@ class RmcApp(object):
                                                                 headers=headers)
 
         if not silent and not service:
-            (base_messages, ilo_messages, hpcommon_messages, \
-                                iloevent_messages) = self.get_error_messages()
+            errmessages = self.get_error_messages()
 
         if not silent:
-            self.invalid_return_handler(results, ilo_messages, base_messages, \
-                        iloevent_messages, hpcommon_messages, verbose=verbose)
+            self.invalid_return_handler(results, errmessages, verbose=verbose)
 
         if results.status == 200 or iloresponse:
             return results
@@ -2030,10 +1969,7 @@ class RmcApp(object):
         :returns: returns a RestResponse from client's Post command
 
         """
-        ilo_messages = None
-        base_messages = None
-        iloevent_messages = None
-        hpcommon_messages = None
+        errmessages = None
 
         (put_path, body) = self.checkpostpatch(body=body, path=put_path, \
                     verbose=verbose, service=False, url=None, sessionid=None,\
@@ -2048,11 +1984,10 @@ class RmcApp(object):
                                 providerheader=providerheader, headers=headers)
 
         if not silent and not service:
-            (base_messages, ilo_messages, hpcommon_messages, \
-                                iloevent_messages) = self.get_error_messages()
+            errmessages = self.get_error_messages()
+
         if not silent:
-            self.invalid_return_handler(results, ilo_messages, base_messages, \
-                        iloevent_messages, hpcommon_messages, verbose=verbose)
+            self.invalid_return_handler(results, errmessages, verbose=verbose)
 
         if iloresponse:
             return results
@@ -2088,10 +2023,7 @@ class RmcApp(object):
         :returns: returns a RestResponse object from client's Put command
 
         """
-        ilo_messages = None
-        base_messages = None
-        iloevent_messages = None
-        hpcommon_messages = None
+        errmessages = None
 
         if sessionid:
             results = RmcClient(url=url, sessionkey=sessionid).toolput(\
@@ -2106,12 +2038,11 @@ class RmcApp(object):
                                           headers=headers)
 
         if not silent and not service:
-            (base_messages, ilo_messages, hpcommon_messages, \
-                                iloevent_messages) = self.get_error_messages()
+            errmessages = self.get_error_messages()
+
         if not silent:
-            self.invalid_return_handler(results, ilo_messages, \
-                                            base_messages, iloevent_messages,\
-                                            hpcommon_messages, verbose=verbose)
+            self.invalid_return_handler(results, errmessages, verbose=verbose)
+
         if iloresponse:
             return results
         elif results.status == 401:
@@ -2138,10 +2069,7 @@ class RmcApp(object):
         :returns: returns a RestResponse object from client's Delete command
 
         """
-        ilo_messages = None
-        base_messages = None
-        iloevent_messages = None
-        hpcommon_messages = None
+        errmessages = None
 
         if sessionid:
             results = RmcClient(url=url, sessionkey=sessionid).tooldelete(\
@@ -2151,11 +2079,11 @@ class RmcApp(object):
                                  providerheader=providerheader, headers=headers)
 
         if not silent and not service:
-            (base_messages, ilo_messages, hpcommon_messages, \
-                                iloevent_messages) = self.get_error_messages()
+            errmessages = self.get_error_messages()
+
         if not silent:
-            self.invalid_return_handler(results, ilo_messages, base_messages, \
-                        iloevent_messages, hpcommon_messages, verbose=verbose)
+            self.invalid_return_handler(results, errmessages, verbose=verbose)
+
         elif results.status == 401:
             raise SessionExpired()
 
@@ -2178,23 +2106,18 @@ class RmcApp(object):
         :returns: returns a RestResponse object from client's Head command
 
         """
-        ilo_messages = None
-        base_messages = None
-        iloevent_messages = None
-        hpcommon_messages = None
+        errmessages = None
 
         if sessionid:
             results = RmcClient(url=url, sessionkey=sessionid).head(put_path)
         else:
             results = self.current_client.head(put_path)
 
-        if not service and not silent:
-            (base_messages, ilo_messages, hpcommon_messages, \
-                                iloevent_messages) = self.get_error_messages()
+        if not silent and not service:
+            errmessages = self.get_error_messages()
+
         if not silent:
-            self.invalid_return_handler(results, ilo_messages, \
-                                            base_messages, iloevent_messages,\
-                                            hpcommon_messages, verbose=verbose)
+            self.invalid_return_handler(results, errmessages, verbose=verbose)
 
         if results.status == 200:
             return results
@@ -2222,22 +2145,14 @@ class RmcApp(object):
 
         return dict(instance=qgroups[u'instance'], \
                                             xpath=qgroups.get(u'xpath', None))
-
-    def invalid_return_handler(self, results, ilomessages=None, \
-                                    basemessages=None, hpcommonmessages=None, \
-                                    iloeventsmessages=None, verbose=False):
+    def invalid_return_handler(self, results, errmessages=None, verbose=False):
         """Main worker function for handling all error messages from iLO
 
-        :param ilomessages: list containing the systems ilo messages.
-        :type ilomessages: list.
-        :param basemessages: list containing the systems base messages.
-        :type basemessages: list.
-        :param hpcommonmessages: list containing the systems common messages.
-        :type hpcommonmessages: list.
-        :param iloeventsmessages: list containing the systems event messages.
-        :type iloeventsmessages: list.
+        :param errmessages: dict of lists containing the systems error messages.
+        :type errmessages: dict.
 
         """
+        output = ''
         try:
             contents = results.dict["Messages"][0]["MessageID"].split('.')
         except Exception:
@@ -2262,63 +2177,24 @@ class RmcApp(object):
             raise SessionExpired()
         elif results.status == 403:
             raise IdTokenError()
-        elif ilomessages and basemessages and hpcommonmessages and iloeventsmessages:
-            if contents[0] == "Base":
-                try:
-                    if basemessages[contents[-1]]["NumberOfArgs"] == 0:
-                        output = basemessages[contents[-1]]["Message"]
-                    else:
-                        output = basemessages[contents[-1]]["Description"]
-
-                    if verbose:
-                        sys.stdout.write(u"[%d] %s\n" % (results.status, \
+        elif errmessages:
+            for messagetype in errmessages.keys():
+                if contents[0] == messagetype:
+                    try:
+                        if errmessages[messagetype][contents[-1]]["NumberOfArgs"] == 0:
+                            output = errmessages[messagetype][contents[-1]]["Message"]
+                        else:
+                            output = errmessages[messagetype][contents[-1]]["Description"]
+    
+                        if verbose:
+                            sys.stdout.write(u"[%d] %s\n" % (results.status, \
                                                                         output))
-                    else:
-                        self.warning_handler(u"%s\n" % output)
-                except Exception:
-                    pass
-            elif contents[0] == "iLO":
-                try:
-                    if ilomessages[contents[-1]]["NumberOfArgs"] == 0:
-                        output = ilomessages[contents[-1]]["Message"]
-                    else:
-                        output = ilomessages[contents[-1]]["Description"]
-
-                    if verbose:
-                        sys.stdout.write(u"[%d] %s\n" % (results.status, \
-                                                                        output))
-                    else:
-                        self.warning_handler(u"%s\n" % output)
-                except Exception:
-                    pass
-            elif contents[0] == self.typepath.defs.HpCommonType:
-                try:
-                    if hpcommonmessages[contents[-1]]["NumberOfArgs"] == 0:
-                        output = hpcommonmessages[contents[-1]]["Message"]
-                    else:
-                        output = hpcommonmessages[contents[-1]]["Description"]
-
-                    if verbose:
-                        sys.stdout.write(u"[%d] %s\n" % (results.status, \
-                                                                        output))
-                    else:
-                        self.warning_handler(u"%s\n" % output)
-                except Exception:
-                    pass
-            elif contents[0] == "iLOEvents":
-                try:
-                    if iloeventsmessages[contents[-1]]["NumberOfArgs"] == 0:
-                        output = iloeventsmessages[contents[-1]]["Message"]
-                    else:
-                        output = iloeventsmessages[contents[-1]]["Description"]
-
-                    if verbose:
-                        sys.stdout.write(u"[%d] %s\n" % (results.status, \
-                                                                        output))
-                    else:
-                        self.warning_handler(u"%s\n" % output)
-                except Exception:
-                    pass
+                            break
+                        else:
+                            self.warning_handler(u"%s\n" % output)
+                            break
+                    except Exception:
+                        pass
         else:
             if results.status == 200 or results.status == 201:
                 if verbose:
@@ -2522,7 +2398,7 @@ class RmcApp(object):
             self.reloadmonolith(paths[instance.type])
             (newtag, paths) = self.gettypeswithetag()
             if (oldtag[instance.type] != newtag[instance.type]) and \
-                        not self.typepath.defs.HpiLODateTimeType in instance.type:
+                        not self.typepath.defs.hpilodatetimetype in instance.type:
                 self.warning_handler("The property you are trying to change " \
                                  "has been updated. Please check entry again " \
                                  " before manipulating it\n")
@@ -2539,8 +2415,8 @@ class RmcApp(object):
         registriesfound = False
 
         if monolith.is_redfish:
-            schemaid = "/redfish/v1/schemas/"
-            regid = "/redfish/v1/registries/"
+            schemaid = "/redfish/v1/schemas/?$expand=."
+            regid = "/redfish/v1/registries/?$expand=."
         else:
             schemaid = "/rest/v1/schemas"
             regid = "/rest/v1/registries"
@@ -2569,7 +2445,7 @@ class RmcApp(object):
 
         """
         for ristype in monolith.types:
-            if self.typepath.defs.ResourceDirectoryType.lower() \
+            if self.typepath.defs.resourcedirectorytype.lower() \
                                                 in ristype.lower():
                 return (True, ristype)
 
@@ -2610,8 +2486,11 @@ class RmcApp(object):
             except SessionExpiredRis:
                 raise SessionExpired()
             except Exception, excp:
-                if excp.errno == 10053:
-                    raise SessionExpired()
+                try:
+                    if excp.errno == 10053:
+                        raise SessionExpired()
+                except:
+                    raise excp
                 else:
                     raise excp
 
@@ -2852,9 +2731,9 @@ class RmcApp(object):
                                                     instance.resp.obj["Model"]
 
                             if instance.resp.obj["Oem"][self.typepath.\
-                                                defs.OemHp]["Bios"]["Current"]:
+                                                defs.oemhp]["Bios"]["Current"]:
                                 oemjson = instance.resp.obj["Oem"]\
-                                    [self.typepath.defs.OemHp]["Bios"]["Current"]
+                                    [self.typepath.defs.oemhp]["Bios"]["Current"]
                                 instances["Comments"]["BIOSFamily"] = \
                                                             oemjson["Family"]
                                 instances["Comments"]["BIOSDate"] = \
@@ -2952,14 +2831,14 @@ class RmcApp(object):
                 regfound = validation_manager.find_bios_registry(regtype)
                 biosschemafound = validation_manager.find_schema(schematype)
 
-                if isredfish and biosschemafound:
+                if isredfish and not isinstance(biosschemafound, RepoRegistryEntry):
                     regfound = self.get_handler(regfound[u'@odata.id'], \
                                 verbose=False, service=True, silent=True).obj
                     regfound = RepoRegistryEntry(regfound)
         except Exception:
             regfound = validation_manager.find_schema(schematype)
 
-        if isredfish and regfound:
+        if isredfish and not isinstance(regfound, RepoRegistryEntry):
             regfound = self.get_handler(regfound[u'@odata.id'], \
                                 verbose=False, service=True, silent=True).obj
             regfound = RepoRegistryEntry(regfound)
@@ -3133,14 +3012,14 @@ class RmcApp(object):
                 biosmode = True
                 biosschemafound = validation_manager.find_schema(schematype)
 
-                if isredfish and biosschemafound:
-                    regfound = self.get_handler(regfound[u'@odata.id'], \
+                if isredfish and not isinstance(biosschemafound, RepoRegistryEntry):
+                    biosschemafound = self.get_handler(biosschemafound[u'@odata.id'], \
                                 verbose=False, service=True, silent=True).obj
-                    regfound = RepoRegistryEntry(regfound)
+                    biosschemafound = RepoRegistryEntry(biosschemafound)
         except Exception:
             regfound = validation_manager.find_schema(schematype)
 
-        if isredfish and regfound:
+        if isredfish and not isinstance(regfound, RepoRegistryEntry):
             regfound = self.get_handler(regfound[u'@odata.id'], \
                                 verbose=False, service=True, silent=True).obj
             regfound = RepoRegistryEntry(regfound)
@@ -3185,20 +3064,20 @@ class RmcApp(object):
 
     def geturidict(self, Locationobj):
         """Return the external reference link."""
-        if self.typepath.defs.IsGen10:
+        if self.typepath.defs.isgen10:
             try:
                 return Locationobj["Uri"]
             except Exception:
                 raise InvalidPathError("Error accessing Uri path!/n")
-        elif self.typepath.defs.IsGen9:
+        elif self.typepath.defs.isgen9:
             try:
                 return Locationobj["Uri"]["extref"]
             except Exception:
                 raise InvalidPathError("Error accessing extref path!/n")
 
-    def getGen(self, url=None):
+    def getgen(self, url=None):
         """Updates the defines object based on the iLO manager version"""
-        self.typepath.getGen(url=url, logger=LOGGER)
+        self.typepath.getgen(url=url, logger=LOGGER)
 
     def updateDefinesFlag(self, redfishFlag=None):
         """Updates the redfish and rest flag depending on system and
@@ -3210,7 +3089,7 @@ class RmcApp(object):
         
         """
         if self.typepath.defs:
-            is_redfish = redfishFlag or self.typepath.defs.IsGen10
+            is_redfish = redfishFlag or self.typepath.defs.isgen10
             self.typepath.defs.flagforrest = not is_redfish
             if is_redfish:
                 self.typepath.defs.redfishchange()
@@ -3260,7 +3139,7 @@ class RmcApp(object):
                 if u"/Actions/" in path:
                     ind = path.find(u"/Actions/")
                     path = path[:ind]
-            elif path.startswith(u"/rest/") and self.typepath.defs.IsGen9:
+            elif path.startswith(u"/rest/") and self.typepath.defs.isgen9:
                 results = self.get_handler(put_path=path, service=service, \
                               url=url, sessionid=sessionid, headers=headers, \
                               iloresponse=iloresponse, silent=silent)
@@ -3268,7 +3147,7 @@ class RmcApp(object):
                     if results.dict:
                         if u"Target" in body:
                             actions = results.dict[u"Oem"][self.typepath.defs.\
-                                                            OemHp][u"Actions"]
+                                                            oemhp][u"Actions"]
                         elif u"Actions" in body:
                             actions = results.dict[u"Actions"]
                         else:
@@ -3306,20 +3185,20 @@ class RmcApp(object):
         query = query.lower()
         returnval = query
 
-        if self.typepath.defs.IsGen9:
+        if self.typepath.defs.isgen9:
             if query.startswith((u"hpeeskm", u"#hpeeskm")) or \
                                     query.startswith((u"hpeskm", u"#hpeskm")):
-                returnval = self.typepath.defs.HpESKMType
+                returnval = self.typepath.defs.hpeskmtype
             elif u'bios.' in query[:9].lower():
-                returnval = self.typepath.defs.BiosType
+                returnval = self.typepath.defs.biostype
             elif query.startswith((u"hpe", u"#hpe")):
                 returnval = query[:4].replace(u"hpe", u"hp")+query[4:]
         else:
             if query.startswith((u"hpeskm", u"#hpeskm")) or \
                                     query.startswith((u"hpeeskm", u"#hpeeskm")):
-                returnval = self.typepath.defs.HpESKMType
+                returnval = self.typepath.defs.hpeskmtype
             elif u'bios.' in query[:9].lower():
-                returnval = self.typepath.defs.BiosType
+                returnval = self.typepath.defs.biostype
             elif not query.startswith((u"hpe", u"#hpe")):
                 returnval = query[:3].replace(u"hp", u"hpe")+query[3:]
 

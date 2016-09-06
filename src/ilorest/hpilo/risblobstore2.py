@@ -20,6 +20,7 @@
 #---------Imports---------
 
 import os
+import sys
 import struct
 
 from ilorest.hpilo.rishpilo import (HpIlo)
@@ -543,13 +544,28 @@ class BlobStore2(object):
         """Multi platform handle for chif hprest library"""
         try:
             if os.name == 'nt':
-                libhandle = cdll.LoadLibrary('hprest_chif.dll')
+                libpath = self.checkincurrdirectory('hprest_chif.dll')
+                libhandle = cdll.LoadLibrary(libpath)
             else:
-                libhandle = cdll.LoadLibrary('hprest_chif.so')
+                try:
+                    libpath = self.checkincurrdirectory('hprest_chif_dev.so')
+                    libhandle = cdll.LoadLibrary(libpath)
+                except:
+                    libpath = self.checkincurrdirectory('hprest_chif.so')
+                    libhandle = cdll.LoadLibrary(libpath)
         except Exception as excp:
             raise ChifDllMissingError(excp)
 
         return libhandle
+
+    def checkincurrdirectory(self, libname):
+        """Check if the library is present in current directory."""
+        libpath = libname
+        if os.path.isfile(os.path.join(os.path.split(sys.executable)[0], libpath)):
+            libpath = os.path.join(os.path.split(sys.executable)[0], libpath)
+        elif os.path.isfile(os.path.join(os.getcwd(), libpath)):
+            libpath = os.path.join(os.getcwd(), libpath)
+        return libpath
 
     def unloadChifHandle(self, lib):
         """Release a handle on the chif hprest library

@@ -16,15 +16,15 @@
 
 # -*- coding: utf-8 -*-
 """Typedefs implementation"""
-
 #---------Imports---------
+import logging
 from ilorest import redfish_client, rest_client
 from ilorest.ris.rmc_helper import UnableToObtainIloVersionError
 #---------End of imports---------
 
-#TODO: need to add the real LOGGER included in other files
+LOGGER = logging.getLogger(__name__)
 
-class typesandpathdefines(object):
+class Typesandpathdefines(object):
     """Global types and path definitions class"""
     def __init__(self):
         self.url = None
@@ -32,7 +32,7 @@ class typesandpathdefines(object):
         self.ilogen = None
         self.flagiften = False
 
-    def getGen(self, url=None, logger=None):
+    def getgen(self, url=None, logger=None):
         """Function designed to verify the servers platform
 
         :param url: The URL to perform the request on.
@@ -53,9 +53,9 @@ class typesandpathdefines(object):
                                      password=None, default_prefix="/rest/v1")
                 response = restclient.get(path="/rest/v1")
             except Exception as excep:
-                if logger:
-                    if not type(excep) == type(excp):
-                        logger.error(u"Gen get rest error:"+str(excep)+u"\n")
+                logger = logger if not logger else LOGGER
+                if type(excep) != type(excp):
+                    logger.error(u"Gen get rest error:"+str(excep)+u"\n")
                 raise excp
 
         self.ilogen = None
@@ -77,124 +77,130 @@ class typesandpathdefines(object):
             self.flagiften = True
 
         if self.flagiften:
-            self.defs = definevalstenplus()
+            self.defs = Definevalstenplus()
         else:
-            self.defs = definevalsNine()
+            self.defs = DefinevalsNine()
 
-class definevals(object):
+class Definevals(object):
     """Class for setting platform dependent variables"""
     def __init__(self):
         pass
 
-#TODO: need to fix the variable names to pass pylint check
-class definevalstenplus(definevals):
+class Definevalstenplus(Definevals):
     """Platform dependent variables"""
+    # pylint: disable=too-many-instance-attributes
+    # As a defines classt this will need all the attributes
     def __init__(self):
-        self.OemHp = u"Hpe"
+        self.oemhp = u"Hpe"
 
         self.oempath = u"/Oem/Hpe"
-        self.StartPath = u"/redfish/v1/"
+        self.startpath = u"/redfish/v1/"
         self.systempath = u"/redfish/v1/Systems/1/"
-        self.ManagerPath = u"/redfish/v1/Managers/1/"
-        self.BiosPath = u"/redfish/v1/systems/1/bios/"
-        self.AddLicensePath = u"/redfish/v1/Managers/1/LicenseService/"
-        self.AccountsPath = u"/redfish/v1/AccountService/Accounts/"
-        self.FederationPath = u"/redfish/v1/Managers/1/FederationGroups/"
+        self.managerpath = u"/redfish/v1/Managers/1/"
+        self.biospath = u"/redfish/v1/systems/1/bios/"
+        self.addlicensepath = u"/redfish/v1/Managers/1/LicenseService/"
+        self.accountspath = u"/redfish/v1/AccountService/Accounts/"
+        self.federationpath = u"/redfish/v1/Managers/1/FederationGroups/"
 
-        self.BiosType = u"Bios."
-        self.HpESKMType = u"HpeESKM."
-        self.HpCommonType = u"HpeCommon"
-        self.HpiLOSSOType = u"HpeiLOSSO."
-        self.HpSecureBoot = u"HpeSecureBoot."
-        self.LogServiceType = u"#LogService."
-        self.HpHttpsCertType = u"HpeHttpsCert."
-        self.SnmpService = u"HpeiLOSnmpService."
-        self.AttributeNameType = u"AttributeName"
-        self.HpiLODateTimeType = u"HpeiLODateTime."
-        self.AttributeRegType = u"#AttributeRegistry."
-        self.HpiLOFirmwareUpdateType = u"HpeiLOFirmwareUpdate."
-        self.ResourceDirectoryType = u"HpeiLOResourceDirectory."
-        self.HpiLOFederationGroupType = u"HpeiLOFederationGroup."
-        self.ManagerNetworkServiceType = u"ManagerNetworkProtocol."
-        self.SchemaFileCollectionType = u"#JsonSchemaFileCollection."
-        self.HpiLOLicenseCollectionType = u"HpeiLOLicenseCollection."
-        self.HpiLOActiveHealthSystemType = u"#HpeiLOActiveHealthSystem."
-        self.HpiLOFederationGroupTypeColl = u"HpeiLOFederationGroupCollection."
-        self.MessageRegistryType = u"#MessageRegistry."
+        self.biostype = u"Bios."
+        self.hpeskmtype = u"HpeESKM."
+        self.hpcommontype = u"HpeCommon"
+        self.hpilossotype = u"HpeiLOSSO."
+        self.hpsecureboot = u"SecureBoot."
+        self.logservicetype = u"#LogService."
+        self.hphttpscerttype = u"HpeHttpsCert."
+        self.snmpservice = u"HpeiLOSnmpService."
+        self.attributenametype = u"AttributeName"
+        self.hpilodatetimetype = u"HpeiLODateTime."
+        self.attributeregtype = u"#AttributeRegistry."
+        self.hpilofirmwareupdatetype = u"UpdateService."
+        self.resourcedirectorytype = u"HpeiLOResourceDirectory."
+        self.hpilofederationgrouptype = u"HpeiLOFederationGroup."
+        self.managernetworkservicetype = u"ManagerNetworkProtocol."
+        self.schemafilecollectiontype = u"#JsonSchemaFileCollection."
+        self.hpilolicensecollectiontype = u"HpeiLOLicenseCollection."
+        self.hpiloactivehealthsystemtype = u"#HpeiLOActiveHealthSystem."
+        self.hpilofederationgrouptypecoll = u"HpeiLOFederationGroupCollection."
+        self.messageregistrytype = u"#MessageRegistry."
 
         self.typestring = u"@odata.type"
         self.hrefstring = u"@odata.id"
         self.collectionstring = u"Members"
+        self.biossettingsstring = u"@Redfish.Settings"
 
-        self.IsGen9 = False
-        self.IsGen10 = True
+        self.isgen9 = False
+        self.isgen10 = True
         self.flagforrest = False
-        super(definevalstenplus, self).__init__()
+        super(Definevalstenplus, self).__init__()
 
     def redfishchange(self):
         """Function to update redfish variables"""
         pass
 
 
-class definevalsNine(definevals):
+class DefinevalsNine(Definevals):
     """Platform dependent variables"""
+    # pylint: disable=too-many-instance-attributes
+    # As a defines classt this will need all the attributes
     def __init__(self):
-        self.OemHp = u"Hp"
+        self.oemhp = u"Hp"
 
         self.oempath = u"/Oem/Hp"
-        self.StartPath = u"/rest/v1"
+        self.startpath = u"/rest/v1"
         self.systempath = u"/rest/v1/Systems/1"
-        self.ManagerPath = u"/rest/v1/Managers/1"
-        self.BiosPath = u"/rest/v1/systems/1/bios"
-        self.AddLicensePath = u"/rest/v1/Managers/1/LicenseService"
-        self.AccountsPath = u"/rest/v1/AccountService/Accounts"
-        self.FederationPath = u"/rest/v1/Managers/1/FederationGroups"
+        self.managerpath = u"/rest/v1/Managers/1"
+        self.biospath = u"/rest/v1/systems/1/bios"
+        self.addlicensepath = u"/rest/v1/Managers/1/LicenseService"
+        self.accountspath = u"/rest/v1/AccountService/Accounts"
+        self.federationpath = u"/rest/v1/Managers/1/FederationGroups"
 
-        self.BiosType = u"HpBios."
-        self.HpESKMType = u"HpESKM."
-        self.HpCommonType = u"HpCommon"
-        self.HpiLOSSOType = u"HpiLOSSO."
-        self.SnmpService = u"SnmpService."
-        self.AttributeNameType = u"Name"
-        self.LogServiceType = u"LogService."
-        self.HpSecureBoot = u"HpSecureBoot."
-        self.HpHttpsCertType = u"HpHttpsCert."
-        self.HpiLODateTimeType = u"HpiLODateTime."
-        self.HpiLOFirmwareUpdateType = u"HpiLOFirmwareUpdate."
-        self.ResourceDirectoryType = u"HpiLOResourceDirectory."
-        self.HpiLOFederationGroupType = u"HpiLOFederationGroup."
-        self.AttributeRegType = u"HpBiosAttributeRegistrySchema."
-        self.SchemaFileCollectionType = u"#SchemaFileCollection."
-        self.ManagerNetworkServiceType = u"ManagerNetworkService."
-        self.HpiLOActiveHealthSystemType = u"HpiLOActiveHealthSystem."
-        self.MessageRegistryType = u"MessageRegistry."
-
+        self.biostype = u"HpBios."
+        self.hpeskmtype = u"HpESKM."
+        self.hpcommontype = u"HpCommon"
+        self.hpilossotype = u"HpiLOSSO."
+        self.snmpservice = u"SnmpService."
+        self.attributenametype = u"Name"
+        self.logservicetype = u"LogService."
+        self.hpsecureboot = u"HpSecureBoot."
+        self.hphttpscerttype = u"HpHttpsCert."
+        self.hpilodatetimetype = u"HpiLODateTime."
+        self.hpilofirmwareupdatetype = u"HpiLOFirmwareUpdate."
+        self.resourcedirectorytype = u"HpiLOResourceDirectory."
+        self.hpilofederationgrouptype = u"HpiLOFederationGroup."
+        self.attributeregtype = u"HpBiosAttributeRegistrySchema."
+        self.schemafilecollectiontype = u"#SchemaFileCollection."
+        self.managernetworkservicetype = u"ManagerNetworkService."
+        self.hpiloactivehealthsystemtype = u"HpiLOActiveHealthSystem."
+        self.messageregistrytype = u"MessageRegistry."
+        self.hpilolicensecollectiontype = None
+        self.hpilofederationgrouptypecoll = None
         self.typestring = u"Type"
         self.hrefstring = u"href"
         self.collectionstring = u"Items"
+        self.biossettingsstring = u"SettingsResult"
 
-        self.IsGen9 = True
-        self.IsGen10 = False
+        self.isgen9 = True
+        self.isgen10 = False
         self.flagforrest = True
-        super(definevalsNine, self).__init__()
+        super(DefinevalsNine, self).__init__()
 
     def redfishchange(self):
         """Function to update redfish variables"""
-        self.StartPath = u"/redfish/v1/"
+        self.startpath = u"/redfish/v1/"
         self.systempath = u"/redfish/v1/Systems/1/"
-        self.ManagerPath = u"/redfish/v1/Managers/1/"
-        self.BiosPath = u"/redfish/v1/systems/1/bios/"
-        self.AddLicensePath = u"/redfish/v1/Managers/1/LicenseService/"
+        self.managerpath = u"/redfish/v1/Managers/1/"
+        self.biospath = u"/redfish/v1/systems/1/bios/"
+        self.addlicensepath = u"/redfish/v1/Managers/1/LicenseService/"
 
         self.typestring = u"@odata.type"
         self.hrefstring = u"@odata.id"
         self.collectionstring = u"Members"
 
-        self.LogServiceType = u"#LogService."
-        self.HpiLOActiveHealthSystemType = u"#HpiLOActiveHealthSystem."
-        self.HpiLOLicenseCollectionType = u"HpiLOLicenseCollection."
-        self.HpiLOFederationGroupTypeColl = u"HpiLOFederationGroupCollection."
-        self.ManagerNetworkServiceType = u"ManagerNetworkProtocol."
+        self.logservicetype = u"#LogService."
+        self.hpiloactivehealthsystemtype = u"#HpiLOActiveHealthSystem."
+        self.hpilolicensecollectiontype = u"HpiLOLicenseCollection."
+        self.hpilofederationgrouptypecoll = u"HpiLOFederationGroupCollection."
+        self.managernetworkservicetype = u"ManagerNetworkProtocol."
 
         self.flagforrest = False
 

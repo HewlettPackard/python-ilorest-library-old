@@ -7,7 +7,7 @@ cpq_package -- classes for working with HPE SmartComponents
 """
 
 __all__ = ['rest', 'ris', 'hpilo']
-__version__ = "1.3.0"
+__version__ = "1.4.0"
 
 
 from ilorest.rest.v1 import rest_client

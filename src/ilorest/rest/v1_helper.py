@@ -789,9 +789,11 @@ class RestClientBase(object):
         while attempts < self.MAX_RETRY:
 
             if logging.getLogger().isEnabledFor(logging.DEBUG):
-                LOGGER.debug('REQ %s', (restreq))
+                LOGGER.debug('HTTP REQUEST: %s\n\tPATH: %s\n\tBODY: %s'% \
+                             (restreq.method, restreq.path, restreq.body))
 
             attempts = attempts + 1
+            LOGGER.info('Attempt %s of %s', attempts, path)
 
             try:
                 while True:
@@ -801,7 +803,12 @@ class RestClientBase(object):
                     self._conn.request(method.upper(), reqpath, body=body, \
                                                                 headers=headers)
                     self._conn_count += 1
+
+                    inittime = time.clock()
                     resp = self._conn.getresponse()
+                    endtime = time.clock()
+                    LOGGER.info('iLO Response Time to %s: %s secs.'% \
+                                (restreq.path, str(endtime-inittime)))
 
                     if resp.getheader('Connection') == 'close':
                         self.__destroy_connection()
@@ -829,7 +836,7 @@ class RestClientBase(object):
                 if isinstance(excp, DecompressResponseError):
                     raise
 
-                LOGGER.info('Retrying [%s]', excp)
+                LOGGER.info('Retrying %s [%s]'% (path, excp))
                 time.sleep(1)
 
                 self.__init_connection()
@@ -841,7 +848,18 @@ class RestClientBase(object):
         if attempts < self.MAX_RETRY:
 
             if logging.getLogger().isEnabledFor(logging.DEBUG):
-                LOGGER.debug('RESP %s', (restresp))
+                headerstr = ''
+                for header in restresp._http_response.msg.headers:
+                    headerstr += '\t' + header.rstrip() + '\n'
+                try:
+                    LOGGER.debug('HTTP RESPONSE for %s:\nCode: %s\nHeaders:\n%s'\
+                             '\nBody Response of %s: %s'%\
+                             (restresp.request.path,\
+                            str(restresp._http_response.status)+ ' ' + \
+                            restresp._http_response.reason, \
+                            headerstr, restresp.request.path, restresp.read))
+                except:
+                    LOGGER.debug('HTTP RESPONSE:\nCode:%s', (restresp))
 
             return restresp
         else:
@@ -875,8 +893,11 @@ class RestClientBase(object):
                                             self.login_url), headers=headers)
 
             if respvalidate.status == 401:
-                raise InvalidCredentialsError(\
-                                    self.root.Oem.Hp.Sessions.LoginFailureDelay)
+                try:
+                    delay = self.root.Oem.Hp.Sessions.LoginFailureDelay
+                except:
+                    delay = self.root.Oem.Hpe.Sessions.LoginFailureDelay
+                raise InvalidCredentialsError(delay)
         elif auth == AuthMethod.SESSION:
             data = dict()
             data['UserName'] = self.__username
@@ -892,8 +913,11 @@ class RestClientBase(object):
             self.__session_key = resp.session_key
             self.__session_location = resp.session_location
             if not self.__session_key and not resp.status == 200:
-                raise InvalidCredentialsError(\
-                                    self.root.Oem.Hp.Sessions.LoginFailureDelay)
+                try:
+                    delay = self.root.Oem.Hp.Sessions.LoginFailureDelay
+                except:
+                    delay = self.root.Oem.Hpe.Sessions.LoginFailureDelay
+                raise InvalidCredentialsError(delay)
             else:
                 self.set_username(None)
                 self.set_password(None)
@@ -1135,9 +1159,16 @@ class Blobstore2RestClient(RestClientBase):
         bs2 = BlobStore2()
         if not isinstance(str1, bytearray):
             str1 = str1.encode("ASCII")
+        if logging.getLogger().isEnabledFor(logging.DEBUG):
+            LOGGER.debug('Blobstore REQUEST: %s\n\tPATH: %s\n\tBODY: %s'% \
+                         (method, path, body))
 
+        inittime = time.clock()
         resp_txt = bs2.rest_immediate(str1)
+        endtime = time.clock()
 
+        LOGGER.info("iLO Response Time to %s: %s secs."% \
+                                                (path, str(endtime-inittime)))
         #Dummy response to support a bad host response
         if len(resp_txt) == 0:
             resp_txt = "HTTP/1.1 500 Not Found\r\nAllow: " \
@@ -1164,7 +1195,20 @@ class Blobstore2RestClient(RestClientBase):
                 rest_response.text = decompressedfile.read()
         except StandardError:
             pass
-
+        if logging.getLogger().isEnabledFor(logging.DEBUG):
+            headerstr = ''
+            for header in rest_response._http_response.msg.headers:
+                headerstr += '\t' + header.rstrip() + '\n'
+            try:
+                LOGGER.debug('Blobstore RESPONSE for %s:\nCode: %s\nHeaders:\n%s'\
+                         '\nBody of %s: %s'%\
+                         (rest_response.request.path,\
+                        str(rest_response._http_response.status)+ ' ' + \
+                        rest_response._http_response.reason, \
+                        headerstr, rest_response.request.path, rest_response.read))
+            except:
+                LOGGER.debug('Blobstore RESPONSE for %s:\nCode:%s'% \
+                             (rest_response.request.path, rest_response))
         return rest_response
 
     def _get_req_headers(self, headers=None, providerheader=None, \

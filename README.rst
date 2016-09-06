@@ -67,7 +67,7 @@ Import ilorest
 
 Create a Rest Object
 ~~~~~~~~~~~~~~~~~~~~~~~~~
- In RestfulApiExamples.py module, a rest object instance is created by calling the **rest_client** method with four parameters: base url, the server's iLO IP address, formatted as a string ("https://xx.xx.xx.xx"), iLO user name, iLO password and the default prefix.
+ In RestfulApiExamples.py module, a rest object instance is created by calling the **rest_client** method with four parameters: base url aka the server's iLO url, formatted as a string ("https://xx.xx.xx.xx", "https://box1.america.corp.net" both work!), iLO user name, iLO password and the default prefix.
  
 .. code-block:: python
 
@@ -76,7 +76,7 @@ Create a Rest Object
 
 Create a Redfish Object
 ~~~~~~~~~~~~~~~~~~~~~~~~~
- Just like Rest object, a Redfish object instance in RedfishAPiExamples.py is created by calling the **redfish_client** method with four parameters: base url, the server's iLO IP address, formatted as a string ("https://xx.xx.xx.xx"), iLO user name, iLO password and the default prefix.
+ Just like Rest object, a Redfish object instance in RedfishAPiExamples.py is created by calling the **redfish_client** method with four parameters: base url aka the server's iLO url, formatted as a string ("https://xx.xx.xx.xx", "https://box1.america.corp.net" both work!), iLO user name, iLO password and the default prefix.
 
 .. code-block:: python
 

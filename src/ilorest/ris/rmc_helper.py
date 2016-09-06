@@ -698,7 +698,7 @@ class RmcFileCacheManager(RmcCacheManager):
                     if u'url' not in login_data:
                         continue
 
-                    self._rmc.getGen(url=login_data.get('url', None))
+                    self._rmc.getgen(url=login_data.get('url', None))
                     rmc_client = RmcClient(\
                         username=login_data.get('username', 'Administrator'), \
                         password=login_data.get('password', None), \

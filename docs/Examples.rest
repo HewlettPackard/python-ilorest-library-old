@@ -75,5 +75,6 @@ The following examples can all be used as guidance for `managing iLO using iLO R
    ex45_get_license_key
    ex46_get_ahs_data
    ex47_clear_ahs_data
+   ex48_set_bios_password
    
    

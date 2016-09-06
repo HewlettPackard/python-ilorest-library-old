@@ -290,11 +290,11 @@ class RisMonolith_v1_0_0(Dictable):
                 LOGGER.warning("Discovering data from iLO...")
             self.name = self.name + u' at %s' % self._client.base_url
             self.types = OrderedDict()
-
-        for _ in range(5):
-            workhand = SuperDuperWorker(self.queue)
-            workhand.setDaemon(True)
-            workhand.start()
+        if not threading.active_count() >= 6:
+            for _ in range(5):
+                workhand = SuperDuperWorker(self.queue)
+                workhand.setDaemon(True)
+                workhand.start()
 
         selectivepath = path
         if not selectivepath:
@@ -342,14 +342,14 @@ class RisMonolith_v1_0_0(Dictable):
         resp = self._client.get(path)
 
         if resp.status != 200 and path.lower() == self._client.typepath.defs.\
-                                                                    BiosPath:
+                                                                    biospath:
             raise BiosUnregisteredError()
         elif resp.status != 200:
             path = path + '/'
             resp = self._client.get(path)
             if resp.status == 401:
                 raise SessionExpiredRis("Invalid session. Please logout and "\
-                                                                "log back in.")
+                                        "log back in or include credentials.")
             elif resp.status != 200:
                 return
 
@@ -714,6 +714,17 @@ class RisMonolith_v1_0_0(Dictable):
 
         return results
 
+    def killthreads(self):
+        """Function to kill threads on logout or exit"""
+        #TODO: revisit to make sure this is correct
+        threads = []
+        for thread in threading.enumerate():
+            if isinstance(thread, SuperDuperWorker):
+                self.queue.put(('KILL', 'KILL', 'KILL', 'KILL'))
+                threads.append(thread)
+        for thread in threads:
+            thread.join()
+
 class RisMonolith(RisMonolith_v1_0_0):
     """Latest implementation of RisMonolith"""
     def __init__(self, client):
@@ -741,6 +752,9 @@ class SuperDuperWorker(threading.Thread):
         """Thread creator"""
         while True:
             (resp, path, skipinit, thobj) = self.queue.get()
+            if resp == 'KILL' and path == 'KILL' and skipinit == 'KILL' and\
+                                                            thobj == 'KILL':
+                break
             thobj.branch_worker(resp, path, skipinit)
             self.queue.task_done()
 

@@ -7,13 +7,13 @@
    :maxdepth: 1
    
 
-If not created already,  create an instance of Rest or Redfish Object using the  **RestObject** or **RedfishObject** class respectively. The class constructor takes iLO hostname/ ip address, iLO login username and password as arguments. 
+First create an instance of Rest or Redfish Object using the  **RestObject** or **RedfishObject** class respectively. The class constructor takes iLO hostname/ ip address formatted as a string ("https://xx.xx.xx.xx"), iLO login username and password as arguments. The class also initializes a login session, gets systems resources and message registries.
 
 Rest Object creation:
 
 .. code-block:: python
 
- REST_OBJ = RestObject(iLO_host, login_account, login_password)
+ REST_OBJ = RestObject(iLO_https_host, login_account, login_password)
 
 ::
 
@@ -21,7 +21,7 @@ Redfish Object creation:
 
 .. code-block:: python
 
- REDFISH_OBJ = RedfishObject(iLO_host, login_account, login_password)
+ REDFISH_OBJ = RedfishObject(iLO_https_host, login_account, login_password)
 
 ::
 

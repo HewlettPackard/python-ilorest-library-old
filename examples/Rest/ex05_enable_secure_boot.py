@@ -27,17 +27,20 @@ def ex5_enable_secure_boot(restobj, secure_boot_enable, bios_password=None):
 
 if __name__ == "__main__":
     # When running on the server locally use the following commented values
-    # iLO_https_host = "blobstore://."
+    # iLO_https_url = "blobstore://."
     # iLO_account = "None"
     # iLO_password = "None"
 
-    # When running remotely connect using the iLO address, iLO account name, 
-    # and password to send https requests
-    iLO_https_host = "https://10.0.0.100"
+    # When running remotely connect using the iLO secured (https://) address, 
+    # iLO account name, and password to send https requests
+    # iLO_https_url acceptable examples:
+    # "https://10.0.0.100"
+    # "https://f250asha.americas.hpqcorp.net"
+    iLO_https_url = "https://10.0.0.100"
     iLO_account = "admin"
     iLO_password = "password"
     
     #Create a REST object
-    REST_OBJ = RestObject(iLO_https_host, iLO_account, iLO_password)
+    REST_OBJ = RestObject(iLO_https_url, iLO_account, iLO_password)
     ex5_enable_secure_boot(REST_OBJ, False)
    

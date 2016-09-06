@@ -140,8 +140,8 @@ class ValidationManager(object):
                                             "doesn't exist" % bios_local_path)
         else:
             if monolith.is_redfish:
-                local_path = "/redfish/v1/Schemas/"
-                bios_local_path = "/redfish/v1/Registries/"
+                local_path = "/redfish/v1/Schemas/?$expand=./"
+                bios_local_path = "/redfish/v1/Registries/?$expand=./"
             else:
                 local_path = "/rest/v1/Schemas"
                 bios_local_path = "/rest/v1/Registries"
@@ -171,8 +171,8 @@ class ValidationManager(object):
 
         #strings for v1/redfish
         if monolith.is_redfish:
-            self._schemaid = ["/redfish/v1/schemas", "Members"]
-            self._regid = ["/redfish/v1/registries", "Members"]
+            self._schemaid = ["/redfish/v1/schemas/?$expand=./", "Members"]
+            self._regid = ["/redfish/v1/registries/?$expand=./", "Members"]
         else:
             self._schemaid = ["/rest/v1/schemas", "Items"]
             self._regid = ["/rest/v1/registries", "Items"]
@@ -338,7 +338,7 @@ class ValidationManager(object):
         classesdataholder = []
 
         for itemtype in monolith.types:
-            if itemtype.startswith(self.defines.defs.SchemaFileCollectionType)\
+            if itemtype.startswith(self.defines.defs.schemafilecollectiontype)\
                                     or itemtype.startswith("Collection.") and \
                                     u'Instances' in monolith.types[itemtype]:
                 for instance in monolith.types[itemtype][u'Instances']:
@@ -370,7 +370,7 @@ class ValidationManager(object):
         try:
             if monolith._typestring in classesdataholder and ('Collection.' in \
                                     classesdataholder[monolith._typestring] or \
-                                    (self.defines.defs.SchemaFileCollectionType\
+                                    (self.defines.defs.schemafilecollectiontype\
                                     in classesdataholder[monolith._typestring] \
                                     and monolith.is_redfish)):
                 newclass = Classes.parse(classesdataholder)
@@ -664,14 +664,24 @@ class Classes(RisObject):
                     result = regentry
                     break
         elif hasattr(self, 'Members') and isinstance(self.Members, list):
-            schname = schname.split('.')[-1]
+            splitname = schname.split('.')[-1]
             for entry in self.Members:
-                schlink = entry[u'@odata.id'].split('/')
-                schlink = schlink[len(schlink)-2]
+                if 'Schema' in entry:
+                    if entry and u'Schema' in entry and entry[u'Schema'].lower()\
+                                            == schname.lower():
+                        regentry = RepoRegistryEntry.parse(entry)
+                        regentry.set_root(self._root)
+                        result = regentry
+                        break
+                else:
+                    schlink = entry[u'@odata.id'].split('/')
+                    schlink = schlink[len(schlink)-2]
+                    #schlink = schlink.replace('%23', '')
+                    #schlink = schlink.split('.')[0]
 
-                if schname.lower() == schlink.lower():
-                    result = entry
-                    break
+                    if splitname.lower() == schlink.lower():
+                        result = entry
+                        break
 
         return result
 
@@ -693,13 +703,21 @@ class Classes(RisObject):
                     result = regentry
                     break
         elif hasattr(self, 'Members') and isinstance(self.Members, list):
-            regname = regname.split('.')[-1]
+            splitname = regname.split('.')[-1]
             for entry in self.Members:
-                reglink = entry[u'@odata.id'].split('/')
-                reglink = reglink[len(reglink)-2]
-                if regname.lower() == reglink.lower():
-                    result = entry
-                    break
+                if 'Schema' in entry:
+                    if entry and u'Schema' in entry and entry[u'Schema'].lower()\
+                                            == regname.lower():
+                        regentry = RepoRegistryEntry.parse(entry)
+                        regentry.set_root(self._root)
+                        result = regentry
+                        break
+                else:
+                    reglink = entry[u'@odata.id'].split('/')
+                    reglink = reglink[len(reglink)-2]
+                    if splitname.lower() == reglink.lower():
+                        result = entry
+                        break
 
         return result
 
@@ -1153,7 +1171,7 @@ class RepoRegistryEntry(RepoBaseEntry):
         :returns: returns the registry model
 
         """
-        attregType = Typepathforval.typepath.defs.AttributeRegType
+        attregType = Typepathforval.typepath.defs.attributeregtype
         if not errlist:
             errlist = list()
 
@@ -1439,7 +1457,7 @@ class HpPropertiesRegistry(RisObject):
 
 
         for item in self.Attributes:
-            name = Typepathforval.typepath.defs.AttributeNameType
+            name = Typepathforval.typepath.defs.attributenametype
             if name not in item.keys():
                 return None
             if item[name] == attrname:
