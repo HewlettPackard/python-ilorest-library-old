@@ -14,7 +14,7 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex30_get_powermetrics_average(redfishobj):
     sys.stdout.write("\nEXAMPLE 30: Report PowerMetrics Average Watts\n")

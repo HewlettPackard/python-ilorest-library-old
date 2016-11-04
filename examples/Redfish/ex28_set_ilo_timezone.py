@@ -14,13 +14,17 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex28_set_ilo_timezone(redfishobj, olson_timezone):
     sys.stdout.write("\nEXAMPLE 28: Set iLO's Timezone\n")
     sys.stdout.write("\tNOTE: This only works if iLO is NOT configured to " \
                                     "take time settings from DHCP v4 or v6\n")
-    instances = redfishobj.search_for_type("HpiLODateTime.")
+    if redfishobj.typepath.defs.isgen9:
+        hpilodatetimetype = "HpiLODateTime."
+    else:
+        hpilodatetimetype = "#HpeiLODateTime."
+    instances = redfishobj.search_for_type(hpilodatetimetype)
 
     for instance in instances:
         response = redfishobj.redfish_get(instance["@odata.id"])

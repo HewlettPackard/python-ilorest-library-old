@@ -14,7 +14,7 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex8_change_temporary_boot_order(redfishobj, boottarget, bios_password=None):
     sys.stdout.write("\nEXAMPLE 8: Change temporary boot order (one time boot" \

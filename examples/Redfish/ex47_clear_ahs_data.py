@@ -14,19 +14,29 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex47_clear_ahs_data(redfishobj):
     sys.stdout.write("\nEXAMPLE 47: Clear AHS Data\n")
     instances = redfishobj.search_for_type("Manager.")
 
-    for instance in instances:
-        tmp = redfishobj.redfish_get(instance["@odata.id"])
-        body = {"Action": "ClearLog"}
-
-        response = redfishobj.redfish_post(tmp.dict["Oem"]["Hp"]["Links"]\
-                                    ["ActiveHealthSystem"]["@odata.id"], body)
-        redfishobj.error_handler(response)
+    if redfishobj.typepath.defs.isgen9:
+        for instance in instances:
+            tmp = redfishobj.redfish_get(instance["@odata.id"])
+            body = {"Action": "ClearLog"}
+    
+            response = redfishobj.redfish_post(tmp.dict["Oem"]["Hp"]["Links"]\
+                                        ["ActiveHealthSystem"]["@odata.id"], body)
+            redfishobj.error_handler(response)
+    else:
+        for instance in instances:
+            resp = redfishobj.redfish_get(instance["@odata.id"])
+            response = redfishobj.redfish_get(resp.dict["Oem"]["Hpe"]["Links"]\
+                                        ["ActiveHealthSystem"]["@odata.id"]) 
+            body = {"Action": "HpeiLOActiveHealthSystem.ClearLog"}
+            path = response.dict["Actions"]["#HpeiLOActiveHealthSystem.ClearLog"]["target"]
+            clrresponse = redfishobj.redfish_post(path, body)
+            redfishobj.error_handler(clrresponse)
 
 if __name__ == "__main__":
     # When running on the server locally use the following commented values

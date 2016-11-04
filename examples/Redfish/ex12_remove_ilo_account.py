@@ -14,7 +14,7 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex12_remove_ilo_account(redfishobj, ilo_loginname_to_remove):
     sys.stdout.write("\nEXAMPLE 12: Remove an iLO account\n")
@@ -60,4 +60,3 @@ if __name__ == "__main__":
         raise excp
 
     ex12_remove_ilo_account(REDFISH_OBJ, "newname")
-  

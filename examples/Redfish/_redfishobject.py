@@ -71,12 +71,13 @@ Clients should always be prepared for:
 import sys
 import logging
 import json
-from ilorest import AuthMethod, ilorest_logger, redfish_client
+import redfish.ris.tpdefs
+from redfish import AuthMethod, redfish_logger, redfish_client
 
 #Config logger used by HPE Restful library
 LOGGERFILE = "RedfishApiExamples.log"
 LOGGERFORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-LOGGER = ilorest_logger(LOGGERFILE, LOGGERFORMAT, logging.INFO)
+LOGGER = redfish_logger(LOGGERFILE, LOGGERFORMAT, logging.INFO)
 LOGGER.info("HPE Redfish API examples")
 
 class RedfishObject(object):
@@ -87,6 +88,9 @@ class RedfishObject(object):
                       default_prefix="/redfish/v1")
         except:
             raise
+        self.typepath = redfish.ris.tpdefs.Typesandpathdefines()
+        self.typepath.getgen(url=host, logger=LOGGER)
+        self.typepath.defs.redfishchange()
         self.redfish_client.login(auth=AuthMethod.SESSION)
         self.SYSTEMS_RESOURCES = self.ex1_get_resource_directory()
         self.MESSAGE_REGISTRIES = self.ex2_get_base_registry()

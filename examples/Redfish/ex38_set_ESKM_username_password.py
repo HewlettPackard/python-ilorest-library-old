@@ -14,7 +14,7 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex38_set_ESKM_username_password(redfishobj, username, password, accountgroup):
     sys.stdout.write("\nEXAMPLE 38: Set ESKM username, password\n")

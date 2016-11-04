@@ -14,7 +14,7 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex36_set_bios_url_boot_file(redfishobj, path='', bios_password=None):
     sys.stdout.write("\nEXAMPLE 36: Set BIOS url boot file\n")

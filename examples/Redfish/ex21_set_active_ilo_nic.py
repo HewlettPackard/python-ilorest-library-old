@@ -14,7 +14,7 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex21_set_active_ilo_nic(redfishobj, shared_nic):
     sys.stdout.write("\nEXAMPLE 21: Set the active iLO NIC\n")
@@ -29,8 +29,12 @@ def ex21_set_active_ilo_nic(redfishobj, shared_nic):
         for entry in response.dict["Members"]:
             nic = redfishobj.redfish_get(entry["@odata.id"])
 
+            if redfishobj.typepath.defs.isgen9:
+                oemhpdict = nic.dict["Oem"]["Hp"]
+            else:
+                oemhpdict = nic.dict["Oem"]["Hpe"]
             try:
-                if (nic.dict["Oem"]["Hp"]["SupportsFlexibleLOM"] == True and \
+                if (oemhpdict["SupportsFlexibleLOM"] == True and \
                                                             shared_nic == True):
                     selected_nic_uri = nic.dict["links"]["self"]["href"]
                     break
@@ -38,7 +42,7 @@ def ex21_set_active_ilo_nic(redfishobj, shared_nic):
                 pass
     
             try:
-                if (nic.dict["Oem"]["Hp"]["SupportsLOM"] == True and \
+                if (oemhpdict["SupportsLOM"] == True and \
                                                             shared_nic == True):
                     selected_nic_uri = nic.dict["links"]["self"]["href"]
                     break
@@ -53,7 +57,10 @@ def ex21_set_active_ilo_nic(redfishobj, shared_nic):
                 break
     
         if selected_nic_uri:
-            body = {"Oem": {"Hp": {"NICEnabled": True}}}
+            if redfishobj.typepath.defs.isgen9:
+                body = {"Oem": {"Hp": {"NICEnabled": True}}}
+            else:
+                body = {"Oem": {"Hpe": {"NICEnabled": True}}}
             response = redfishobj.redfish_patch(selected_nic_uri, body)
             redfishobj.error_handler(response)
 

@@ -15,7 +15,7 @@
 import sys
 import json
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex42_get_ESKM(redfishobj):
     sys.stdout.write("\nEXAMPLE 42: Get ESKM configuration\n")

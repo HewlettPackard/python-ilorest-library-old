@@ -1,4 +1,4 @@
- # Copyright 2016 Hewlett Packard Enterprise Development LP
+# Copyright 2016 Hewlett Packard Enterprise Development, LP.
  #
  # Licensed under the Apache License, Version 2.0 (the "License"); you may
  # not use this file except in compliance with the License. You may obtain
@@ -14,39 +14,40 @@
 
 import sys
 from _redfishobject import RedfishObject
-from redfish.rest.v1 import ServerDownOrUnreachableError
+from ilorest.rest.v1_helper import ServerDownOrUnreachableError
 
-def ex31_set_license_key(redfishobj, iLO_Key):
-    sys.stdout.write("\nEXAMPLE 31: Set iLO License Key\n")
+def ex52_get_ilo_ip(redfishobj):
+    sys.stdout.write("\nEXAMPLE 52: Get iLO IP locally\n")
     instances = redfishobj.search_for_type("Manager.")
 
     for instance in instances:
-        rsp = redfishobj.redfish_get(instance["@odata.id"])
-
-        body = dict()
-        body["LicenseKey"] = iLO_Key
-        if redfishobj.typepath.defs.isgen9:
-            oemhpdict = rsp.dict["Oem"]["Hp"]
-        else:
-            oemhpdict = rsp.dict["Oem"]["Hpe"]
-        response = redfishobj.redfish_post(oemhpdict["Links"]\
-                                       ["LicenseService"]["@odata.id"], body)
+        response = redfishobj.redfish_get(instance["@odata.id"])
+        ethernet_rsp =  redfishobj.redfish_get(response.dict\
+                                    ["EthernetInterfaces"]["@odata.id"])
+        
+        for item in ethernet_rsp.dict["Members"]:
+            item_rsp = redfishobj.redfish_get(item["@odata.id"])
+            if not item_rsp.dict["IPv4Addresses"][0]["Address"] == "0.0.0.0":
+                sys.stdout.write("\t" + item_rsp.dict["IPv4Addresses"][0]\
+                                 ["Address"] + "\n")
         redfishobj.error_handler(response)
-
+        
 if __name__ == "__main__":
     # When running on the server locally use the following commented values
-    # iLO_https_url = "blobstore://."
-    # iLO_account = "None"
-    # iLO_password = "None"
+    # While this example can be run remotely, it is used locally to locate the
+    # iLO IP address
+    iLO_https_url = "blobstore://."
+    iLO_account = "None"
+    iLO_password = "None"
 
     # When running remotely connect using the iLO secured (https://) address, 
     # iLO account name, and password to send https requests
     # iLO_https_url acceptable examples:
     # "https://10.0.0.100"
     # "https://f250asha.americas.hpqcorp.net"
-    iLO_https_url = "https://10.0.0.100"
-    iLO_account = "admin"
-    iLO_password = "password"
+    # iLO_https_url = "https://10.0.0.100"
+    # iLO_account = "admin"
+    # iLO_password = "password"
 
     # Create a REDFISH object
     try:
@@ -57,6 +58,5 @@ if __name__ == "__main__":
         sys.exit()
     except Exception, excp:
         raise excp
+    ex52_get_ilo_ip(REDFISH_OBJ)
 
-    ex31_set_license_key(REDFISH_OBJ, "test_iLO_Key")
-  

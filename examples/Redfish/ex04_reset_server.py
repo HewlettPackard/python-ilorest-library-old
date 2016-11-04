@@ -14,19 +14,34 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex4_reset_server(redfishobj, bios_password=None):
     sys.stdout.write("\nEXAMPLE 4: Reset a server\n")
     instances = redfishobj.search_for_type("ComputerSystem.")
 
-    for instance in instances:
-        body = dict()
-        body["Action"] = "Reset"
-        body["ResetType"] = "ForceRestart"
+    if redfishobj.typepath.defs.isgen9:
+        for instance in instances:
+            body = dict()
+            body["Action"] = "Reset"
+            body["ResetType"] = "ForceRestart"
 
-        response = redfishobj.redfish_post(instance["@odata.id"], body)
-        redfishobj.error_handler(response)
+            response = redfishobj.redfish_post(instance["@odata.id"], body)
+            redfishobj.error_handler(response)
+    else:
+        for instance in instances:
+            resp = redfishobj.redfish_get(instance['@odata.id'])
+            if resp.status==200:
+                body = dict()
+                body["Action"] = "ComputerSystem.Reset"
+                body["ResetType"] = "ForceRestart"
+                path = resp.dict["Actions"]["#ComputerSystem.Reset"]["target"]
+            else:
+                sys.stderr.write("ERROR: Unable to find the path for reboot.")
+                raise
+
+            response = redfishobj.redfish_post(path, body)
+            redfishobj.error_handler(response)
 
 if __name__ == "__main__":
     # When running on the server locally use the following commented values

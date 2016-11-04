@@ -14,7 +14,7 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex16_computer_details(redfishobj):
     sys.stdout.write("\nEXAMPLE 16: Dump host computer details\n")
@@ -36,9 +36,13 @@ def ex16_computer_details(redfishobj):
                                         "available on system resource\n")
         sys.stdout.write("\tUUID:  " + str(response.dict["UUID"]) + "\n")
 
-        if "VirtualUUID" in response.dict["Oem"]["Hp"]:
+        if redfishobj.typepath.defs.isgen9:
+            OemHpdict = response.dict["Oem"]["Hp"]
+        else:
+            OemHpdict = response.dict["Oem"]["Hpe"]
+        if "VirtualUUID" in OemHpdict:
             sys.stdout.write("\tVirtualUUID:  " + \
-                     str(response.dict["Oem"]["Hp"]["VirtualUUID"]) + "\n")
+                     str(OemHpdict["VirtualUUID"]) + "\n")
         else:
             sys.stderr.write("\tVirtualUUID not available system " \
                                                             "resource\n")

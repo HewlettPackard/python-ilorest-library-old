@@ -14,7 +14,7 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex6_bios_revert_default(redfishobj):
     sys.stdout.write("\nEXAMPLE 6: Revert BIOS settings to default\n")

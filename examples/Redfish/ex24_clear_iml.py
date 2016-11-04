@@ -14,17 +14,26 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex24_clear_iml(redfishobj):
     sys.stdout.write("\nEXAMPLE 24: Clear Integrated Management Log\n")
     instances = redfishobj.search_for_type("LogService.")
 
-    for instance in instances:
-        if instance["@odata.id"].endswith("IML/"):
-            body = {"Action": "ClearLog"}
-            response = redfishobj.redfish_post(instance["@odata.id"], body)
-            redfishobj.error_handler(response)
+    if redfishobj.typepath.defs.isgen9:
+        for instance in instances:
+            if instance["@odata.id"].endswith("IML/"):
+                body = {"Action": "ClearLog"}
+                response = redfishobj.redfish_post(instance["@odata.id"], body)
+                redfishobj.error_handler(response)
+    else:
+        for instance in instances:
+            if instance["@odata.id"].endswith("IML/"):
+                resp = redfishobj.redfish_get(instance['@odata.id'])
+                body = {"Action": "LogService.ClearLog"}
+                path = resp.dict["Actions"]["#LogService.ClearLog"]["target"]
+                response = redfishobj.redfish_post(path, body)
+                redfishobj.error_handler(response)
 
 if __name__ == "__main__":
     # When running on the server locally use the following commented values

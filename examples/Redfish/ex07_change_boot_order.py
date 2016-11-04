@@ -14,7 +14,7 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex7_change_boot_order(redfishobj, bios_password=None):
     sys.stdout.write("\nEXAMPLE 7: Change Boot Order (UEFI)\n")

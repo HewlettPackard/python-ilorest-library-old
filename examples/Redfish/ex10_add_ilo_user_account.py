@@ -14,7 +14,7 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex10_add_ilo_user_account(redfishobj, new_ilo_loginname, new_ilo_username, \
                                  new_ilo_password, irc=None, cfg=None, \
@@ -27,14 +27,18 @@ def ex10_add_ilo_user_account(redfishobj, new_ilo_loginname, new_ilo_username, \
 
         body = {"UserName": new_ilo_loginname, "Password": \
                                                 new_ilo_password, "Oem": {}}
-        body["Oem"]["Hp"] = {}
-        body["Oem"]["Hp"]["LoginName"] = new_ilo_username
-        body["Oem"]["Hp"]["Privileges"] = {}
-        body["Oem"]["Hp"]["Privileges"]["RemoteConsolePriv"] = irc
-        body["Oem"]["Hp"]["Privileges"]["iLOConfigPriv"] = cfg
-        body["Oem"]["Hp"]["Privileges"]["VirtualMediaPriv"] = virtual_media
-        body["Oem"]["Hp"]["Privileges"]["UserConfigPriv"] = usercfg
-        body["Oem"]["Hp"]["Privileges"]["VirtualPowerAndResetPriv"] = vpr
+        OemHpDict = {}
+        OemHpDict["LoginName"] = new_ilo_username
+        OemHpDict["Privileges"] = {}
+        OemHpDict["Privileges"]["RemoteConsolePriv"] = irc
+        OemHpDict["Privileges"]["iLOConfigPriv"] = cfg
+        OemHpDict["Privileges"]["VirtualMediaPriv"] = virtual_media
+        OemHpDict["Privileges"]["UserConfigPriv"] = usercfg
+        OemHpDict["Privileges"]["VirtualPowerAndResetPriv"] = vpr
+        if redfishobj.typepath.defs.isgen9:
+            body["Oem"]["Hp"] = OemHpDict
+        else:
+            body["Oem"]["Hpe"] = OemHpDict
 
         newrsp = redfishobj.redfish_post(rsp.dict["Accounts"]["@odata.id"], \
                                                                         body)

@@ -14,14 +14,17 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex26_configure_snmp(redfishobj, snmp_mode, snmp_alerts):
     sys.stdout.write("\nEXAMPLE 26: Configure iLO SNMP Settings\n")
     instances = redfishobj.search_for_type("SnmpService.")
 
     for instance in instances:
-        body = {"Mode": snmp_mode, "AlertsEnabled": snmp_alerts}
+        if redfishobj.typepath.defs.isgen9:
+            body = {"Mode": snmp_mode, "AlertsEnabled": snmp_alerts}
+        else:
+            body = {"AlertsEnabled": snmp_alerts}
         response = redfishobj.redfish_patch(instance["@odata.id"], body)
         redfishobj.error_handler(response)
 

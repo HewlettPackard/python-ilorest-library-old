@@ -14,7 +14,7 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex5_enable_secure_boot(redfishobj, secure_boot_enable, bios_password=None):
     sys.stdout.write("\nEXAMPLE 5: Enable/Disable UEFI Secure Boot\n")

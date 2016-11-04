@@ -14,7 +14,7 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex9_find_ilo_mac_address(redfishobj):
     sys.stdout.write("\nEXAMPLE 9: Find iLO's MAC Addresses\n")

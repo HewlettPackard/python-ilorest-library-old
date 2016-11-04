@@ -14,7 +14,7 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex39_test_ESKM_connection(redfishobj):
     sys.stdout.write("\nEXAMPLE 39: Test ESKM connection\n")
@@ -28,7 +28,10 @@ def ex39_test_ESKM_connection(redfishobj):
                 post_target = tmp.dict["Actions"][action]["target"]
 
         body = dict()
-        body["Action"] = "TestESKMConnections"
+        if redfishobj.typepath.defs.isgen9:
+            body["Action"] = "TestESKMConnections"
+        else:
+            body["Action"] = "HpeESKM.TestESKMConnections"
 
         response = redfishobj.redfish_post(post_target, body)
         redfishobj.error_handler(response)

@@ -14,19 +14,24 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex27_get_schema(redfishobj, schema_prefix):
     sys.stdout.write("\nEXAMPLE 27:  Find and return schema " + \
                                                         schema_prefix + "\n")
     response = redfishobj.redfish_get("/redfish/v1/Schemas")
+    if not redfishobj.typepath.defs.isgen9:
+        schema_prefix = '#'+schema_prefix
 
     for entry in response.dict["Members"]:
         schema = redfishobj.redfish_get(entry["@odata.id"])
 
         if schema.dict["Schema"].startswith(schema_prefix):
             for location in schema.dict["Location"]:
-                extref_uri = location["Uri"]["extref"]
+                if redfishobj.typepath.defs.isgen9:
+                    extref_uri = location["Uri"]["extref"]
+                else:
+                    extref_uri = location["Uri"]
                 response = redfishobj.redfish_get(extref_uri)
                 if response.status == 200:
                     sys.stdout.write("\tFound " + schema_prefix + " at "\

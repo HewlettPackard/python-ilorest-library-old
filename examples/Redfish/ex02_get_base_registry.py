@@ -14,7 +14,7 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex2_get_base_registry(redfishobj):
     sys.stdout.write("\nEXAMPLE 2: Find and return registry " + "\n")

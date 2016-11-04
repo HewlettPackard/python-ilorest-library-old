@@ -15,7 +15,7 @@
 import sys
 import json
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex20_get_ilo_nic(redfishobj, get_active):
     sys.stdout.write("\nEXAMPLE 20: Get iLO's NIC configuration\n")

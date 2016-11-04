@@ -1,4 +1,4 @@
-# Copyright 2016 Hewlett Packard Enterprise Development LP
+# Copyright 2016 Hewlett Packard Enterprise Development, LP.
  #
  # Licensed under the Apache License, Version 2.0 (the "License"); you may
  # not use this file except in compliance with the License. You may obtain
@@ -15,30 +15,22 @@
 import sys
 from _restobject import RestObject
 
-def ex22_dump_iml(restobj):
-    sys.stdout.write("\nEXAMPLE 22: Dump Integrated Management Log\n")
-    instances = restobj.search_for_type("LogService.")
+def ex49_generate_csr(restobj, csr_properties):
+    sys.stdout.write("\nEXAMPLE 49: Generate CSR\n")
+    instances = restobj.search_for_type("HpHttpsCert.")
 
     for instance in instances:
-        if instance["href"].endswith("IML"):
-            tmp = restobj.rest_get(instance["href"])
-
-            for entry in tmp.dict["links"]["Entries"]:
-                response = restobj.rest_get(entry["href"])
-                print_log_entries(response.dict["Items"])
-
-                while 'NextPage' in response.dict["links"]:
-                    response = restobj.rest_get(entry["href"] + '?page=' + \
-                                str(response.dict["links"]['NextPage']['page']))
-                    print_log_entries(response.dict["Items"])
-            restobj.error_handler(response)
-
-def print_log_entries(log_entries):
-    for log_entry in log_entries:
-        sys.stdout.write(log_entry["Severity"] + ": Class " + \
-             str(log_entry["Oem"]["Hp"]["Class"]) + \
-             " / Code " + str(log_entry["Oem"]["Hp"]["Code"]) + \
-             ":\t" + log_entry["Message"] + "\n")
+        body = dict()
+        body["Action"] = "GenerateCSR"
+        body["City"] = csr_properties["City"]
+        body["CommonName"] = csr_properties["CommonName"]
+        body["Country"] = csr_properties["Country"]
+        body["OrgName"] = csr_properties["OrgName"]
+        body["OrgUnit"] = csr_properties["OrgUnit"]
+        body["State"] = csr_properties["State"]
+        response = restobj.rest_post(instance["href"], body)
+        restobj.error_handler(response)
+        sys.stdout.write("\tGenerating CSR, this may take a few minutes\n")
 
 if __name__ == "__main__":
     # When running on the server locally use the following commented values
@@ -54,7 +46,13 @@ if __name__ == "__main__":
     iLO_https_url = "https://10.0.0.100"
     iLO_account = "admin"
     iLO_password = "password"
-    
+
     #Create a REST object
     REST_OBJ = RestObject(iLO_https_url, iLO_account, iLO_password)
-    ex22_dump_iml(REST_OBJ)
+    ex49_generate_csr(REST_OBJ, {"City" : "City",\
+                                    "CommonName": "Common Name",\
+                                    "Country": "US",\
+                                    "OrgName": "Organization",\
+                                    "OrgUnit": "Unit",\
+                                    "State": "State"})
+

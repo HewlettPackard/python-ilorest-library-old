@@ -15,7 +15,7 @@
 import sys
 import urlparse
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex14_sessions(redfishobj, login_account, login_password):
     sys.stdout.write("\nEXAMPLE 14: Create/Use/Delete a user session\n")

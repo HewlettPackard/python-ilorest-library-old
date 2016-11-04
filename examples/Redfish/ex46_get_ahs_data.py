@@ -14,7 +14,7 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex46_get_ahs_data(redfishobj):
     sys.stdout.write("\nEXAMPLE 46: Get AHS Data\n")
@@ -22,7 +22,11 @@ def ex46_get_ahs_data(redfishobj):
 
     for instance in instances:
         tmp = redfishobj.redfish_get(instance["@odata.id"])
-        response = redfishobj.redfish_get(tmp.dict["Oem"]["Hp"]["Links"]\
+        if redfishobj.typepath.defs.isgen9:
+            response = redfishobj.redfish_get(tmp.dict["Oem"]["Hp"]["Links"]\
+                                          ["ActiveHealthSystem"]["@odata.id"])
+        else:
+            response = redfishobj.redfish_get(tmp.dict["Oem"]["Hpe"]["Links"]\
                                           ["ActiveHealthSystem"]["@odata.id"])
 
         sys.stdout.write("Fetching AHS Data, this may take minutes to hours\n")

@@ -14,12 +14,15 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex43_get_EncryptionSettings(redfishobj):
 
     sys.stdout.write("\nEXAMPLE 43: Dump EncryptionSettings\n")
-    instances = redfishobj.search_for_type("HpSmartStorageArrayController.")
+    if redfishobj.typepath.defs.isgen9:
+        instances = redfishobj.search_for_type("HpSmartStorageArrayController.")
+    else:
+        instances = redfishobj.search_for_type("#HpeSmartStorageArrayController")
 
     types = ["Name","Model","SerialNumber","EncryptionBootPasswordSet",\
              "EncryptionCryptoOfficerPasswordSet",\

@@ -1,9 +1,3 @@
-import sys
-import json
-import logging
-from ilorest import AuthMethod, rest_client, ilorest_logger
-
-
 """
 Provides examples of using the HP RESTful API on iLO for common use cases.  This is for tutorial/example purposes only.
 ---------------------------------------------------------------------------------------------------------------------
@@ -74,10 +68,15 @@ Clients should always be prepared for:
 * A client should be tolerant of any set of HTTP headers the service returns
 """
 
+import sys
+import json
+import logging
+from redfish import AuthMethod, rest_client, redfish_logger
+
 #Config logger used by HPE Restful library
 LOGGERFILE = "RestfulApiExamples.log"
 LOGGERFORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-LOGGER = ilorest_logger(LOGGERFILE, LOGGERFORMAT, logging.INFO)
+LOGGER = redfish_logger(LOGGERFILE, LOGGERFORMAT, logging.INFO)
 LOGGER.info("HPE Restful API examples")
 
 

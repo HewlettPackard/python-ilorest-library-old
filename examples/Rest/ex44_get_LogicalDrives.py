@@ -28,7 +28,7 @@ def ex44_get_LogicalDrives(restobj):
         else:
             sys.stderr.write("\tArrayControllers is not " \
                         "available on HpSmartStorageArrayController resource\n")
-    restobj.error_handler(response)
+        restobj.error_handler(response)
 
 if __name__ == "__main__":
     # When running on the server locally use the following commented values

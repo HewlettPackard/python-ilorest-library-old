@@ -14,11 +14,14 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex45_get_license_key(redfishobj):
     sys.stdout.write("\nEXAMPLE 45: Get iLO License Key\n")
-    instances = redfishobj.search_for_type("HpiLOLicense.")
+    if redfishobj.typepath.defs.isgen9:
+        instances = redfishobj.search_for_type("HpiLOLicense.")
+    else:
+        instances = redfishobj.search_for_type("HpeiLOLicense.")
     license_result = dict()
     licenseproperties = ["License", "LicenseKey", "LicenseType"]
     

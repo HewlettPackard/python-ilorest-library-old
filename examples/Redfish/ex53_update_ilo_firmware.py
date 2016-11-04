@@ -14,23 +14,21 @@
 
 import sys
 from _redfishobject import RedfishObject
-from redfish.rest.v1 import ServerDownOrUnreachableError
+from ilorest.rest.v1_helper import ServerDownOrUnreachableError
 
-def ex31_set_license_key(redfishobj, iLO_Key):
-    sys.stdout.write("\nEXAMPLE 31: Set iLO License Key\n")
+def ex53_update_ilo_firmware(redfishobj, fw_url=None, tpm_flag=None):
+    sys.stdout.write("\nEXAMPLE 53: Update iLO Firmware\n")
     instances = redfishobj.search_for_type("Manager.")
 
     for instance in instances:
-        rsp = redfishobj.redfish_get(instance["@odata.id"])
-
+        response = redfishobj.redfish_get(instance["@odata.id"])
         body = dict()
-        body["LicenseKey"] = iLO_Key
-        if redfishobj.typepath.defs.isgen9:
-            oemhpdict = rsp.dict["Oem"]["Hp"]
-        else:
-            oemhpdict = rsp.dict["Oem"]["Hpe"]
-        response = redfishobj.redfish_post(oemhpdict["Links"]\
-                                       ["LicenseService"]["@odata.id"], body)
+        body["Action"] = "InstallFromURI"
+        body["FirmwareURI"] = {"FirmwareURI": fw_url}
+        body["TPMOverrideFlag"] = {"TPMOverrideFlag": tpm_flag}
+        response = redfishobj.redfish_post(response.dict["Oem"]\
+                                         ["Hp"]["Links"]["UpdateService"]\
+                                         ["@odata.id"], body)
         redfishobj.error_handler(response)
 
 if __name__ == "__main__":
@@ -58,5 +56,4 @@ if __name__ == "__main__":
     except Exception, excp:
         raise excp
 
-    ex31_set_license_key(REDFISH_OBJ, "test_iLO_Key")
-  
+    ex53_update_ilo_firmware(REDFISH_OBJ, "http://test.com/ilo4_244.bin", False)

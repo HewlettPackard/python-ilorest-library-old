@@ -14,7 +14,7 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex23_dump_ilo_event_log(redfishobj):
     sys.stdout.write("\nEXAMPLE 23: Dump iLO Event Log\n")

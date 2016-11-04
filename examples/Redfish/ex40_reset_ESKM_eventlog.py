@@ -14,7 +14,7 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex40_reset_ESKM_eventlog(redfishobj):
     sys.stdout.write("\nEXAMPLE 40: Reset ESKM event logs\n")
@@ -27,7 +27,10 @@ def ex40_reset_ESKM_eventlog(redfishobj):
             if "ClearESKMLog" in action:
                 post_target = tmp.dict["Actions"][action]["target"]
         body = dict()
-        body["Action"] = "ClearESKMLog"
+        if redfishobj.typepath.defs.isgen9:
+            body["Action"] = "ClearESKMLog"
+        else:
+            body["Action"] = "HpeESKM.ClearESKMLog"
 
         response = redfishobj.redfish_post(post_target, body)
         redfishobj.error_handler(response)

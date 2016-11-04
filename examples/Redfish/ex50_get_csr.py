@@ -14,24 +14,26 @@
 
 import sys
 from _redfishobject import RedfishObject
-from redfish.rest.v1 import ServerDownOrUnreachableError
+from ilorest.rest.v1_helper import ServerDownOrUnreachableError
 
-def ex31_set_license_key(redfishobj, iLO_Key):
-    sys.stdout.write("\nEXAMPLE 31: Set iLO License Key\n")
-    instances = redfishobj.search_for_type("Manager.")
+def ex50_get_csr(redfishobj, filename):
+    sys.stdout.write("\nEXAMPLE 50: Get CSR\n")
+    instances = redfishobj.search_for_type("HpHttpsCert.")
 
     for instance in instances:
-        rsp = redfishobj.redfish_get(instance["@odata.id"])
-
-        body = dict()
-        body["LicenseKey"] = iLO_Key
-        if redfishobj.typepath.defs.isgen9:
-            oemhpdict = rsp.dict["Oem"]["Hp"]
-        else:
-            oemhpdict = rsp.dict["Oem"]["Hpe"]
-        response = redfishobj.redfish_post(oemhpdict["Links"]\
-                                       ["LicenseService"]["@odata.id"], body)
-        redfishobj.error_handler(response)
+        response = redfishobj.redfish_get(instance["@odata.id"])
+        try:
+            csr_response = response.dict["CertificateSigningRequest"]
+            with open(filename, 'wb') as csroutput:
+                csroutput.write(csr_response)
+                csroutput.close()
+    
+            sys.stdout.write("\tCSR Data saved successfully as \
+            "+ filename + "\n")
+            redfishobj.error_handler(response)
+        except KeyError:
+            sys.stdout.write("\tCSR cannot be accessed right now, \
+            please try again later")
 
 if __name__ == "__main__":
     # When running on the server locally use the following commented values
@@ -58,5 +60,4 @@ if __name__ == "__main__":
     except Exception, excp:
         raise excp
 
-    ex31_set_license_key(REDFISH_OBJ, "test_iLO_Key")
-  
+    ex50_get_csr(REDFISH_OBJ, "csr.txt")

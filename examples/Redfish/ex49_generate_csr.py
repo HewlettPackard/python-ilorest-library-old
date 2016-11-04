@@ -14,24 +14,24 @@
 
 import sys
 from _redfishobject import RedfishObject
-from redfish.rest.v1 import ServerDownOrUnreachableError
+from ilorest.rest.v1_helper import ServerDownOrUnreachableError
 
-def ex31_set_license_key(redfishobj, iLO_Key):
-    sys.stdout.write("\nEXAMPLE 31: Set iLO License Key\n")
-    instances = redfishobj.search_for_type("Manager.")
+def ex49_generate_csr(redfishobj, csr_properties):
+    sys.stdout.write("\nEXAMPLE 49: Generate CSR\n")
+    instances = redfishobj.search_for_type("HpHttpsCert.")
 
     for instance in instances:
-        rsp = redfishobj.redfish_get(instance["@odata.id"])
-
         body = dict()
-        body["LicenseKey"] = iLO_Key
-        if redfishobj.typepath.defs.isgen9:
-            oemhpdict = rsp.dict["Oem"]["Hp"]
-        else:
-            oemhpdict = rsp.dict["Oem"]["Hpe"]
-        response = redfishobj.redfish_post(oemhpdict["Links"]\
-                                       ["LicenseService"]["@odata.id"], body)
+        body["Action"] = "GenerateCSR"
+        body["City"] = csr_properties["City"]
+        body["CommonName"] = csr_properties["CommonName"]
+        body["Country"] = csr_properties["Country"]
+        body["OrgName"] = csr_properties["OrgName"]
+        body["OrgUnit"] = csr_properties["OrgUnit"]
+        body["State"] = csr_properties["State"]
+        response = redfishobj.redfish_post(instance["@odata.id"], body)
         redfishobj.error_handler(response)
+        sys.stdout.write("\tGenerating CSR, this may take a few minutes\n")
 
 if __name__ == "__main__":
     # When running on the server locally use the following commented values
@@ -58,5 +58,9 @@ if __name__ == "__main__":
     except Exception, excp:
         raise excp
 
-    ex31_set_license_key(REDFISH_OBJ, "test_iLO_Key")
-  
+    ex49_generate_csr(REDFISH_OBJ, {"City" : "City",\
+                                    "CommonName": "Common Name",\
+                                    "Country": "US",\
+                                    "OrgName": "Organization",\
+                                    "OrgUnit": "Unit",\
+                                    "State": "State"})

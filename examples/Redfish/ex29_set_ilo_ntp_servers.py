@@ -15,11 +15,16 @@
 import sys
 import json
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex29_set_ilo_ntp_servers(redfishobj, ntp_servers):
     sys.stdout.write("\nEXAMPLE 29:  Set iLO's NTP Servers\n")
-    instances = redfishobj.search_for_type("HpiLODateTime.")
+
+    if redfishobj.typepath.defs.isgen9:
+        hpilodatetimetype = "HpiLODateTime."
+    else:
+        hpilodatetimetype = "#HpeiLODateTime."
+    instances = redfishobj.search_for_type(hpilodatetimetype)
 
     for instance in instances:
         response = redfishobj.redfish_get(instance["@odata.id"])

@@ -14,7 +14,7 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex13_dump_ilo_nic(redfishobj):
     sys.stdout.write("\nEXAMPLE 13: Get iLO NIC state\n")
@@ -40,8 +40,8 @@ def ex13_dump_ilo_nic(redfishobj):
 
                 sys.stdout.write("\tSpeed: " + str(nic.dict["SpeedMbps"]) + \
                                                                         "\n")
-                if not "Autosence" in nic.dict:
-                    sys.stderr.write("\tNo Autosence information available\n")
+                if not "Autosense" in nic.dict:
+                    sys.stderr.write("\tNo Autosense information available\n")
                 else:
                     sys.stdout.write("\tAutosense:  " + \
                                             str(nic.dict["Autosense"]) + "\n")
@@ -90,4 +90,3 @@ if __name__ == "__main__":
         raise excp
 
     ex13_dump_ilo_nic(REDFISH_OBJ)
-  

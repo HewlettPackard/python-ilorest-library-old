@@ -14,7 +14,7 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex32_set_bios_dhcp(redfishobj, bios_properties, bios_password=None):
     sys.stdout.write("\nEXAMPLE 32: Set DHCP\n")

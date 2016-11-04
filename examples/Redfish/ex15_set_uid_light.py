@@ -14,7 +14,7 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex15_set_uid_light(redfishobj, uid):
     sys.stdout.write("\nEXAMPLE 15: Set UID Light on or off\n")

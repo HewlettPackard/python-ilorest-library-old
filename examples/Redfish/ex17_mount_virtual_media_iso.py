@@ -14,7 +14,7 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex17_mount_virtual_media_iso(redfishobj, iso_url, boot_on_next_server_reset):
     sys.stdout.write("\nEXAMPLE 17: Mount iLO Virtual Media DVD ISO from URL\n")
@@ -33,9 +33,13 @@ def ex17_mount_virtual_media_iso(redfishobj, iso_url, boot_on_next_server_reset)
                 # TODO need to check for redfish support
                 if (iso_url is not None and \
                                         boot_on_next_server_reset is not None):
-                    body["Oem"] = {"Hp": {"BootOnNextServerReset": \
+                    if redfishobj.typepath.defs.isgen9:
+                        body["Oem"] = {"Hp": {"BootOnNextServerReset": \
                                                     boot_on_next_server_reset}}
-    
+                    else:
+                        body["Oem"] = {"Hpe": {"BootOnNextServerReset": \
+                                                    boot_on_next_server_reset}}
+
                     response = redfishobj.redfish_patch(vmlink["@odata.id"], body)
                     redfishobj.error_handler(response)
             elif response.status != 200:

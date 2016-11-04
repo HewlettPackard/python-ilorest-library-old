@@ -14,7 +14,7 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex22_dump_iml(redfishobj):
     sys.stdout.write("\nEXAMPLE 22: Dump Integrated Management Log\n")
@@ -27,9 +27,12 @@ def ex22_dump_iml(redfishobj):
 
             for entry in rsp.dict["Members"]:
                 response = redfishobj.redfish_get(entry["@odata.id"])
+                if redfishobj.typepath.defs.isgen9:
+                    oemhpdict = response.dict["Oem"]["Hp"]
+                else:
+                    oemhpdict = response.dict["Oem"]["Hpe"]
                 sys.stdout.write(response.dict["Severity"] + ": Class " + \
-                     str(response.dict["Oem"]["Hp"]["Class"]) + \
-                     " / Code " + str(response.dict["Oem"]["Hp"]["Code"]) + \
+                     str(oemhpdict["Class"]) + " / Code " + str(oemhpdict["Code"]) + \
                      ":\t" + response.dict["Message"] + "\n")
                 
                 while 'NextPage' in rsp.dict["Members"]:
@@ -39,8 +42,7 @@ def ex22_dump_iml(redfishobj):
                                                 ['NextPage']['page']))
                     
                     sys.stdout.write(response.dict["Severity"] + ": Class " + \
-                         str(response.dict["Oem"]["Hp"]["Class"]) + \
-                         " / Code " + str(response.dict["Oem"]["Hp"]["Code"]) \
+                         str(oemhpdict["Class"]) + " / Code " + str(oemhpdict["Code"]) \
                          + ":\t" + response.dict["Message"] + "\n")
             redfishobj.error_handler(response)
 
@@ -70,4 +72,3 @@ if __name__ == "__main__":
         raise excp
 
     ex22_dump_iml(REDFISH_OBJ)
-  

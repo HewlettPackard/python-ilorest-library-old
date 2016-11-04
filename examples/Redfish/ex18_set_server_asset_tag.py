@@ -14,7 +14,7 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex18_set_server_asset_tag(redfishobj, asset_tag):
     sys.stdout.write("\nEXAMPLE 18: Set Computer Asset Tag\n")

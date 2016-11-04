@@ -14,22 +14,36 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex44_get_LogicalDrives(redfishobj):
 
     sys.stdout.write("\nEXAMPLE 44: Dump LogicalDrivese details\n")
-    instances = redfishobj.search_for_type("HpSmartStorageArrayController.")
+    if redfishobj.typepath.defs.isgen9:
+        instances = redfishobj.search_for_type("HpSmartStorageArrayController.")
+    else:
+        instances = redfishobj.search_for_type("#HpeSmartStorageArrayController")
 
-    for instance in instances:
-        response = redfishobj.redfish_get(instance["@odata.id"])
-        if "ArrayControllers" in response.dict:
-            sys.stdout.write("\tArrayControllers:  " +
-                           str(response.dict["ArrayControllers"]) + "\n")
-        else:
-            sys.stderr.write("\tArrayControllers is not " \
-                        "available on HpSmartStorageArrayController resource\n")
-        redfishobj.error_handler(response)
+    if redfishobj.typepath.defs.isgen9:
+        for instance in instances:
+            response = redfishobj.redfish_get(instance["@odata.id"])
+            if "ArrayControllers" in response.dict:
+                sys.stdout.write("\tArrayControllers:  " +
+                               str(response.dict["ArrayControllers"]) + "\n")
+            else:
+                sys.stderr.write("\tArrayControllers is not " \
+                            "available on HpSmartStorageArrayController resource\n")
+            redfishobj.error_handler(response)
+    else:
+        for instance in instances:
+            response = redfishobj.redfish_get(instance["@odata.id"])
+            if response.status == 200:
+                sys.stdout.write("\tArrayControllers:  " +
+                               str(response.dict) + "\n")
+            else:
+                sys.stderr.write("\tArrayControllers is not " \
+                            "available on HpSmartStorageArrayController resource\n")
+            redfishobj.error_handler(response)
 
 if __name__ == "__main__":
     # When running on the server locally use the following commented values

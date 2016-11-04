@@ -14,7 +14,7 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex11_modify_ilo_user_account(redfishobj, ilo_login_name_to_modify, \
                 new_ilo_loginname, new_ilo_username, new_ilo_password, \
@@ -60,7 +60,10 @@ def ex11_modify_ilo_user_account(redfishobj, ilo_login_name_to_modify, \
                 if len(body_oemhp_privs):
                     body_oemhp["Privileges"] = body_oemhp_privs
                 if len(body_oemhp):
-                    body["Oem"] = {"Hp": body_oemhp}
+                    if redfishobj.typepath.defs.isgen9:
+                        body["Oem"] = {"Hp": body_oemhp}
+                    else:
+                        body["Oem"] = {"Hpe": body_oemhp}
 
                 newrsp = redfishobj.redfish_patch(entry["@odata.id"], body)
                 redfishobj.error_handler(newrsp)

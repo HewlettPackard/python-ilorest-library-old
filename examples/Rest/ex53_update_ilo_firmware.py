@@ -13,24 +13,30 @@
  # under the License.
 
 import sys
-from _redfishobject import RedfishObject
-from redfish.rest.v1 import ServerDownOrUnreachableError
+from _restobject import RestObject
 
-def ex33_set_bios_service(redfishobj, bios_properties, bios_password=None):
-    sys.stdout.write("\nEXAMPLE 33: Set Bios Service\n")
-    instances = redfishobj.search_for_type("Bios.")
+def ex53_update_ilo_firmware(restobj, fw_url=None, tpm_flag=None):
+    sys.stdout.write("\nEXAMPLE 53: Update iLO Firmware\n")
+    instances = restobj.search_for_type("Manager.")
 
-    
     for instance in instances:
-        response = redfishobj.rest_patch(instance["href"], bios_properties, \
-                                         bios_password)
-        redfishobj.error_handler(response)
-
+        response = restobj.rest_get(instance["href"])
+        body = dict()
+        body["Action"] = "InstallFromURI"
+        body["FirmwareURI"] = {"FirmwareURI": fw_url}
+        body["TPMOverrideFlag"] = {"TPMOverrideFlag": tpm_flag}
+        response = restobj.rest_post(response.dict["Oem"]\
+                                         ["Hp"]["links"]["UpdateService"]\
+                                         ["href"], body)
+        restobj.error_handler(response)
+        
 if __name__ == "__main__":
     # When running on the server locally use the following commented values
-    # iLO_https_url = "blobstore://."
-    # iLO_account = "None"
-    # iLO_password = "None"
+    # While this example can be run remotely, it is used locally to locate the
+    # iLO IP address
+    #iLO_https_url = "blobstore://."
+    #iLO_account = "None"
+    #iLO_password = "None"
 
     # When running remotely connect using the iLO secured (https://) address, 
     # iLO account name, and password to send https requests
@@ -40,17 +46,8 @@ if __name__ == "__main__":
     iLO_https_url = "https://10.0.0.100"
     iLO_account = "admin"
     iLO_password = "password"
-    
-    # Create a REDFISH object
-    try:
-        REDFISH_OBJ = RedfishObject(iLO_https_url, iLO_account, iLO_password)
-    except ServerDownOrUnreachableError, excp:
-        sys.stderr.write("ERROR: server not reachable or doesn't support " \
-                                                                "RedFish.\n")
-        sys.exit()
-    except Exception, excp:
-        raise excp
 
-    ex33_set_bios_service(REDFISH_OBJ, {'ServiceName':'HP', \
-                                        'ServiceEmail':'me@hp.com'})
- 
+    #Create a REST object
+    REST_OBJ = RestObject(iLO_https_url, iLO_account, iLO_password)
+    ex53_update_ilo_firmware(REST_OBJ, "http://test.com/ilo4_244.bin", False)
+

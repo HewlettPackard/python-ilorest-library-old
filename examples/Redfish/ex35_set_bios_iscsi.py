@@ -14,7 +14,7 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex35_set_bios_iscsi(redfishobj, bios_properties, bios_password=None):
     sys.stdout.write("\nEXAMPLE 35: Set ISCSI Config\n")

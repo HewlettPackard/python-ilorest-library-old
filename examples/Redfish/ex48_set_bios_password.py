@@ -14,7 +14,7 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex48_set_bios_password(redfishobj, new_password, bios_password=None):
     sys.stdout.write("\nEXAMPLE 48: Set Bios Password\n")
