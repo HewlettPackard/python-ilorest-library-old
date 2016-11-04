@@ -21,7 +21,4 @@ setup(name='python-ilorest-library',
           'jsonpointer',
           'validictory',
           'urlparse2',
-		  'decorator',
-		  'six',
-		  'ply'
       ])

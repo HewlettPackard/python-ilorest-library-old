@@ -57,13 +57,13 @@ Inband communication
 Usage
 ----------
 
-Import ilorest
+Import redfish
 ~~~~~~~~~~~~~~~~~~~~~~~~~
- First, import the ilorest module.
+ First, import the redfish module.
 
 .. code-block:: python
 
-	import ilorest
+	import redfish
 
 Create a Rest Object
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -71,7 +71,7 @@ Create a Rest Object
  
 .. code-block:: python
 
-	REST_OBJ = ilorest.rest_client(base_url="https://xx.xx.xx.xx",username=login_account, \
+	REST_OBJ = redfish.rest_client(base_url="https://xx.xx.xx.xx",username=login_account, \
                               password=login_password, default_prefix='/rest/v1') 
 
 Create a Redfish Object
@@ -80,7 +80,7 @@ Create a Redfish Object
 
 .. code-block:: python
 
-	REST_OBJ = ilorest.redfish_client(base_url="https://xx.xx.xx.xx",username=login_account, \ 
+	REST_OBJ = redfish.redfish_client(base_url="https://xx.xx.xx.xx",username=login_account, \ 
                                  password=login_password, default_prefix='/redfish/v1')   	
 
 Login to the server

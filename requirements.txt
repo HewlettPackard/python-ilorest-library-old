@@ -3,6 +3,3 @@ jsonpath_rw
 jsonpointer
 validictory
 urlparse2
-decorator
-six
-ply
