@@ -16,11 +16,11 @@ Quick Start
 
 This is a basic detailed breakdown of `quickstart.py <https://github.com/HewlettPackard/python-ilorest-library/tree/master/examples/quickstart.py>`_ examples. This will cover object creation and a simple call to the API. For more elaborate example that use the API and Python library look at the examples in `RestfulApiExamples.py <https://github.com/HewlettPackard/python-ilorest-library/tree/master/examples/RestfulApiExamples.py>`_ and `RedfishApiExamples.py <https://github.com/HewlettPackard/python-ilorest-library/tree/master/examples/RedfishApiExamples.py>`_.
 
-Make sure that ilorest library is imported.
+Make sure that redfish library is imported.
 
 .. code-block:: python
 
- import ilorest
+ import redfish
 
 ..
 
@@ -29,12 +29,12 @@ The very first thing that needs to be done for a restful request is to create a 
 Create a Redfish Object
 =======================
 
-A Redfish Rest object instance  is created by calling the  **redfish_client** method of the imported **ilorest** library. The **redfish_client** method returns an instance of the Redfish RESTful client and takes as parameters iLO hostname/ ip address, user name, password, default rest prefix ('**/redfish/v1**') and other optional arguments.
+A Redfish Rest object instance  is created by calling the  **redfish_client** method of the imported **redfish** library. The **redfish_client** method returns an instance of the Redfish RESTful client and takes as parameters iLO hostname/ ip address, user name, password, default rest prefix ('**/redfish/v1**') and other optional arguments.
 
 
 .. code-block:: python
 
-   REST_OBJ = ilorest.redfish_client(base_url=host,username=login_account, 
+   REST_OBJ = redfish.redfish_client(base_url=host,username=login_account, 
                                    password=login_password, default_prefix='/redfish/v1')
 ::
 
@@ -45,11 +45,11 @@ A Redfish Rest object instance  is created by calling the  **redfish_client** me
 Create a Rest Object
 ====================
 
-A Rest object instance is created by calling the **rest_client** method of the imported **ilorest** library. The **rest_client** method returns an instance of the RESTful client and takes as parameters iLO hostname/ ip address, user name, password, default rest prefix ('**/rest/v1**') and other optional arguments.
+A Rest object instance is created by calling the **rest_client** method of the imported **redfish** library. The **rest_client** method returns an instance of the RESTful client and takes as parameters iLO hostname/ ip address, user name, password, default rest prefix ('**/rest/v1**') and other optional arguments.
 
 .. code-block:: python
 
-   REST_OBJ = ilorest.rest_client(base_url=host,username=login_account,
+   REST_OBJ = redfish.rest_client(base_url=host,username=login_account,
                                 password=login_password, default_prefix='/rest/v1')
 
 
