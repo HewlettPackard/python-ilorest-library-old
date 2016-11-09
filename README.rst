@@ -124,6 +124,7 @@ History
   * 07/25/2016: Release of v1.2.0
   * 08/02/2016: Release of v1.3.0
   * 09/06/2016: Release of v1.4.0
+  * 11/04/2016: Release of v1.5.0
 
 Copyright and License
 ---------------------
