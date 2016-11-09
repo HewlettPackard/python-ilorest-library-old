@@ -23,8 +23,8 @@ def ex53_update_ilo_firmware(restobj, fw_url=None, tpm_flag=None):
         response = restobj.rest_get(instance["href"])
         body = dict()
         body["Action"] = "InstallFromURI"
-        body["FirmwareURI"] = {"FirmwareURI": fw_url}
-        body["TPMOverrideFlag"] = {"TPMOverrideFlag": tpm_flag}
+        body["FirmwareURI"] = fw_url
+        body["TPMOverrideFlag"] = tpm_flag
         response = restobj.rest_post(response.dict["Oem"]\
                                          ["Hp"]["links"]["UpdateService"]\
                                          ["href"], body)

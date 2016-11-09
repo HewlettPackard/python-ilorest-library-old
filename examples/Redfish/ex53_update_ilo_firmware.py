@@ -24,8 +24,8 @@ def ex53_update_ilo_firmware(redfishobj, fw_url=None, tpm_flag=None):
         response = redfishobj.redfish_get(instance["@odata.id"])
         body = dict()
         body["Action"] = "InstallFromURI"
-        body["FirmwareURI"] = {"FirmwareURI": fw_url}
-        body["TPMOverrideFlag"] = {"TPMOverrideFlag": tpm_flag}
+        body["FirmwareURI"] = fw_url
+        body["TPMOverrideFlag"] = tpm_flag
         response = redfishobj.redfish_post(response.dict["Oem"]\
                                          ["Hp"]["Links"]["UpdateService"]\
                                          ["@odata.id"], body)

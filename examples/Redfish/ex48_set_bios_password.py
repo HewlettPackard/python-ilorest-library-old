@@ -18,7 +18,7 @@ from redfish.rest.v1 import ServerDownOrUnreachableError
 
 def ex48_set_bios_password(redfishobj, new_password, bios_password=None):
     sys.stdout.write("\nEXAMPLE 48: Set Bios Password\n")
-    instances = redfishobj.search_for_type("ComputerSystem.")
+    instances = redfishobj.search_for_type("Bios.")
 
     for instance in instances:
         body = {"AdminPassword": new_password, \
