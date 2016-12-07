@@ -1129,6 +1129,8 @@ class RepoRegistryEntry(RepoBaseEntry):
                     regcopy = reg
                     for arg in newarg[:-1]:
                         try:
+                            arg = next(key for key in regcopy.keys() if \
+                                                    key.lower() == arg.lower())
                             if 'properties' in regcopy[arg].iterkeys() \
                                                 and ('patternProperties' in \
                                                     regcopy[arg].iterkeys()):
@@ -1393,14 +1395,16 @@ class HpPropertiesRegistry(RisObject):
         """
         result = list()
 
-        for tkey in tdict:
+        attdict = tdict[u'Attributes'] if u'Attributes' in tdict.keys() else tdict
+        for tkey in attdict:
             for item in self.Attributes:
                 try:
-                    if item["Name"] == tkey and hasattr(item, "Type"):
+                    if item[Typepathforval.typepath.defs.attributenametype] \
+                            == tkey and hasattr(item, "Type"):
                         keyval = list()
-                        keyval.append(tdict[tkey])
+                        keyval.append(attdict[tkey])
                         temp = self.validate_attribute(item, keyval, tkey)
-                        tdict[tkey] = keyval[0]
+                        attdict[tkey] = keyval[0]
 
                         for err in temp:
                             if isinstance(err, RegistryValidationError):
@@ -1412,6 +1416,7 @@ class HpPropertiesRegistry(RisObject):
                 except Exception:
                     pass
 
+        tdict = attdict if u'Attributes' not in tdict.keys() else tdict[u'Attributes']
         return result
 
     def get_validator(self, attrname, newargs=None, oneof=None):
@@ -1844,17 +1849,18 @@ class StringValidator(BaseValidator):
 
         """
         result = list()
+        namestr = Typepathforval.typepath.defs.attributenametype
         if u'MinLength' in self:
             if len(newval) < int(self[u'MinLength']):
                 result.append(RegistryValidationError(
                     u"'%s' must be at least '%s' characters long" %
-                    (self.Name, int(self[u'MinLength'])), regentry=self))
+                    (self[namestr], int(self[u'MinLength'])), regentry=self))
 
         if u'MaxLength' in self:
             if len(newval) > int(self[u'MaxLength']):
                 result.append(RegistryValidationError(
                     u"'%s' must be less than '%s' characters long" %
-                    (self.Name, int(self[u'MaxLength'])), regentry=self))
+                    (self[namestr], int(self[u'MaxLength'])), regentry=self))
 
         if u'ValueExpression' in self:
             if self[u'ValueExpression']:

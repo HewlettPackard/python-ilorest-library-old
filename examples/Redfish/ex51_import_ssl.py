@@ -14,7 +14,7 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1_helper import ServerDownOrUnreachableError
 
 def ex51_import_ssl(redfishobj, filename):
     sys.stdout.write("\nEXAMPLE 51: Import SSL Certificate\n")

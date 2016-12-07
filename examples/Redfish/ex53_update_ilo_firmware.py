@@ -14,7 +14,7 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1_helper import ServerDownOrUnreachableError
 
 def ex53_update_ilo_firmware(redfishobj, fw_url=None, tpm_flag=None):
     sys.stdout.write("\nEXAMPLE 53: Update iLO Firmware\n")

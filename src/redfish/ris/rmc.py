@@ -85,7 +85,7 @@ class RmcApp(object):
                 configfile = os.path.join(os.path.dirname(sys.executable), \
                                                                  'redfish.conf')
             else:
-                configfile = '/etc/redfish/redfish.conf'
+                configfile = '/etc/hprest/redfish.conf'
 
         if not os.path.isfile(configfile):
             self.warn("Config file '%s' not found\n\n" % configfile)
@@ -95,7 +95,6 @@ class RmcApp(object):
         self.logger = logging.getLogger()
         self._cm = RmcFileCacheManager(self)
         self._monolith = None
-        self._multilevelbuffer = None
         self._validationmanager = None
         self._iloversion = None
 
@@ -118,7 +117,7 @@ class RmcApp(object):
         :type url: str.
 
         """
-        self._cm.logout_del_function(url)
+        return self._cm.logout_del_function(url)
 
     def save(self):
         """Cache current monolith build"""
@@ -360,17 +359,28 @@ class RmcApp(object):
         :type url: str.
 
         """
+        sessionlocs = []
+        self._validationmanager = None
+        self._iloversion = None
+
         try:
             self.current_client.monolith.killthreads()
-        except:
+        except Exception:
             pass
 
         try:
             self.current_client.logout()
         except Exception:
-            pass
+            sessionlocs = self.deletelogoutfunction(url)
+        else:
+            self.deletelogoutfunction(url)
 
-        self.deletelogoutfunction(url)
+        for session in sessionlocs:
+            try:
+                self.delete_handler(session[0], url=session[1], \
+                            sessionid=session[2], silent=True, service=True)
+            except:
+                pass
         self.remove_rmc_client(url)
         self.save()
 
@@ -798,6 +808,14 @@ class RmcApp(object):
                                 instance, iloversion, attributeregistry, \
                                 latestschema, newarg)
 
+            for ind in range(len(dicttolist)):
+                try:
+                    dicttolist[ind] = (next(key for key in model.keys() if \
+                                    key.lower() == dicttolist[ind][0].lower()),\
+                                     dicttolist[ind][1])
+                except:
+                    pass
+
             if model:
                 if biosmode:
                     validator = map(model.get_validator_bios, (x[0] for x in \
@@ -864,7 +882,7 @@ class RmcApp(object):
                             settingskipped = True
 
                     if templist:
-                        dicttolist = [x for x in dicttolist if x[0] not in \
+                        dicttolist = [x for x in dicttolist if x not in \
                                                                     templist]
                 except Exception, excp:
                     raise excp
@@ -896,6 +914,7 @@ class RmcApp(object):
                     except Exception, excp:
                         raise excp
             elif model:
+                templist = []
                 for xitem in selectors:
                     try:
                         if model[xitem].readonly:
@@ -922,8 +941,7 @@ class RmcApp(object):
             patch = None
 
             if newargs and len(dicttolist)==1 :
-                self._multilevelbuffer = newdict
-                matches = self.setmultiworker(newargs, self._multilevelbuffer)
+                matches = self.setmultiworker(newargs, dicttolist, newdict)
 
                 if not matches:
                     self.warning_handler("Property not found in selection " \
@@ -960,6 +978,10 @@ class RmcApp(object):
 
                     json_node = jsonpointer.resolve_pointer(newdict, json_pstr)
 
+                    self.validatechanges(validation_manager=validation_manager, instance=instance,\
+                        iloversion=iloversion, attributeregistry=attributeregistry, \
+                        newdict=newdict, checkall=True, service=True, silent=True, oridict=oridict)
+
                     patch = jsonpatch.make_patch(currdict, newdict)
 
                     if patch:
@@ -977,34 +999,10 @@ class RmcApp(object):
 
                     currdict = newdict.copy()
 
-            entrydict = None
-            entrymono = None
-
-            if float(iloversion) >= 4.210:
-                entrydict = oridict
-                entrymono = self.current_client.monolith
-
-            try:
-                if attributeregistry[instance.type]:
-                    validation_manager.bios_validate(newdict, \
-                            attributeregistry[instance.type], checkall=True, \
-                                        currdict=entrydict, monolith=entrymono)
-            except Exception:
-                attrreg = validation_manager.validate(newdict, checkall=True, \
-                                        currdict=entrydict, monolith=entrymono)
-                if isinstance(attrreg, dict):
-                    attrreg = self.get_handler(attrreg[self.current_client.\
-                            monolith._hrefstring], service=True, silent=True)
-                    attrreg = RepoRegistryEntry(attrreg.dict)
-                    validation_manager.validate(newdict, checkall=True, \
-                                        currdict=entrydict, monolith=entrymono,\
-                                        attrreg=attrreg)
-
-            validation_errors = validation_manager.get_errors()
-            if validation_errors and len(validation_errors) > 0:
-                raise ValidationError(validation_errors)
-
             if newargs and not dicttolist:
+                self.validatechanges(validation_manager=validation_manager, instance=instance,\
+                        iloversion=iloversion, attributeregistry=attributeregistry, \
+                        newdict=newdict, checkall=True, service=True, silent=True, oridict=oridict)
                 patch = jsonpatch.make_patch(currdict, newdict)
 
                 if patch:
@@ -1045,6 +1043,35 @@ class RmcApp(object):
             raise LoadSkipSettingError()
         else:
             return results
+
+    def validatechanges(self, validation_manager=None, instance=None, entrydict=\
+                None, entrymono=None, iloversion=None, attributeregistry=None, \
+                newdict=None, checkall=True, service=True, silent=True, oridict=None ):
+        entrydict = None
+        entrymono = None
+        if float(iloversion) >= 4.210:
+            entrydict = oridict
+            entrymono = self.current_client.monolith
+
+        try:
+            if attributeregistry[instance.type]:
+                validation_manager.bios_validate(newdict, \
+                        attributeregistry[instance.type], checkall=True, \
+                                    currdict=entrydict, monolith=entrymono)
+        except Exception:
+            attrreg = validation_manager.validate(newdict, checkall=True, \
+                                    currdict=entrydict, monolith=entrymono)
+            if isinstance(attrreg, dict):
+                attrreg = self.get_handler(attrreg[self.current_client.\
+                        monolith._hrefstring], service=True, silent=True)
+                attrreg = RepoRegistryEntry(attrreg.dict)
+                validation_manager.validate(newdict, checkall=True, \
+                                    currdict=entrydict, monolith=entrymono,\
+                                    attrreg=attrreg)
+
+        validation_errors = validation_manager.get_errors()
+        if validation_errors and len(validation_errors) > 0:
+            raise ValidationError(validation_errors)
 
     def checkforintvalue(self, selector, val, iloversion, validation_manager, \
                                                         instance, newarg=None):
@@ -1202,9 +1229,8 @@ class RmcApp(object):
                         raise excp
 
                 newdict = copy.deepcopy(currdict)
-                self._multilevelbuffer = newdict
 
-                matches = self.setmultiworker(newargs, self._multilevelbuffer)
+                matches = self.setmultiworker(newargs, newdict)
 
                 if not matches:
                     self.warning_handler("Property not found in selection " \
@@ -1295,7 +1321,7 @@ class RmcApp(object):
         else:
             return results
 
-    def setmultiworker(self, newargs, currdict, current=0):
+    def setmultiworker(self, newargs, change, currdict, current=0):
         """Helper function for multi level set function
 
         :param newargs: list of multi level properties to be modified.
@@ -1313,28 +1339,15 @@ class RmcApp(object):
             for attr, val in currdict.iteritems():
                 if attr.lower() == newargs[current].lower():
                     current += 1
-                    found = self.setmultiworker(newargs, val, current)
+                    found = self.setmultiworker(newargs, change, val, current)
                     continue
                 else:
                     continue
         else:
-            (name, value) = newargs[current].split('=', 1)
             for attr, val in currdict.iteritems():
-                if attr.lower() == name.lower():
+                if attr.lower() == change[0][0].lower():
+                    currdict[attr] = change[0][1]
                     found = True
-
-                    if value:
-                        if value[0] == "[" and value[-1] == "]":
-                            value = value[1:-1].split(',')
-                            currdict[attr] = '"' + str(value) + '"'
-                        else:
-                            if value.lower() == "true" or value.lower() == \
-                                                                        "false":
-                                value = value.lower() in ("yes", "true", "t", \
-                                                                            "1")
-                            currdict[attr] = value
-                    else:
-                        currdict[attr] = value
 
         return found
 
@@ -1355,7 +1368,7 @@ class RmcApp(object):
         :param latestschema: flag to determine if we should use smart schema.
         :type latestschema: boolean.
         :returns: returns a list of keys from current dict that are not ignored
-`
+
         """
         results = list()
         iloversion = self.getiloversion()
@@ -1634,12 +1647,17 @@ class RmcApp(object):
                     boolfound = isinstance(patch.patch[0]["value"], bool)
                 except Exception:
                     boolfound = isinstance(patch[0]["value"], bool)
+                try:
+                    intfound = isinstance(patch.patch[0]["value"], int)
+                except Exception:
+                    intfound = isinstance(patch[0]["value"], int)
 
-                if boolfound:
+                if boolfound or intfound:
                     try:
                         results = {item:patch.patch[0]["value"]}
                     except Exception:
                         results = {item:patch[0]["value"]}
+
                 else:
                     try:
                         if patch.patch[0]["value"][0] == '"' and\
@@ -1799,22 +1817,23 @@ class RmcApp(object):
             return None
         for reg in validation_manager._classes_registry[0][colstr]:
             try:
-                if 'Id' in reg and not 'biosattributeregistry' in \
+                if reg and 'Id' in reg and not 'biosattributeregistry' in \
                                                             reg['Id'].lower():
                     reglist.append(reg['Id'])
-                elif 'Schema' in reg and not 'biosattributeregistry' in \
+                elif reg and 'Schema' in reg and not 'biosattributeregistry' in \
                                                         reg['Schema'].lower():
                     reglist.append(reg['Schema'])
             except:
-                reg = reg[u'@odata.id'].split('/')
-                reg = reg[len(reg)-2]
-                if not 'biosattributeregistry' in reg.lower():
-                    reglist.append(reg)
+                if reg:
+                    reg = reg[u'@odata.id'].split('/')
+                    reg = reg[len(reg)-2]
+                    if not 'biosattributeregistry' in reg.lower():
+                        reglist.append(reg)
 
         for reg in reglist:
             regfound = validation_manager.find_registry(reg)
 
-            if self.current_client.monolith.is_redfish\
+            if regfound and self.current_client.monolith.is_redfish\
                                  and not isinstance(regfound, RepoRegistryEntry):
                 regfound = self.get_handler(regfound[u'@odata.id'], \
                                 verbose=False, service=True, silent=True).obj
@@ -1871,10 +1890,14 @@ class RmcApp(object):
                     headers=None, iloresponse=False, silent=True, patch=True)
 
         if sessionid:
-            results = RmcClient(url=url, sessionkey=sessionid).set(put_path, \
-                                           body=body, headers=headers, \
+            rf = True if 'redfish' in put_path else False
+            if url == None:
+                url = 'blobstore://'
+            results = RmcClient(url=url, sessionkey=sessionid, is_redfish=rf).\
+                                    set(put_path, body=body, headers=headers, \
                                            optionalpassword=optionalpassword, \
                                            providerheader=providerheader)
+            service = True
         else:
             results = self.current_client.set(put_path, body=body, \
                         headers=headers, optionalpassword=optionalpassword, \
@@ -1885,11 +1908,11 @@ class RmcApp(object):
 
         if not silent:
             self.invalid_return_handler(results, verbose=verbose, errmessages=errmessages)
+        elif results.status == 401:
+            raise SessionExpired()
 
         if response:
             return results
-        elif results.status == 401:
-            raise SessionExpired()
 
     def get_handler(self, put_path, silent=False, verbose=False, url=None, \
                                 sessionid=None, uncache=False, headers=None, \
@@ -1920,8 +1943,12 @@ class RmcApp(object):
         errmessages = None
 
         if sessionid:
-            results = RmcClient(url=url, sessionkey=sessionid).get(put_path, \
-                                                               headers=headers)
+            rf = True if 'redfish' in put_path else False
+            if url == None:
+                url = 'blobstore://'
+            results = RmcClient(url=url, sessionkey=sessionid, is_redfish=rf).\
+                                                get(put_path, headers=headers)
+            service = True
         else:
             results = self.current_client.get(put_path, uncache=uncache, \
                                                                 headers=headers)
@@ -1930,12 +1957,13 @@ class RmcApp(object):
             errmessages = self.get_error_messages()
 
         if not silent:
-            self.invalid_return_handler(results, verbose=verbose, errmessages=errmessages)
+            self.invalid_return_handler(results, verbose=verbose, \
+                                                        errmessages=errmessages)
+        elif results.status == 401:
+            raise SessionExpired()
 
         if results.status == 200 or response:
             return results
-        elif results.status == 401:
-            raise SessionExpired()
         else:
             return None
 
@@ -1972,9 +2000,13 @@ class RmcApp(object):
                     headers=None, iloresponse=False, silent=True)
 
         if sessionid:
-            results = RmcClient(url=url, sessionkey=sessionid).toolpost(\
-                                        put_path, body=body, headers=headers, \
+            rf = True if 'redfish' in put_path else False
+            if url == None:
+                url = 'blobstore://'
+            results = RmcClient(url=url, sessionkey=sessionid, is_redfish=rf).\
+                                toolpost(put_path, body=body, headers=headers, \
                                         providerheader=providerheader)
+            service = True
         else:
             results = self.current_client.toolpost(put_path, body=body, \
                                 headers=headers, providerheader=providerheader)
@@ -1984,11 +2016,11 @@ class RmcApp(object):
 
         if not silent:
             self.invalid_return_handler(results, verbose=verbose, errmessages=errmessages)
+        elif results.status == 401:
+            raise SessionExpired()
 
         if response:
             return results
-        elif results.status == 401:
-            raise SessionExpired()
 
     def put_handler(self, put_path, body, verbose=False, url=None, \
                 sessionid=None, headers=None, response=False, silent=False, \
@@ -2021,10 +2053,14 @@ class RmcApp(object):
         errmessages = None
 
         if sessionid:
-            results = RmcClient(url=url, sessionkey=sessionid).toolput(\
-                                       put_path, body=body, headers=headers, \
+            rf = True if 'redfish' in put_path else False
+            if url == None:
+                url = 'blobstore://'
+            results = RmcClient(url=url, sessionkey=sessionid, is_redfish=rf).\
+                                toolput(put_path, body=body, headers=headers, \
                                        optionalpassword=optionalpassword, \
                                        providerheader=providerheader)
+            service = True
         else:
             results = self.current_client.toolput(put_path, body=body, \
                           headers=headers, optionalpassword=optionalpassword, \
@@ -2035,11 +2071,11 @@ class RmcApp(object):
 
         if not silent:
             self.invalid_return_handler(results, verbose=verbose, errmessages=errmessages)
+        elif results.status == 401:
+            raise SessionExpired()
 
         if response:
             return results
-        elif results.status == 401:
-            raise SessionExpired()
 
     def delete_handler(self, put_path, verbose=False, url=None, \
                                     sessionid=None, headers=None, silent=True, \
@@ -2068,8 +2104,12 @@ class RmcApp(object):
         errmessages = None
 
         if sessionid:
-            results = RmcClient(url=url, sessionkey=sessionid).tooldelete(\
-                      put_path, headers=headers, providerheader=providerheader)
+            rf = True if 'redfish' in put_path else False
+            if url == None:
+                url = 'blobstore://'
+            results = RmcClient(url=url, sessionkey=sessionid, is_redfish=rf).\
+                tooldelete(put_path, headers=headers, providerheader=providerheader)
+            service = True
         else:
             results = self.current_client.tooldelete(put_path, \
                                  headers=headers, providerheader=providerheader)
@@ -2079,7 +2119,6 @@ class RmcApp(object):
 
         if not silent:
             self.invalid_return_handler(results, verbose=verbose, errmessages=errmessages)
-
         elif results.status == 401:
             raise SessionExpired()
 
@@ -2105,7 +2144,12 @@ class RmcApp(object):
         errmessages = None
 
         if sessionid:
-            results = RmcClient(url=url, sessionkey=sessionid).head(put_path)
+            rf = True if 'redfish' in put_path else False
+            if url == None:
+                url = 'blobstore://'
+            results = RmcClient(url=url, sessionkey=sessionid, is_redfish=rf).\
+                                                                head(put_path)
+            service = True
         else:
             results = self.current_client.head(put_path)
 
@@ -2114,11 +2158,11 @@ class RmcApp(object):
 
         if not silent:
             self.invalid_return_handler(results, verbose=verbose, errmessages=errmessages)
+        elif results.status == 401:
+            raise SessionExpired()
 
         if results.status == 200:
             return results
-        elif results.status == 401:
-            raise SessionExpired()
         else:
             return None
 
@@ -2174,7 +2218,8 @@ class RmcApp(object):
 
                 return
 
-        if results.status == 401:
+        if results.status == 401 and not contents[-1].lower() == \
+                                                        'insufficientprivilege':
             raise SessionExpired()
         elif results.status == 403:
             raise IdTokenError()
@@ -2794,6 +2839,7 @@ class RmcApp(object):
         """
 
         if self._validationmanager:
+            self._validationmanager._errors = list()
             return self._validationmanager
 
         monolith = None

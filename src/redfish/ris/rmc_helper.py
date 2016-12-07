@@ -645,6 +645,7 @@ class RmcFileCacheManager(RmcCacheManager):
         """
         cachedir = self._rmc.config.get_cachedir()
         indexfn = u'%s/index' % cachedir
+        sessionlocs = []
 
         if os.path.isfile(indexfn):
             try:
@@ -658,9 +659,29 @@ class RmcFileCacheManager(RmcCacheManager):
                             os.remove(os.path.join(cachedir, index['href']))
                             break
                     else:
+                        if os.path.isfile(cachedir + '/' + index['href']):
+                            monolith = open(cachedir + '/' + index['href'], 'r')
+                            data = json.load(monolith)
+                            monolith.close()
+                            for item in data:
+                                if 'login' in item and 'session_location' in \
+                                                                item['login']:
+                                    if 'blobstore' in item['login']['url']:
+                                        loc = item['login']['session_location'].\
+                                                split('//')[-1]
+                                        sesurl = None
+                                    else:
+                                        loc = item['login']['session_location'].\
+                                                split(item['login']['url'])[-1]
+                                        sesurl = item['login']['url']
+                                    sessionlocs.append((loc, sesurl,\
+                                                item['login']['session_key']))
+
                         os.remove(os.path.join(cachedir, index['href']))
             except BaseException, excp:
                 self._rmc.warn(u'Unable to read cache data %s' % excp)
+
+        return sessionlocs
 
     def uncache_rmc(self):
         """Simple monolith uncache function"""

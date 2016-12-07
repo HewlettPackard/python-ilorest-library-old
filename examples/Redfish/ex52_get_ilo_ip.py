@@ -14,7 +14,7 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1_helper import ServerDownOrUnreachableError
 
 def ex52_get_ilo_ip(redfishobj):
     sys.stdout.write("\nEXAMPLE 52: Get iLO IP locally\n")

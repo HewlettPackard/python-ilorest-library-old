@@ -1016,15 +1016,6 @@ class HttpClient(RestClientBase):
         :returns: returns a rest request
 
         """
-        if not self.is_redfish and self.default_prefix in path and \
-                                                                path[-1] == '/':
-            path = path[0:-1]
-        elif self.is_redfish and self.default_prefix in path and \
-                                                                path[-1] != '/':
-            #TODO: Fix back
-            path = path# + '/'
-        else:
-            pass
 
         return super(HttpClient, self)._rest_request(path=path, method=method, \
                                      args=args, body=body, headers=headers, \
@@ -1111,18 +1102,9 @@ class Blobstore2RestClient(RestClientBase):
         headers = self._get_req_headers(headers, providerheader, \
                                                             optionalpassword)
 
-        if not self.is_redfish and self.default_prefix in path and \
-                                                                path[-1] == '/':
-            path = path[0:-1]
-        elif self.is_redfish and self.default_prefix in path and \
-                                                                path[-1] != '/':
-            #TODO: Fix back
-            path = path# + '/'
-        else:
-            pass
-
         reqpath = path.replace('//', '/')
 
+        oribody = body
         if body is not None:
             if isinstance(body, dict) or isinstance(body, list):
                 headers['Content-Type'] = u'application/json'
@@ -1212,7 +1194,7 @@ class Blobstore2RestClient(RestClientBase):
             newurl = urlparse2.urlparse(newloc)
 
             rest_response = self._rest_request(newurl.path, method, args, \
-                               body, headers, optionalpassword, providerheader)
+                               oribody, headers, optionalpassword, providerheader)
 
         try:
             if rest_response.getheader('content-encoding') == 'gzip':

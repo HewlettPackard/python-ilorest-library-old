@@ -14,7 +14,7 @@
 
 import sys
 from _redfishobject import RedfishObject
-from ilorest.rest.v1_helper import ServerDownOrUnreachableError
+from redfish.rest.v1_helper import ServerDownOrUnreachableError
 
 def ex50_get_csr(redfishobj, filename):
     sys.stdout.write("\nEXAMPLE 50: Get CSR\n")

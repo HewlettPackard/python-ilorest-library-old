@@ -1,17 +1,17 @@
-python-ilorestful-library
+python-redfish-library
 ==============
-.. image:: https://travis-ci.org/HewlettPackard/python-ilorest-library.svg?branch=master
-    :target: https://travis-ci.org/HewlettPackard/python-ilorest-library
-.. image:: https://img.shields.io/pypi/v/python-ilorest-library.svg?maxAge=2592000
-	:target: https://pypi.python.org/pypi/python-ilorest-library
-.. image:: https://img.shields.io/github/release/HewlettPackard/python-ilorest-library.svg?maxAge=2592000
+.. image:: https://travis-ci.org/HewlettPackard/python-redfish-library.svg?branch=master
+    :target: https://travis-ci.org/HewlettPackard/python-redfish-library
+.. image:: https://img.shields.io/pypi/v/python-redfish-library.svg?maxAge=2592000
+	:target: https://pypi.python.org/pypi/python-redfish-library
+.. image:: https://img.shields.io/github/release/HewlettPackard/python-redfish-library.svg?maxAge=2592000
 	:target: 
 .. image:: https://img.shields.io/badge/license-Apache%202-blue.svg
-	:target: https://raw.githubusercontent.com/HewlettPackard/python-ilorest-library/master/LICENSE
-.. image:: https://img.shields.io/pypi/pyversions/python-ilorest-library.svg?maxAge=2592000
-	:target: https://pypi.python.org/pypi/python-ilorest-library
+	:target: https://raw.githubusercontent.com/HewlettPackard/python-redfish-library/master/LICENSE
+.. image:: https://img.shields.io/pypi/pyversions/python-redfish-library.svg?maxAge=2592000
+	:target: https://pypi.python.org/pypi/python-redfish-library
 .. image:: https://api.codacy.com/project/badge/Grade/1283adc3972d42b4a3ddb9b96660bc07
-	:target: https://www.codacy.com/app/rexysmydog/python-ilorest-library?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=HewlettPackard/python-ilorest-library&amp;utm_campaign=Badge_Grade
+	:target: https://www.codacy.com/app/rexysmydog/python-redfish-library?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=HewlettPackard/python-redfish-library&amp;utm_campaign=Badge_Grade
 
 
 .. contents:: :depth: 1
@@ -26,7 +26,7 @@ Installing
 
 .. code-block:: console
 
-	pip install python-ilorest-library
+	pip install python-redfish-library
 
 Building from zip file source
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -35,7 +35,7 @@ Building from zip file source
 
 	python setup.py sdist --formats=zip (this will produce a .zip file)
 	cd dist
-	pip install python-ilorest-library-x.x.x.zip
+	pip install python-redfish-library-x.x.x.zip
 
 Requirements
 ----------
@@ -125,6 +125,7 @@ History
   * 08/02/2016: Release of v1.3.0
   * 09/06/2016: Release of v1.4.0
   * 11/04/2016: Release of v1.5.0
+  * 12/06/2016: Release of v1.6.0
 
 Copyright and License
 ---------------------

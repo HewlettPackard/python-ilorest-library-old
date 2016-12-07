@@ -120,7 +120,8 @@ class Definevalstenplus(Definevals):
         self.schemafilecollectiontype = u"#JsonSchemaFileCollection."
         self.hpilolicensecollectiontype = u"HpeiLOLicenseCollection."
         self.hpiloactivehealthsystemtype = u"#HpeiLOActiveHealthSystem."
-        self.hpilofederationgrouptypecoll = u"HpeiLOFederationGroupCollection."
+		self.hpiscsisoftwareinitiatortype = u"HpeiSCSISoftwareInitiator."
+        self.hpilofederationgrouptypecoll = u"HpeiLOFederationGroupCollection."        
         self.bootoverridetargettype = u"BootSourceOverrideTarget@Redfish.AllowableValues"
         self.messageregistrytype = u"#MessageRegistry."
 
@@ -177,6 +178,7 @@ class DefinevalsNine(Definevals):
         self.hpilolicensecollectiontype = None
         self.hpilofederationgrouptypecoll = None
         self.bootoverridetargettype = u"BootSourceOverrideSupported"
+        self.hpiscsisoftwareinitiatortype = u"HpiSCSISoftwareInitiator"
 
         self.typestring = u"Type"
         self.hrefstring = u"href"

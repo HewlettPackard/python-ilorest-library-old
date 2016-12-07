@@ -14,7 +14,7 @@ Quick Start
 
 
 
-This is a basic detailed breakdown of `quickstart.py <https://github.com/HewlettPackard/python-ilorest-library/tree/master/examples/quickstart.py>`_ examples. This will cover object creation and a simple call to the API. For more elaborate example that use the API and Python library look at the examples in `RestfulApiExamples.py <https://github.com/HewlettPackard/python-ilorest-library/tree/master/examples/RestfulApiExamples.py>`_ and `RedfishApiExamples.py <https://github.com/HewlettPackard/python-ilorest-library/tree/master/examples/RedfishApiExamples.py>`_.
+This is a basic detailed breakdown of `quickstart.py <https://github.com/HewlettPackard/python-redfish-library/tree/master/examples/quickstart.py>`_ examples. This will cover object creation and a simple call to the API. For more elaborate example that use the API and Python library look at the examples in `RestfulApiExamples.py <https://github.com/HewlettPackard/python-redfish-library/tree/master/examples/RestfulApiExamples.py>`_ and `RedfishApiExamples.py <https://github.com/HewlettPackard/python-redfish-library/tree/master/examples/RedfishApiExamples.py>`_.
 
 Make sure that redfish library is imported.
 
