@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-setup(name='python-redfish-library',
+setup(name='python-ilorest-library',
       version='1.6.0',
       description='iLO Rest Python Library',
 	  author = 'Hewlett Packard Enterprise',
@@ -12,7 +12,7 @@ setup(name='python-redfish-library',
           'Topic :: Communications'
       ],
       keywords='HP Enterprise',
-      url='https://github.com/HewlettPackard/python-redfish-library',
+      url='https://github.com/HewlettPackard/python-ilorest-library',
       packages=find_packages('src'),
       package_dir={'': 'src'},
       install_requires=[

@@ -49,5 +49,5 @@ If you have further questions, please contact the team:
 Contributors
 -------------
 
-Contributors are listed `here <../../python-ilorestful-library/graphs/contributors>`_.
+Contributors are listed `here <../../python-ilorest-library/graphs/contributors>`_.
 

@@ -80,7 +80,7 @@ Assuming that SVN is already installed in your system and it is already in Syste
 
 ::
 
-  svn checkout https://github.com/HewlettPackard/python-redfish-library.git
+  svn checkout https://github.com/HewlettPackard/python-ilorest-library.git
   
 ::
 
@@ -91,7 +91,7 @@ Execute the following command from the directory where you want to copy the sour
 
 ::
 
-  git clone https://github.com/HewlettPackard/python-redfish-library.git
+  git clone https://github.com/HewlettPackard/python-ilorest-library.git
   
 ::
 
@@ -109,8 +109,8 @@ First download the redfish.zip file from the github. Next unzip redfish.zip file
 
   python setup.py sdist --formats=zip
   cd dist
-  pip install --upgrade python-redfish-library-1.6.0.zip
+  pip install --upgrade python-ilorest-library-1.6.0.zip
 
 ::
 
-A successful installation will display that python-redfish-library-x.x.x and the dependencies have been successfully installed.  
+A successful installation will display that python-ilorest-library-x.x.x and the dependencies have been successfully installed.  
