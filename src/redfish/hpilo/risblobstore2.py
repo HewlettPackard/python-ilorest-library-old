@@ -624,25 +624,27 @@ class BlobStore2(object):
         resp = self.channel.send_receive_raw(indata, 3, datarecv)
         return resp
 
-    def gethprestchifhandle(self):
+    @staticmethod
+    def gethprestchifhandle():
         """Multi platform handle for chif hprest library"""
         try:
             if os.name == 'nt':
-                libpath = self.checkincurrdirectory('hprest_chif.dll')
+                libpath = BlobStore2.checkincurrdirectory('hprest_chif.dll')
                 libhandle = cdll.LoadLibrary(libpath)
             else:
                 try:
-                    libpath = self.checkincurrdirectory('hprest_chif_dev.so')
+                    libpath = BlobStore2.checkincurrdirectory('hprest_chif_dev.so')
                     libhandle = cdll.LoadLibrary(libpath)
                 except:
-                    libpath = self.checkincurrdirectory('hprest_chif.so')
+                    libpath = BlobStore2.checkincurrdirectory('hprest_chif.so')
                     libhandle = cdll.LoadLibrary(libpath)
         except Exception as excp:
             raise ChifDllMissingError(excp)
 
         return libhandle
 
-    def checkincurrdirectory(self, libname):
+    @staticmethod
+    def checkincurrdirectory(libname):
         """Check if the library is present in current directory."""
         libpath = libname
         if os.path.isfile(os.path.join(os.path.split(sys.executable)[0], libpath)):
@@ -651,7 +653,8 @@ class BlobStore2(object):
             libpath = os.path.join(os.getcwd(), libpath)
         return libpath
 
-    def unloadchifhandle(self, lib):
+    @staticmethod
+    def unloadchifhandle(lib):
         """Release a handle on the chif hprest library
 
         :param lib: The library handle provided by loading the chif library.

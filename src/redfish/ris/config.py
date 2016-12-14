@@ -52,7 +52,7 @@ class AutoConfigParser(object):
     def _get_ac_keys(self):
         """Retrieve parse option keys"""
         result = []
-        for key in self.__dict__:
+        for key in self.__dict__.keys():
             match = AutoConfigParser._config_pattern.search(key)
             if match:
                 result.append(match.group('confkey'))

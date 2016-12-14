@@ -19,6 +19,10 @@ from redfish.rest.v1 import ServerDownOrUnreachableError
 def ex36_set_bios_url_boot_file(redfishobj, path='', bios_password=None):
     sys.stdout.write("\nEXAMPLE 36: Set BIOS url boot file\n")
     instances = redfishobj.search_for_type("Bios.")
+    if not len(instances) and redfishobj.typepath.defs.isgen9:
+        sys.stderr.write("\nNOTE: This example requires the Redfish schema "\
+                 "version TBD in the managed iLO. It will fail against iLOs"\
+                 " with the 2.50 firmware or earlier.\n")
 
     for instance in instances:
         print instance

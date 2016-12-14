@@ -19,6 +19,10 @@ from redfish.rest.v1 import ServerDownOrUnreachableError
 def ex6_bios_revert_default(redfishobj):
     sys.stdout.write("\nEXAMPLE 6: Revert BIOS settings to default\n")
     instances = redfishobj.search_for_type("Bios.")
+    if not len(instances) and redfishobj.typepath.defs.isgen9:
+        sys.stderr.write("\nNOTE: This example requires the Redfish schema "\
+                 "version TBD in the managed iLO. It will fail against iLOs"\
+                 " with the 2.50 firmware or earlier. \n")
 
     for instance in instances:
         body = {"BaseConfig": "default"}

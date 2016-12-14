@@ -120,7 +120,7 @@ class Definevalstenplus(Definevals):
         self.schemafilecollectiontype = u"#JsonSchemaFileCollection."
         self.hpilolicensecollectiontype = u"HpeiLOLicenseCollection."
         self.hpiloactivehealthsystemtype = u"#HpeiLOActiveHealthSystem."
-		self.hpiscsisoftwareinitiatortype = u"HpeiSCSISoftwareInitiator."
+        self.hpiscsisoftwareinitiatortype = u"HpeiSCSISoftwareInitiator."
         self.hpilofederationgrouptypecoll = u"HpeiLOFederationGroupCollection."        
         self.bootoverridetargettype = u"BootSourceOverrideTarget@Redfish.AllowableValues"
         self.messageregistrytype = u"#MessageRegistry."

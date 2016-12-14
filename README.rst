@@ -56,36 +56,40 @@ Inband communication
 
 Usage
 ----------
+ A large set of examples is provided under the examples directory of this project. In addition to the directives present in this paragraph, you will find valuable implementation tips and tricks in those examples.
 
-Import redfish
-~~~~~~~~~~~~~~~~~~~~~~~~~
- First, import the redfish module.
-
-.. code-block:: python
-
-	import redfish
-
-Create a Rest Object
-~~~~~~~~~~~~~~~~~~~~~~~~~
- In RestfulApiExamples.py module, a rest object instance is created by calling the **rest_client** method with four parameters: base url aka the server's iLO url, formatted as a string ("https://xx.xx.xx.xx", "https://box1.america.corp.net" both work!), iLO user name, iLO password and the default prefix.
+Import the relevant python module
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ Depending on your desire to develop an HPE legacy REST or Redfish compliant application import the relevant python module.
+ 
+ For a legacy REST application:
  
 .. code-block:: python
 
-	REST_OBJ = redfish.rest_client(base_url="https://xx.xx.xx.xx",username=login_account, \
-                              password=login_password, default_prefix='/rest/v1') 
+	from _restobject import RestObject
 
-Create a Redfish Object
-~~~~~~~~~~~~~~~~~~~~~~~~~
- Just like Rest object, a Redfish object instance in RedfishAPiExamples.py is created by calling the **redfish_client** method with four parameters: base url aka the server's iLO url, formatted as a string ("https://xx.xx.xx.xx", "https://box1.america.corp.net" both work!), iLO user name, iLO password and the default prefix.
+ For Redfish compliant application:
 
 .. code-block:: python
 
-	REST_OBJ = redfish.redfish_client(base_url="https://xx.xx.xx.xx",username=login_account, \ 
-                                 password=login_password, default_prefix='/redfish/v1')   	
+	from _redfishobject import RedfishObject
+
+Create a REST or Redfish Object
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ Both legacy REST and Redfish Objects contain 3 parameters: the target secured URL (i.e. "https://ilo-IP" or "https://X.Y.Z.T"), an iLO user name and its password.
+ To create a REST object, call the RestObject method:
+.. code-block:: python
+
+	REST_OBJ = RestObject(iLO_https_url, iLO_account, iLO_password)
+
+ To crete a Redfish Object, call the RedfishObject method:
+.. code-block:: python
+
+	REDFISH_OBJ = RedfishObject(iLO_https_url, iLO_account, iLO_password)
 
 Login to the server
 ~~~~~~~~~~~~~~~~~~~~~~~~~
- You must login to the server to create a session. You can continue with a basic authentication, but it would less secure.
+ The login operation is performed when creating the REST_OBJ or REDFISH_OBJ. You can continue with a basic authentication, but it would less secure.
 
 .. code-block:: python
 
@@ -93,11 +97,14 @@ Login to the server
 
 Perform a GET operation
 ~~~~~~~~~~~~~~~~~~~~~~~~~
- Do a GET operation on a given path.
+ A simple GET operation can be performed to obtain the data present in any valid path.
+ An example of rawget operation on the path "/rest/v1/system/1" is shown below:
 
 .. code-block:: python
 
 	response = REST_OBJ.get("/rest/v1/systems/1", None)
+
+ A safer implementation of GET operation is performed in the library. This method finds the path of requested data based on the selected type. This will allow for the script to work seamlessly with any changes of location of data. The response obtained is also validated against schema for correct return values.
 
 Logout the created session
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -106,7 +113,9 @@ Logout the created session
 .. code-block:: python
 
 	REST_OBJ.logout()
-	
+
+ A logout deletes the current sesssion from the system. The redfish_client and the rest_client object destructor includes a logout statement. 
+
 Contributing
 ----------
 

@@ -20,6 +20,10 @@ def ex3_change_bios_setting(redfishobj, bios_property, property_value, \
                                                             bios_password=None):
     sys.stdout.write("\nEXAMPLE 3: Change a BIOS setting\n")
     instances = redfishobj.search_for_type("Bios.")
+    if not len(instances) and redfishobj.typepath.defs.isgen9:
+        sys.stderr.write("\nNOTE: This example requires the Redfish schema "\
+                 "version TBD in the managed iLO. It will fail against iLOs"\
+                 " with the 2.50 firmware or earlier. \n")
 
     for instance in instances:
         body = {bios_property: property_value}

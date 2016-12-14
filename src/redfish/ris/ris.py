@@ -23,6 +23,7 @@ import re
 import sys
 import logging
 import threading
+import urlparse2 #pylint warning disable
 from Queue import Queue
 from collections import (OrderedDict)
 
@@ -296,7 +297,7 @@ class RisMonolithv100(Dictable):
         :param loadtype: flag to determine if load is meant for only href items.
         :type loadtype: str.
         :param loadcomplete: flag to download the entire monolith
-        :type loadcomplete:boolean
+        :type loadcomplete: boolean
 
         """
         if not skipinit:
@@ -345,6 +346,8 @@ class RisMonolithv100(Dictable):
         :type skipinit: boolean.
         :param loadtype: flag to determine if load is meant for only href items.
         :type loadtype: str.
+        :param loadcomplete: flag to download the entire monolith
+        :type loadcomplete: boolean
 
         """
         if path.endswith("?page=1"):
@@ -355,6 +358,11 @@ class RisMonolithv100(Dictable):
 
         #TODO: need to find a better way to support non ascii characters
         path = path.replace("|", "%7C")
+        #remove fragments
+        newpath = urlparse2.urlparse(path)
+        newpath.fragment = ''
+        path = urlparse2.urlunparse(newpath)
+
         LOGGER.debug(u'_loading %s', path)
 
         if not self.reload:

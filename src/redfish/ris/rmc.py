@@ -2168,8 +2168,8 @@ class RmcApp(object):
 
     _QUERY_PATTERN = re.compile(r'(?P<instance>[\w\.]+)(:(?P<xpath>.*))?')
     def _parse_query(self, querystr):
-        """Parse query and return as a dict. TODO probably need to move
-        this into its own class if it gets too complicated
+        """Parse query and return as a dict. TODO probably need to move"""
+        """ this into its own class if it gets too complicated
 
         :param querystr: query string.
         :type querystr: str.

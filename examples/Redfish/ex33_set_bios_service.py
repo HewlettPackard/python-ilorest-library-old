@@ -19,8 +19,11 @@ from redfish.rest.v1 import ServerDownOrUnreachableError
 def ex33_set_bios_service(redfishobj, bios_properties, bios_password=None):
     sys.stdout.write("\nEXAMPLE 33: Set Bios Service\n")
     instances = redfishobj.search_for_type("Bios.")
+    if not len(instances) and redfishobj.typepath.defs.isgen9:
+        sys.stderr.write("\nNOTE: This example requires the Redfish schema "\
+                 "version TBD in the managed iLO. It will fail against iLOs"\
+                 " with the 2.50 firmware or earlier. \n")
 
-    
     for instance in instances:
         response = redfishobj.rest_patch(instance["href"], bios_properties, \
                                          bios_password)
