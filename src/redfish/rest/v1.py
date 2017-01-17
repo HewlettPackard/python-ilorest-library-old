@@ -1175,6 +1175,8 @@ class Blobstore2RestClient(RestClientBase):
         resp_txt = bs2.rest_immediate(str1)
         endtime = time.clock()
 
+        bs2.channel.close()
+
         LOGGER.info("iLO Response Time to %s: %s secs."% \
                                                 (path, str(endtime-inittime)))
         #Dummy response to support a bad host response

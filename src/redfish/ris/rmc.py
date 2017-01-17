@@ -710,7 +710,7 @@ class RmcApp(object):
         :param verbose: enable to print more operations
         :type verbose: bool
         """
- 
+
         skip = False
 
         try:
@@ -765,7 +765,7 @@ class RmcApp(object):
         """
         results = list()
 
-        if (selector and val) and not dicttolist:
+        if (selector and val is not None) and not dicttolist:
             dicttolist = [(selector, val)]
         elif dicttolist is None and not newargs:
             return results
@@ -1460,17 +1460,19 @@ class RmcApp(object):
                                     return True
                                 else:
                                     #TODO: find a way to not print
+                                    results.append("Success")
                                     found.print_help(selector, out=sys.stdout)
                             else:
                                 self.warning_handler("No data available for " \
                                          "entry: '%s'\n" % ("/".join(newarg) \
                                                     if newarg else selector))
+                                results.append("none")
                 else:
                     self.warning_handler("Entry '%s' not found in current" \
                                             " selection\n" % ("/".join(newarg) \
                                                       if newarg else selector))
+                    results.append("none")
 
-                results.append("Success")
             else:
                 if currdict[self.typepath.defs.typestring].startswith("#Bios."):
                     try:
