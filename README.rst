@@ -51,8 +51,8 @@ Inband communication
  To enable support for inband communications, you must download the DLL/SO for your system from: windows_ / linux_. It must be placed in your working environment path.
  
  
- .. _windows: http://h20564.www2.hpe.com/hpsc/swd/public/detail?swItemId=MTX_43efdf5067924c78a34bf384c9&swEnvOid=4168
- .. _linux: http://h20564.www2.hpe.com/hpsc/swd/public/detail?swItemId=MTX-5f86c051cbd042a6975250da39&swEnvOid=4168
+ .. _windows: https://downloads.hpe.com/pub/softlib2/software1/pubsw-windows/p1463761240/v120479/hprest_chif.dll
+ .. _linux: https://downloads.hpe.com/pub/softlib2/software1/pubsw-linux/p1093353304/v120481/hprest_chif.so
 
 Usage
 ----------
