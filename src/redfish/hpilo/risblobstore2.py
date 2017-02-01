@@ -104,7 +104,7 @@ class BlobStore2(object):
 
     def __del__(self):
         """Blob store 2 close channel function"""
-        if getattr(self, 'channel'):
+        if hasattr(self, 'channel'):
             self.channel.close()
 
     def create(self, key, namespace):

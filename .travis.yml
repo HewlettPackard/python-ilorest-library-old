@@ -14,7 +14,7 @@ deploy:
     server: https://pypi.python.org/pypi
     user: "lumbajack"
     password:
-      secure: "bPot4d6AV//30SwxFfbfkjvk/1+FCuaeRzWwayykErYuPtz55gzE0WFLS0bTHIPJM/6izOKNzAq1cDX1ERXExsEEJ7Lq0L/Kukiuqk7ggXAd45vnNZVidQ4ZXd180ekRg8JIdz4iIobe0GWvy7qCETn1JttCeO3dUUhW8r0Gm60="
+	  secure: "o9WW8rsVhjhZNTTvb30ArwnGIbKd1ZQ0KkQkQUIF9cskJxlkVLFQkcE8fCVVMhZ+BTXakHsAQ0nuKq29YB87dk6qf0Gvd3m/AcSjFSSxrtz4BeqA1vy8MmiUIztoJAGfEXaBKp52JnnIUbXuu+xzzOdFxeRul2GfYRT+KDKW/pk="
     on:
       branch: master
       tags: true

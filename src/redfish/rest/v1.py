@@ -68,6 +68,10 @@ class DecompressResponseError(Exception):
     """Raised when decompressing response failed."""
     pass
 
+class JsonDecodingError(Exception):
+    """Raised when there is an error in json data."""
+    pass
+
 class RisObject(dict):
     """Converts a JSON/Rest dict into a object so you can use .property
     notation"""
@@ -592,8 +596,12 @@ class RestClientBase(object):
         :returns: returns a rest request with method 'Get'
 
         """
-        return self._rest_request(path, method='GET', args=args, \
+        try:
+            return self._rest_request(path, method='GET', args=args, \
                                                                 headers=headers)
+        except ValueError:
+            LOGGER.debug("Error in json object getting path: %s" % path)
+            raise JsonDecodingError('Error in json decoding.')
 
     def head(self, path, args=None, headers=None):
         """Perform a HEAD request
@@ -1016,7 +1024,6 @@ class HttpClient(RestClientBase):
         :returns: returns a rest request
 
         """
-
         return super(HttpClient, self)._rest_request(path=path, method=method, \
                                      args=args, body=body, headers=headers, \
                                      optionalpassword=optionalpassword, \

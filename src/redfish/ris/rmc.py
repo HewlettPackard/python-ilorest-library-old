@@ -1619,12 +1619,19 @@ class RmcApp(object):
         """Build and return the entire monolith"""
         monolith = self.current_client.monolith
         vistedurls = monolith.get_visited_urls()
-
+ 
         monolith.set_visited_urls(list())
         monolith.load(includelogs=True, skipcrawl=False, loadcomplete=True)
         monolith.set_visited_urls(vistedurls)
+        
+        results = list()
+        instances = self.get_selection(selector='"*"')
 
-        return monolith
+        for instance in instances:
+            currdict = instance.resp.dict
+            results.append({instance.resp.request.path: currdict})
+
+        return results
 
     def commitworkerfunc(self, patch):
         """Helper function for the commit command

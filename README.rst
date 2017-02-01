@@ -136,6 +136,7 @@ History
   * 11/04/2016: Release of v1.5.0
   * 12/06/2016: Release of v1.6.0
   * 01/17/2017: Release of v1.7.0
+  * 02/01/2017: Release of v1.8.0
 
 Copyright and License
 ---------------------
