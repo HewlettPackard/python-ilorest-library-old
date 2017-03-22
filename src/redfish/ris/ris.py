@@ -21,6 +21,7 @@
 
 import re
 import sys
+import json
 import logging
 import threading
 import urlparse2 #pylint warning disable
@@ -453,17 +454,26 @@ class RisMonolithv100(Dictable):
         jsonpath_expr = jsonpath_rw.parse(u'$.."$ref"')
         matches = jsonpath_expr.find(resp.dict)
         respcopy = resp.dict
-        listmatch = None
-
+        typeregex = '([#,@].*?\.)'
         if matches:
             for match in matches:
                 fullpath = str(match.full_path)
                 jsonfile = match.value.split('#')[0]
                 jsonpath = match.value.split('#')[1]
+                listmatch = None
+                found = None
 
-                if '@odata' in fullpath:
-                    schemapath = '/' + fullpath.replace('@odata.', '~').\
-                                    replace('.', '/').replace('~', '@odata.')
+                if 'redfish.dmtf.org' in jsonfile:
+                    if 'odata' in jsonfile:
+                        jsonpath = jsonpath.replace(jsonpath.split('/')[-1], \
+                                            'odata' + jsonpath.split('/')[-1])
+                    jsonfile = 'Resource.json'
+
+                found = re.search(typeregex, fullpath)
+                if found:
+                    repitem = fullpath[found.regs[0][0]:found.regs[0][1]]
+                    schemapath = '/' + fullpath.replace(repitem, '~').\
+                                        replace('.', '/').replace('~', repitem)
                 else:
                     schemapath = '/' + fullpath.replace('.', '/')
 
@@ -489,6 +499,7 @@ class RisMonolithv100(Dictable):
                                                 skipinit=True, loadtype='ref')
 
                     instance = list()
+
                     if u'st' in self.types:
                         for stitem in self.types[u'st'][u'Instances']:
                             instance.append(stitem)
@@ -549,6 +560,7 @@ class RisMonolithv100(Dictable):
                     if not jsonfile:
                         replacepath = jsonpointer.JsonPointer(jsonpath)
                         schemapath = schemapath.replace('/$ref', '')
+                        schemapath = schemapath.translate(None, '[]')
                         schemapath = jsonpointer.JsonPointer(schemapath)
                         data = replacepath.resolve(respcopy)
 
@@ -757,7 +769,6 @@ class RisMonolithv100(Dictable):
 
     def killthreads(self):
         """Function to kill threads on logout"""
-        #TODO: revisit to make sure this is correct
         threads = []
         for thread in threading.enumerate():
             if isinstance(thread, SuperDuperWorker):

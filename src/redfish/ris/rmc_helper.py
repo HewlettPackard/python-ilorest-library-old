@@ -53,6 +53,10 @@ class FailureDuringCommitError(RdmcError):
     """Raised when there is an error while updating firmware"""
     pass
 
+class UserNotAdminError(RdmcError):
+    """Raised when user doesn't have admin priviledges"""
+    pass
+
 class UndefinedClientError(Exception):
     """Raised when there are no clients active (usually when user hasn't logged in"""
     pass
@@ -103,7 +107,7 @@ class InvalidPathError(Exception):
     pass
 
 class UnableToObtainIloVersionError(Exception):
-    """Raised when iloversion is missing from deafult path"""
+    """Raised when iloversion is missing from default path"""
     pass
 
 class ValidationError(Exception):
@@ -115,6 +119,10 @@ class ValidationError(Exception):
     def get_errors(self):
         """Wrapper function to return error list"""
         return self._errlist
+
+class IloResponseError(Exception):
+    """Raised when iLO returns with a non 200 response"""
+    pass
 
 class RmcClient(object):
     """RMC client base class"""

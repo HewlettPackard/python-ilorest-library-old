@@ -43,7 +43,8 @@ from redfish.ris.rmc_helper import (UndefinedClientError, InstanceNotFoundError,
                           RmcClient, RmcConfig, RmcFileCacheManager, \
                           NothingSelectedSetError, LoadSkipSettingError, \
                           InvalidCommandLineError, FailureDuringCommitError, \
-                          InvalidPathError, ValueChangedError)
+                          InvalidPathError, ValueChangedError, IloResponseError, \
+                          UserNotAdminError)
 
 #---------End of imports---------
 
@@ -85,7 +86,7 @@ class RmcApp(object):
                 configfile = os.path.join(os.path.dirname(sys.executable), \
                                                                  'redfish.conf')
             else:
-                configfile = '/etc/hprest/redfish.conf'
+                configfile = '/etc/ilorest/redfish.conf'
 
         if not os.path.isfile(configfile):
             self.warn("Config file '%s' not found\n\n" % configfile)
@@ -1485,6 +1486,30 @@ class RmcApp(object):
 
         return results
 
+    def getcollectionmembers(self, path):
+        """Returns collection/item lists of the provided path
+        :param path: path to return .
+        :type path: string.
+        :returns: returns collection list
+        """
+        if self.typepath.defs.isgen10:
+            if path.endswith('/'):
+                path += '?$expand=.'
+            else:
+                path += '/?$expand=.'
+
+        members = self.get_handler(path,service=True, silent=True)
+        if members:
+            try:
+                if self.typepath.defs.isgen10:
+                    members = members.dict['Members']
+                else:
+                    members = members.dict['Items']
+            except:
+                members = []
+
+        return members
+
     def getbiosfamilyandversion(self):
         """Function that returns the current BIOS family"""
         (founddir, entrytype) = \
@@ -1894,15 +1919,20 @@ class RmcApp(object):
         """
         errmessages = None
 
+        if sessionid:
+            if url == None:
+                url = 'blobstore://'
+            if not self.typepath.defs:
+                self.getgen(url=url)
+
         (put_path, body) = self.checkpostpatch(body=body, path=put_path, \
                     verbose=verbose, service=False, url=None, sessionid=None, \
                     headers=None, iloresponse=False, silent=True, patch=True)
 
         if sessionid:
-            rf = True if 'redfish' in put_path else False
-            if url == None:
-                url = 'blobstore://'
-            results = RmcClient(url=url, sessionkey=sessionid, is_redfish=rf).\
+
+            results = RmcClient(url=url, sessionkey=sessionid, is_redfish=\
+                                    self.updatedefinesflag()).\
                                     set(put_path, body=body, headers=headers, \
                                            optionalpassword=optionalpassword, \
                                            providerheader=providerheader)
@@ -1952,10 +1982,13 @@ class RmcApp(object):
         errmessages = None
 
         if sessionid:
-            rf = True if 'redfish' in put_path else False
             if url == None:
                 url = 'blobstore://'
-            results = RmcClient(url=url, sessionkey=sessionid, is_redfish=rf).\
+            if not self.typepath.defs:
+                self.getgen(url=url)
+
+            results = RmcClient(url=url, sessionkey=sessionid, is_redfish=\
+                                                    self.updatedefinesflag()).\
                                                 get(put_path, headers=headers)
             service = True
         else:
@@ -2004,15 +2037,19 @@ class RmcApp(object):
         """
         errmessages = None
 
+        if sessionid:
+            if url == None:
+                url = 'blobstore://'
+            if not self.typepath.defs:
+                self.getgen(url=url)
+
         (put_path, body) = self.checkpostpatch(body=body, path=put_path, \
                     verbose=verbose, service=False, url=None, sessionid=None,\
                     headers=None, iloresponse=False, silent=True)
 
         if sessionid:
-            rf = True if 'redfish' in put_path else False
-            if url == None:
-                url = 'blobstore://'
-            results = RmcClient(url=url, sessionkey=sessionid, is_redfish=rf).\
+            results = RmcClient(url=url, sessionkey=sessionid, is_redfish=\
+                                self.updatedefinesflag()).\
                                 toolpost(put_path, body=body, headers=headers, \
                                         providerheader=providerheader)
             service = True
@@ -2062,11 +2099,14 @@ class RmcApp(object):
         errmessages = None
 
         if sessionid:
-            rf = True if 'redfish' in put_path else False
             if url == None:
                 url = 'blobstore://'
-            results = RmcClient(url=url, sessionkey=sessionid, is_redfish=rf).\
-                                toolput(put_path, body=body, headers=headers, \
+            if not self.typepath.defs:
+                self.getgen(url=url)
+
+            results = RmcClient(url=url, sessionkey=sessionid, is_redfish=\
+                                self.updatedefinesflag()).toolput(put_path, \
+                                       body=body, headers=headers, \
                                        optionalpassword=optionalpassword, \
                                        providerheader=providerheader)
             service = True
@@ -2113,10 +2153,15 @@ class RmcApp(object):
         errmessages = None
 
         if sessionid:
-            rf = True if 'redfish' in put_path else False
             if url == None:
                 url = 'blobstore://'
-            results = RmcClient(url=url, sessionkey=sessionid, is_redfish=rf).\
+            if not self.typepath.defs:
+                rf = None
+                self.getgen(url=url)
+                rf=self.updatedefinesflag(redfishflag=rf)
+
+            results = RmcClient(url=url, sessionkey=sessionid, is_redfish=\
+                                                    self.updatedefinesflag()).\
                 tooldelete(put_path, headers=headers, providerheader=providerheader)
             service = True
         else:
@@ -2153,10 +2198,13 @@ class RmcApp(object):
         errmessages = None
 
         if sessionid:
-            rf = True if 'redfish' in put_path else False
             if url == None:
                 url = 'blobstore://'
-            results = RmcClient(url=url, sessionkey=sessionid, is_redfish=rf).\
+            if not self.typepath.defs:
+                self.getgen(url=url)
+
+            results = RmcClient(url=url, sessionkey=sessionid, is_redfish=\
+                                                    self.updatedefinesflag()).\
                                                                 head(put_path)
             service = True
         else:
@@ -2224,7 +2272,9 @@ class RmcApp(object):
                 else:
                     self.warning_handler(u"[%d] No message returned by iLO.\n" %\
                                                                 results.status)
-
+                    sys.stdout.write(u"iLO response with code [%d].\n"%(\
+                                                            results.status))
+                    raise IloResponseError("")
                 return
 
         if results.status == 401 and not contents[-1].lower() == \
@@ -2244,10 +2294,13 @@ class RmcApp(object):
                         if verbose:
                             sys.stdout.write(u"[%d] %s\n" % (results.status, \
                                                                         output))
-                            break
-                        else:
-                            self.warning_handler(u"%s\n" % output)
-                            break
+                        if results.status is not 200 and results.status is not 201:
+                            sys.stdout.write(u"iLO response with code [%d]: %s\n"%(\
+                                                        results.status, output))
+                            raise IloResponseError("")
+                        break
+                    except IloResponseError as excp:
+                        raise excp
                     except Exception:
                         pass
         else:
@@ -2258,6 +2311,10 @@ class RmcApp(object):
                 else:
                     self.warning_handler(u"The operation completed "\
                                                             "successfully.\n")
+            elif contents:
+                sys.stdout.write(u"iLO responsed with code {0}: {1}\n".format(\
+                                                        results.status, contents))
+                raise IloResponseError()
             else:
                 self.warning_handler(u"[%d] No message returned.\n" % \
                                                                 results.status)
@@ -2901,7 +2958,6 @@ class RmcApp(object):
                     regfound = self.get_handler(regfound[u'@odata.id'], \
                                 verbose=False, service=True, silent=True).obj
                     regfound = RepoRegistryEntry(regfound)
-                biosschemafound = None
         except Exception:
             regfound = validation_manager.find_schema(schematype)
 
@@ -3099,7 +3155,7 @@ class RmcApp(object):
                     biosschemafound = self.get_handler(biosschemafound[u'@odata.id'], \
                                 verbose=False, service=True, silent=True).obj
                     biosschemafound = RepoRegistryEntry(biosschemafound)
-                biosschemafound = None
+
         except Exception:
             regfound = validation_manager.find_schema(schematype)
 
@@ -3165,6 +3221,8 @@ class RmcApp(object):
 
     def getgen(self, url=None):
         """Updates the defines object based on the iLO manager version"""
+        if self.typepath.adminpriv==False and url.startswith("blob"):
+            raise UserNotAdminError("")
         self.typepath.getgen(url=url, logger=LOGGER)
 
     def updatedefinesflag(self, redfishflag=None):

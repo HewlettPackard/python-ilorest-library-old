@@ -23,10 +23,16 @@ import os
 import sys
 import time
 import select
+import logging
 
 from ctypes import cdll, c_void_p, c_uint32, byref, create_string_buffer
 
 #---------End of imports---------
+#---------Debug logger---------
+
+LOGGER = logging.getLogger(__name__)
+
+#---------End of debug logger---------
 
 class BlobReturnCodes(object):
     """Blob store return codes.
@@ -65,8 +71,10 @@ class HpIlo(object):
     def __init__(self):
         if os.name == 'nt':
             fhandle = c_void_p()
-
-            self.dll = cdll.LoadLibrary("hprest_chif.dll")
+            try:
+                self.dll = cdll.LoadLibrary("ilorest_chif.dll")
+            except:
+                self.dll = cdll.LoadLibrary("hprest_chif.dll")
             self.dll.ChifInitialize(None)
 
             self.dll.ChifCreate.argtypes = [c_void_p]
@@ -135,6 +143,9 @@ class HpIlo(object):
         """
         try:
             pkt = bytearray()
+            if logging.getLogger().isEnabledFor(logging.DEBUG):
+                LOGGER.debug('Reading iLO handle(Max wait time: %s '\
+                                        'seconds)...\n'% (timeout))
             status = select.select([self.fhandle], [], [], timeout)
 
             if status != ([self.fhandle], [], []) and timeout > 0:
@@ -200,6 +211,9 @@ class HpIlo(object):
                     if retlen != len(data):
                         raise ValueError()
 
+                    if logging.getLogger().isEnabledFor(logging.DEBUG):
+                        LOGGER.debug('Attempt %s for iLO read.\n'% \
+                                                                (tries+1))
                     resp = self.read_raw(120)
 
                 return resp

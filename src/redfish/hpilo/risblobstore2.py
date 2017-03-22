@@ -22,10 +22,11 @@
 import os
 import sys
 import struct
+import logging
 
-from ctypes import (c_char_p, c_ubyte, c_uint, cdll, POINTER,
-                    create_string_buffer)
-from redfish.hpilo.rishpilo import (HpIlo)
+from redfish.hpilo.rishpilo import HpIlo
+from ctypes import c_char_p, c_ubyte, c_uint, cdll, POINTER, \
+                    create_string_buffer
 
 if os.name == 'nt':
     from ctypes import windll
@@ -77,7 +78,7 @@ class BlobNotFoundError(Exception):
     pass
 
 class ChifDllMissingError(Exception):
-    """Raised when unable to obtain hprest_chif dll handle"""
+    """Raised when unable to obtain ilorest_chif dll handle"""
     pass
 
 #----------------------------------------------------------
@@ -592,6 +593,27 @@ class BlobStore2(object):
 
         return resp
 
+    def vid_media_mount(self):
+        """Operation to mount the gaius media partition"""
+        lib = self.gethprestchifhandle()
+        lib.vid_media_mount.argtypes = []
+        lib.vid_media_mount.restype = POINTER(c_ubyte)
+
+        ptr = lib.vid_media_mount()
+        data = ptr[:lib.size_of_embeddedMediaRequest()]
+        data = bytearray(data)
+
+        resp = self._send_receive_raw(data, lib.size_of_embeddedMediaResponse())
+
+        errorcode = resp[12]
+        if not (errorcode == BlobReturnCodes.SUCCESS or\
+                                    errorcode == BlobReturnCodes.NOTMODIFIED):
+            raise HpIloError(errorcode)
+
+        self.unloadchifhandle(lib)
+
+        return resp
+
     def media_unmount(self):
         """Operation to unmount the media partition"""
         lib = self.gethprestchifhandle()
@@ -599,6 +621,90 @@ class BlobStore2(object):
         lib.media_unmount.restype = POINTER(c_ubyte)
 
         ptr = lib.media_unmount()
+        data = ptr[:lib.size_of_embeddedMediaRequest()]
+        data = bytearray(data)
+
+        resp = self._send_receive_raw(data, lib.size_of_embeddedMediaResponse())
+
+        errorcode = resp[12]
+        if not (errorcode == BlobReturnCodes.SUCCESS or\
+                                    errorcode == BlobReturnCodes.NOTMODIFIED):
+            raise HpIloError(errorcode)
+
+        self.unloadchifhandle(lib)
+
+        return resp
+
+    def bb_media_unmount(self):
+        """Operation to unmount the media partition"""
+        lib = self.gethprestchifhandle()
+        lib.bb_media_unmount.argtypes = []
+        lib.bb_media_unmount.restype = POINTER(c_ubyte)
+
+        ptr = lib.bb_media_unmount()
+        data = ptr[:lib.size_of_embeddedMediaRequest()]
+        data = bytearray(data)
+
+        resp = self._send_receive_raw(data, lib.size_of_embeddedMediaResponse())
+
+        errorcode = resp[12]
+        if not (errorcode == BlobReturnCodes.SUCCESS or\
+                                    errorcode == BlobReturnCodes.NOTMODIFIED):
+            raise HpIloError(errorcode)
+
+        self.unloadchifhandle(lib)
+
+        return resp
+
+    def vid_media_unmount(self):
+        """Operation to unmount the media partition"""
+        lib = self.gethprestchifhandle()
+        lib.vid_media_unmount.argtypes = []
+        lib.vid_media_unmount.restype = POINTER(c_ubyte)
+
+        ptr = lib.vid_media_unmount()
+        data = ptr[:lib.size_of_embeddedMediaRequest()]
+        data = bytearray(data)
+
+        resp = self._send_receive_raw(data, lib.size_of_embeddedMediaResponse())
+
+        errorcode = resp[12]
+        if not (errorcode == BlobReturnCodes.SUCCESS or\
+                                    errorcode == BlobReturnCodes.NOTMODIFIED):
+            raise HpIloError(errorcode)
+
+        self.unloadchifhandle(lib)
+
+        return resp
+
+    def gaius_media_unmount(self):
+        """Operation to unmount the media partition"""
+        lib = self.gethprestchifhandle()
+        lib.gaius_media_unmount.argtypes = []
+        lib.gaius_media_unmount.restype = POINTER(c_ubyte)
+
+        ptr = lib.gaius_media_unmount()
+        data = ptr[:lib.size_of_embeddedMediaRequest()]
+        data = bytearray(data)
+
+        resp = self._send_receive_raw(data, lib.size_of_embeddedMediaResponse())
+
+        errorcode = resp[12]
+        if not (errorcode == BlobReturnCodes.SUCCESS or\
+                                    errorcode == BlobReturnCodes.NOTMODIFIED):
+            raise HpIloError(errorcode)
+
+        self.unloadchifhandle(lib)
+
+        return resp
+
+    def absr_media_unmount(self):
+        """Operation to unmount the media partition"""
+        lib = self.gethprestchifhandle()
+        lib.absaroka_media_unmount.argtypes = []
+        lib.absaroka_media_unmount.restype = POINTER(c_ubyte)
+
+        ptr = lib.absaroka_media_unmount()
         data = ptr[:lib.size_of_embeddedMediaRequest()]
         data = bytearray(data)
 
@@ -622,27 +728,28 @@ class BlobStore2(object):
         :type datarecv: int.
 
         """
-        resp = self.channel.send_receive_raw(indata, 3, datarecv)
+        resp = self.channel.send_receive_raw(indata, 10, datarecv)
         return resp
 
     @staticmethod
     def gethprestchifhandle():
         """Multi platform handle for chif hprest library"""
-        try:
-            if os.name == 'nt':
-                libpath = BlobStore2.checkincurrdirectory('hprest_chif.dll')
+        excp = None
+        libhandle = None
+        libnames = ["ilorest_chif.dll", "hprest_chif.dll"] if os.name == \
+                    'nt' else ["ilorest_chif_dev.so", "hprest_chif_dev.so", \
+                                        "ilorest_chif.so", "hprest_chif.so"]
+        for libname in libnames:
+            try:
+                libpath = BlobStore2.checkincurrdirectory(libname)
                 libhandle = cdll.LoadLibrary(libpath)
-            else:
-                try:
-                    libpath = BlobStore2.checkincurrdirectory('hprest_chif_dev.so')
-                    libhandle = cdll.LoadLibrary(libpath)
-                except:
-                    libpath = BlobStore2.checkincurrdirectory('hprest_chif.so')
-                    libhandle = cdll.LoadLibrary(libpath)
-        except Exception as excp:
-            raise ChifDllMissingError(excp)
-
-        return libhandle
+                if libhandle:
+                    break
+            except Exception as excp:
+                pass
+        if libhandle:
+            return libhandle
+        raise ChifDllMissingError(excp)
 
     @staticmethod
     def checkincurrdirectory(libname):
@@ -656,7 +763,7 @@ class BlobStore2(object):
 
     @staticmethod
     def unloadchifhandle(lib):
-        """Release a handle on the chif hprest library
+        """Release a handle on the chif iLOrest library
 
         :param lib: The library handle provided by loading the chif library.
         :type lib: library handle.

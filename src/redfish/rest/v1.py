@@ -22,22 +22,29 @@
 import os
 import sys
 import ssl
+import uuid
 import time
 import gzip
 import json
 import base64
+import codecs
 import urllib
 import ctypes
 import hashlib
 import logging
 import httplib
 import platform
+try:
+    import io
+except ImportError:
+    pass
 
 from StringIO import StringIO
 from collections import (OrderedDict)
 
 import urlparse2 #pylint warning disable
-from redfish.hpilo.risblobstore2 import (BlobStore2)
+from redfish.hpilo.risblobstore2 import BlobStore2
+from redfish.hpilo.rishpilo import HpIloChifPacketExchangeError
 
 #---------End of imports---------
 
@@ -402,6 +409,59 @@ class AuthMethod(object):
     BASIC = 'basic'
     SESSION = 'session'
 
+class MultipartFormdataEncoder(object):
+    """Python 2/3 implementation of multipart form data encoding 
+        http://stackoverflow.com/questions/1270518/python-standard-library-to-
+        post-multipart-form-data-encoded-data"""
+
+    def __init__(self):
+        self.boundary = uuid.uuid4().hex
+        self.content_type = 'multipart/form-data; boundary={}'.format(self.boundary)
+
+    @classmethod
+    def u(cls, s):
+        if sys.hexversion < 0x03000000 and isinstance(s, str):
+            s = s.decode('utf-8')
+        if sys.hexversion >= 0x03000000 and isinstance(s, bytes):
+            s = s.decode('utf-8')
+        return s
+
+    def iter(self, fields, files):
+        """
+        fields is a sequence of (name, value) elements for regular form fields.
+        files is a sequence of (name, filename, file-type) elements for data to be uploaded as files
+        Yield body's chunk as bytes
+        """
+        encoder = codecs.getencoder('utf-8')
+        for (key, value) in fields:
+            key = self.u(key)
+            yield encoder('--{}\r\n'.format(self.boundary))
+            yield encoder(self.u('Content-Disposition: form-data; name="{}"\r\n').format(key))
+            #yield encoder(self.u('Content-Type: application/json'))
+            yield encoder('\r\n')
+            if isinstance(value, int) or isinstance(value, float):
+                value = str(value)
+            yield encoder(self.u(value))
+            yield encoder('\r\n')
+        for (key, filename, fd) in files:
+            key = self.u(key)
+            filename = self.u(filename)
+            yield encoder('--{}\r\n'.format(self.boundary))
+            yield encoder(self.u('Content-Disposition: form-data; name="{}"; filename="{}"\r\n').format(key, filename))
+            #yield encoder('Content-Type: {}\r\n'.format(mimetypes.guess_type(filename)[0] or 'application/octet-stream'))
+            yield encoder('\r\n')
+            with fd:
+                buff = fd.read()
+                yield (buff, len(buff))
+            yield encoder('\r\n')
+        yield encoder('--{}--\r\n'.format(self.boundary))
+
+    def encode(self, fields, files):
+        body = io.BytesIO()
+        for chunk, _ in self.iter(fields, files):
+            body.write(chunk)
+        return self.content_type, body.getvalue()
+
 class RestClientBase(object):
     """Base class for RestClients"""
     MAX_RETRY = 10
@@ -567,8 +627,8 @@ class RestClientBase(object):
         """Perform an initial get and store the result"""
         try:
             resp = self.get('%s%s' % (self.__url.path, self.default_prefix))
-        except Exception:
-            raise
+        except Exception as excp:
+            raise excp
 
         if resp.status != 200:
             raise ServerDownOrUnreachableError("Server not reachable, " \
@@ -764,9 +824,17 @@ class RestClientBase(object):
         headers = self._get_req_headers(headers, providerheader, \
                                                             optionalpassword)
         reqpath = path.replace('//', '/')
-
         if body is not None:
-            if isinstance(body, dict) or isinstance(body, list):
+            if isinstance(body, list) and isinstance(body[0], tuple):
+                fields = []
+                files = []
+                for item in body:
+                    if len(item) == 2:
+                        fields.append(item)
+                    elif len(item) == 3:
+                        files.append(item)
+                headers['Content-Type'], body = MultipartFormdataEncoder().encode(fields, files)
+            elif isinstance(body, dict) or isinstance(body, list):
                 headers['Content-Type'] = u'application/json'
                 body = json.dumps(body)
             else:
@@ -810,8 +878,14 @@ class RestClientBase(object):
         while attempts < self.MAX_RETRY:
             if logging.getLogger().isEnabledFor(logging.DEBUG):
                 try:
+                    logbody = None
+                    if restreq.body:
+                        if restreq.body[0] == '{':
+                            logbody = restreq.body
+                        else:
+                            raise
                     LOGGER.debug('HTTP REQUEST: %s\n\tPATH: %s\n\tBODY: %s'% \
-                                (restreq.method, restreq.path, restreq.body))
+                                    (restreq.method, restreq.path, logbody))
                 except:
                     LOGGER.debug('HTTP REQUEST: %s\n\tPATH: %s\n\tBODY: %s'% \
                                 (restreq.method, restreq.path, 'binary body'))
@@ -1331,8 +1405,9 @@ def get_client_instance(base_url=None, username=None, password=None, \
     """
     if not base_url or base_url.startswith('blobstore://'):
         if platform.system() == 'Windows':
-            if not ctypes.windll.kernel32.LoadLibraryA('hprest_chif'):
-                raise ChifDriverMissingOrNotFound()
+            if not ctypes.windll.kernel32.LoadLibraryA('ilorest_chif'):
+                if not ctypes.windll.kernel32.LoadLibraryA('hprest_chif'):
+	                raise ChifDriverMissingOrNotFound()
         else:
             if not os.path.isdir('/dev/hpilo'):
                 raise ChifDriverMissingOrNotFound()

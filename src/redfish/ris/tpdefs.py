@@ -31,6 +31,7 @@ class Typesandpathdefines(object):
         self.defs = None
         self.ilogen = None
         self.flagiften = False
+        self.adminpriv = True
 
     def getgen(self, url=None, logger=None):
         """Function designed to verify the servers platform
@@ -108,6 +109,9 @@ class Definevalstenplus(Definevals):
         self.hpilossotype = u"HpeiLOSSO."
         self.hpsecureboot = u"SecureBoot."
         self.logservicetype = u"#LogService."
+        self.iscsisource = u"iSCSISources"
+        self.iscsiattemptinstance = u"iSCSIAttemptInstance"
+        self.iscsiattemptname = u"iSCSIAttemptName"
         self.hphttpscerttype = u"HpeHttpsCert."
         self.snmpservice = u"HpeiLOSnmpService."
         self.attributenametype = u"AttributeName"
@@ -130,6 +134,7 @@ class Definevalstenplus(Definevals):
         self.collectionstring = u"Members"
         self.biossettingsstring = u"@Redfish.Settings"
         self.attname = u"AttributeName"
+        self.iscsistring = u"iSCSISources"
 
         self.isgen9 = False
         self.isgen10 = True
@@ -164,6 +169,9 @@ class DefinevalsNine(Definevals):
         self.snmpservice = u"SnmpService."
         self.attributenametype = u"Name"
         self.logservicetype = u"LogService."
+        self.iscsisource = u"iSCSIBootSources"
+        self.iscsiattemptinstance = u"iSCSIBootAttemptInstance"
+        self.iscsiattemptname = u"iSCSIBootAttemptName"
         self.hpsecureboot = u"HpSecureBoot."
         self.hphttpscerttype = u"HpHttpsCert."
         self.hpilodatetimetype = u"HpiLODateTime."
@@ -185,6 +193,7 @@ class DefinevalsNine(Definevals):
         self.collectionstring = u"Items"
         self.biossettingsstring = u"SettingsResult"
         self.attname = u"Name"
+        self.iscsistring = u"iSCSIBootSources"
 
         self.isgen9 = True
         self.isgen10 = False

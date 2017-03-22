@@ -81,9 +81,9 @@ class ValidationManager(object):
                 defaultbiospath = r".\hp-rest-classes-bios"
                 schemamainfolder = os.path.dirname(sys.executable)
             else:
-                defaultilopath = "/usr/share/hprest/hp-rest-classes-ilo4"
-                defaultbiospath = "/usr/share/hprest/hp-rest-classes-bios"
-                schemamainfolder = "/usr/share/hprest/"
+                defaultilopath = "/usr/share/ilorest/hp-rest-classes-ilo4"
+                defaultbiospath = "/usr/share/ilorest/hp-rest-classes-bios"
+                schemamainfolder = "/usr/share/ilorest/"
 
             # iLO schema location defaults
             if not local_path:
