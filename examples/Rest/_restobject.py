@@ -99,7 +99,7 @@ class RestObject(object):
         for item in self.SYSTEMS_RESOURCES["resources"]:
             foundsettings = False
 
-            if type.lower() in item["Type"].lower():
+            if type and type.lower() in item["Type"].lower():
                 for entry in self.SYSTEMS_RESOURCES["resources"]:
                     if (item["href"] + "/settings").lower() == \
                                                         (entry["href"]).lower():
