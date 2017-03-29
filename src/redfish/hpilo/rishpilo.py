@@ -190,7 +190,7 @@ class HpIlo(object):
         return pkt
 
     def send_receive_raw(self, data, retries=3, datarecv=None):
-        """ Windows only function for proper send receive retry protocol
+        """ Function implementing proper send receive retry protocol
 
         :param data: data to be sent for packet exchange
         :type data: str

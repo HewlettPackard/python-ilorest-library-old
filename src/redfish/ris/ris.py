@@ -560,7 +560,8 @@ class RisMonolithv100(Dictable):
                     if not jsonfile:
                         replacepath = jsonpointer.JsonPointer(jsonpath)
                         schemapath = schemapath.replace('/$ref', '')
-                        schemapath = schemapath.translate(None, '[]')
+                        if re.search('\[\d]', schemapath):
+                            schemapath = schemapath.translate(None, '[]')
                         schemapath = jsonpointer.JsonPointer(schemapath)
                         data = replacepath.resolve(respcopy)
 

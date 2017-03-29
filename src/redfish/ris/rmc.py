@@ -2294,6 +2294,8 @@ class RmcApp(object):
                         if verbose:
                             sys.stdout.write(u"[%d] %s\n" % (results.status, \
                                                                         output))
+                        if results.status == 200 or results.status == 201:
+                            sys.stdout.write(u"{0}\n".format(output))
                         if results.status is not 200 and results.status is not 201:
                             sys.stdout.write(u"iLO response with code [%d]: %s\n"%(\
                                                         results.status, output))
@@ -2312,7 +2314,7 @@ class RmcApp(object):
                     self.warning_handler(u"The operation completed "\
                                                             "successfully.\n")
             elif contents:
-                sys.stdout.write(u"iLO responsed with code {0}: {1}\n".format(\
+                sys.stdout.write(u"iLO responsed with code [{0}]: {1}\n".format(\
                                                         results.status, contents))
                 raise IloResponseError()
             else:
@@ -2932,6 +2934,8 @@ class RmcApp(object):
         :returns: returns dictionary with readonly items removed
 
         """
+
+        outdict = None
         biosmode = False
         iloversion = self.getiloversion()
         type_str = self.current_client.monolith._typestring
