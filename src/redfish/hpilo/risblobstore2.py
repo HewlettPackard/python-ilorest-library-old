@@ -22,11 +22,13 @@
 import os
 import sys
 import struct
+import random
+import string
 import logging
 
 from redfish.hpilo.rishpilo import HpIlo
 from ctypes import c_char_p, c_ubyte, c_uint, cdll, POINTER, \
-                    create_string_buffer
+                    create_string_buffer, c_ushort
 
 if os.name == 'nt':
     from ctypes import windll
@@ -65,6 +67,10 @@ class Blob2DeleteError(Exception):
     """Raised when delete operation fails"""
     pass
 
+class Blob2OverrideError(Exception):
+    """Raised when delete operation fails because of it been overwritten"""
+    pass
+
 class Blob2FinalizeError(Exception):
     """Raised when finalize operation fails"""
     pass
@@ -95,6 +101,7 @@ class BlobReturnCodes(object):
     """
 
     SUCCESS = 0
+    BADPARAMETER = 2
     NOTFOUND = 12
     NOTMODIFIED = 20
 
@@ -174,7 +181,9 @@ class BlobStore2(object):
             raise Blob2InfoError("info response smaller than expected")
 
         errorcode = struct.unpack("<I", bytes(resp[8:12]))[0]
-        if errorcode == BlobReturnCodes.NOTFOUND:
+        if errorcode == BlobReturnCodes.BADPARAMETER:
+            raise Blob2OverrideError(errorcode)
+        elif errorcode == BlobReturnCodes.NOTFOUND:
             raise BlobNotFoundError(key, namespace)
 
         if not (errorcode == BlobReturnCodes.SUCCESS or \
@@ -221,6 +230,10 @@ class BlobStore2(object):
             newreadsize = readhead + 4
             bytesread = struct.unpack("<I", bytes(recvpkt[readhead:\
                                                             (newreadsize)]))[0]
+
+            if bytesread == 0:
+                raise Blob2OverrideError()
+
             data.extend(recvpkt[newreadsize:newreadsize + bytesread])
             bytes_read += bytesread
 
@@ -368,7 +381,9 @@ class BlobStore2(object):
             raise Blob2DeleteError("delete response smaller than expected")
 
         errorcode = struct.unpack("<I", bytes(resp[8:12]))[0]
-        if not (errorcode == BlobReturnCodes.SUCCESS or\
+        if errorcode == BlobReturnCodes.BADPARAMETER:
+            raise Blob2OverrideError(errorcode)
+        elif not (errorcode == BlobReturnCodes.SUCCESS or\
                                     errorcode == BlobReturnCodes.NOTMODIFIED):
             raise HpIloError(errorcode)
 
@@ -461,6 +476,11 @@ class BlobStore2(object):
         :type rsp_namespace: str.
 
         """
+        rqt_key = ''.join(random.choice(string.ascii_letters + \
+                                            string.digits) for _ in range(10))
+        rsp_key = ''.join(random.choice(string.ascii_letters + \
+                                            string.digits) for _ in range(10))
+
         lib = self.gethprestchifhandle()
 
         if len(req_data) < (lib.size_of_restImmediateRequest() + \
@@ -524,9 +544,18 @@ class BlobStore2(object):
 
         if not tmpresponse and recvmode == 1:
             tmpresponse = self.read(rsp_key, rsp_namespace)
-            self.delete(rsp_key, rsp_namespace)
+
+            try:
+                self.delete(rsp_key, rsp_namespace)
+            except Exception, excp:
+                raise excp
         else:
-            self.delete(rsp_key, rsp_namespace)
+            try:
+                self.delete(rsp_key, rsp_namespace)
+            except Blob2OverrideError, excp:
+                pass
+            except Exception, excp:
+                raise excp
 
         return tmpresponse
 
@@ -600,6 +629,27 @@ class BlobStore2(object):
         lib.vid_media_mount.restype = POINTER(c_ubyte)
 
         ptr = lib.vid_media_mount()
+        data = ptr[:lib.size_of_embeddedMediaRequest()]
+        data = bytearray(data)
+
+        resp = self._send_receive_raw(data, lib.size_of_embeddedMediaResponse())
+
+        errorcode = resp[12]
+        if not (errorcode == BlobReturnCodes.SUCCESS or\
+                                    errorcode == BlobReturnCodes.NOTMODIFIED):
+            raise HpIloError(errorcode)
+
+        self.unloadchifhandle(lib)
+
+        return resp
+
+    def mountflat(self):
+        """Operation to mount the gaius media partition"""
+        lib = self.gethprestchifhandle()
+        lib.flat_media_mount.argtypes = []
+        lib.flat_media_mount.restype = POINTER(c_ubyte)
+
+        ptr = lib.flat_media_mount()
         data = ptr[:lib.size_of_embeddedMediaRequest()]
         data = bytearray(data)
 
@@ -728,8 +778,16 @@ class BlobStore2(object):
         :type datarecv: int.
 
         """
-        resp = self.channel.send_receive_raw(indata, 10, datarecv)
-        return resp
+        excp = None
+        for _ in range(0, 3): # channel loop for iLO
+            try:
+                resp = self.channel.send_receive_raw(indata, 10, datarecv)
+                return resp
+            except Exception as excp:
+                self.channel.close()
+                self.channel = HpIlo()
+        if excp:
+            raise excp
 
     @staticmethod
     def gethprestchifhandle():
@@ -748,8 +806,15 @@ class BlobStore2(object):
             except Exception as excp:
                 pass
         if libhandle:
+            BlobStore2.setglobalhprestchifrandnumber(libhandle)
             return libhandle
         raise ChifDllMissingError(excp)
+
+    @staticmethod
+    def setglobalhprestchifrandnumber(libbhndl):
+        rndval = random.randint(1, 65535)
+        libbhndl.updaterandval.argtypes = [c_ushort]
+        libbhndl.updaterandval(rndval)
 
     @staticmethod
     def checkincurrdirectory(libname):

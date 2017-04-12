@@ -796,6 +796,7 @@ class RmcApp(object):
             outputline = '/'.join(newargs[:-1]) + "/" + name
             newarg = newargs[:-1]
             newarg.append(name)
+            value = val if isinstance(val, bool) else value
             dicttolist = [(name, value)]
 
         for instance in instances:
@@ -1945,6 +1946,8 @@ class RmcApp(object):
         if not silent and not service:
             errmessages = self.get_error_messages()
 
+        if results and hasattr(results, "status") and results.status == 412:
+            self.reloadmonolith(path = put_path)
         if not silent:
             self.invalid_return_handler(results, verbose=verbose, errmessages=errmessages)
         elif results.status == 401:
@@ -2264,7 +2267,7 @@ class RmcApp(object):
             except Exception:
                 if results.status == 200 or results.status == 201:
                     if verbose:
-                        sys.stdout.write(u"[%d] The operation completed " \
+                        self.warning_handler(u"[%d] The operation completed " \
                                             "successfully.\n" % results.status)
                     else:
                         self.warning_handler(u"[%d] The operation completed " \
@@ -2272,8 +2275,7 @@ class RmcApp(object):
                 else:
                     self.warning_handler(u"[%d] No message returned by iLO.\n" %\
                                                                 results.status)
-                    sys.stdout.write(u"iLO response with code [%d].\n"%(\
-                                                            results.status))
+
                     raise IloResponseError("")
                 return
 
@@ -2282,6 +2284,11 @@ class RmcApp(object):
             raise SessionExpired()
         elif results.status == 403:
             raise IdTokenError()
+        elif results.status == 412:
+            self.warning_handler("The property you are trying to change " \
+                                 "has been updated. Please check entry again " \
+                                 " before manipulating it.\n")
+            raise ValueChangedError()
         elif errmessages:
             for messagetype in errmessages.keys():
                 if contents[0] == messagetype:
@@ -2292,15 +2299,16 @@ class RmcApp(object):
                             output = errmessages[messagetype][contents[-1]]["Description"]
 
                         if verbose:
-                            sys.stdout.write(u"[%d] %s\n" % (results.status, \
+                            self.warning_handler(u"[%d] %s\n" % (results.status, \
                                                                         output))
                         if results.status == 200 or results.status == 201:
-                            sys.stdout.write(u"{0}\n".format(output))
+                            self.warning_handler(u"{0}\n".format(output))
                         if results.status is not 200 and results.status is not 201:
-                            sys.stdout.write(u"iLO response with code [%d]: %s\n"%(\
+                            self.warning_handler(u"iLO response with code [%d]: %s\n"%(\
                                                         results.status, output))
                             raise IloResponseError("")
                         break
+
                     except IloResponseError as excp:
                         raise excp
                     except Exception:
@@ -2308,13 +2316,13 @@ class RmcApp(object):
         else:
             if results.status == 200 or results.status == 201:
                 if verbose:
-                    sys.stdout.write(u"[%d] The operation completed " \
+                    self.warning_handler(u"[%d] The operation completed " \
                                             "successfully.\n" % results.status)
                 else:
                     self.warning_handler(u"The operation completed "\
                                                             "successfully.\n")
             elif contents:
-                sys.stdout.write(u"iLO responsed with code [{0}]: {1}\n".format(\
+                self.warning_handler(u"iLO responsed with code [{0}]: {1}\n".format(\
                                                         results.status, contents))
                 raise IloResponseError()
             else:
@@ -2516,7 +2524,7 @@ class RmcApp(object):
                         not self.typepath.defs.hpilodatetimetype in instance.type:
                 self.warning_handler("The property you are trying to change " \
                                  "has been updated. Please check entry again " \
-                                 " before manipulating it\n")
+                                 " before manipulating it.\n")
                 raise ValueChangedError()
 
     def verifyschemasdownloaded(self, monolith):

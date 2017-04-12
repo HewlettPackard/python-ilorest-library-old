@@ -487,7 +487,10 @@ class RmcConfig(AutoConfigParser):
 
     def get_url(self):
         """Get the config file URL"""
-        return self._get('url')
+        url = self._get('url')
+        url = url[:-1] if url.endswith('/') else url
+
+        return url 
 
     def set_url(self, value):
         """Set the config file URL

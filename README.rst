@@ -137,6 +137,8 @@ History
   * 12/06/2016: Release of v1.6.0
   * 01/17/2017: Release of v1.7.0
   * 02/01/2017: Release of v1.8.0
+  * 03/22/2017: Release of v1.9.0
+  * 04/12/2017: Release of v1.9.1
 
 Copyright and License
 ---------------------

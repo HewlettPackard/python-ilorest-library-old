@@ -1123,6 +1123,8 @@ class RepoRegistryEntry(RepoBaseEntry):
 
             if u'properties' in jsonreg:
                 regitem = jsonreg[u'properties']
+                if u'Properties' in regitem:
+                    regitem = regitem[u'Properties']
                 reg = HpPropertiesRegistry.parse(regitem)
 
                 if newarg:
