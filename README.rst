@@ -1,4 +1,4 @@
-python-ilorest-library
+python-ilorest-library-old
 ==============
 .. image:: https://travis-ci.org/HewlettPackard/python-ilorest-library.svg?branch=master
     :target: https://travis-ci.org/HewlettPackard/python-ilorest-library
