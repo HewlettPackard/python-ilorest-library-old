@@ -14,7 +14,7 @@ python-ilorest-library
 	:target: https://www.codacy.com/app/rexysmydog/python-ilorest-library?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=HewlettPackard/python-ilorest-library&amp;utm_campaign=Badge_Grade
 
 Python iLOrest Library Announcement
-==============
+----------
 
 **The Python iLOrest Library team would like to inform you that this repository has reached its end of life. We will be continuing our efforts on the forked project directly from the DMTF repository. Click here_ to be redirected to the new project repository. **
  .. _here: https://github.com/HewlettPackard/python-redfish-library
